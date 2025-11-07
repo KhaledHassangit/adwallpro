@@ -1,0 +1,82 @@
+import "./globals.css"
+import { Inter } from 'next/font/google'
+import { ThemeProvider } from "@/components/theme-provider"
+import { LangProvider } from "@/providers/lang-provider"
+
+const inter = Inter({ subsets: ["latin"] })
+
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ar" dir="rtl" suppressHydrationWarning>
+      <body className={inter.className}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <LangProvider>
+            {children}
+          </LangProvider>
+        </ThemeProvider>
+      </body>
+    </html>
+  )
+}
+
+"use client"
+
+import Image from "next/image"
+import Link from "next/link"
+import { categories } from "@/data/categories"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { useI18n } from "@/providers/lang-provider"
+
+export function CategoriesGrid() {
+  const { locale, t } = useI18n()
+  return (
+    <section className="container py-10">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-2xl font-bold">{t("categories")}</h2>
+        <Link href="/category/cars" className="text-primary hover:underline">
+          {t("viewAll")}
+        </Link>
+      </div>
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        {categories.map((c) => {
+          const name = locale === "ar" ? c.nameAr : c.nameEn
+          return (
+            <Link key={c.slug} href={`/category/${c.slug}`}>
+              <Card className="group h-full overflow-hidden transition hover:shadow-lg">
+                <CardHeader>
+                  <CardTitle className="text-lg">{name}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="relative aspect-[4/3] w-full overflow-hidden rounded-md">
+                    <Image
+                      src={c.image || "/placeholder.svg"}
+                      alt={name}
+                      fill
+                      className="object-cover transition group-hover:scale-105"
+                      sizes="(min-width: 1024px) 25vw, 50vw"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
+
+"use client"
+
+import { useI18n } from "@/providers/lang-provider"
+
+export function Footer() {
+  const { t } = useI18n()
+  return (
+    <footer className="border-t">
+      <div className="container py-6 text-sm text-muted-foreground">
+        © {new Date().getFullYear()} {t("siteName")}. All rights reserved.
+      </div>
+    </footer>
+  )
+}

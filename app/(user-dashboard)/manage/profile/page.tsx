@@ -1,0 +1,668 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ProtectedRoute } from "@/components/auth/route-guard";
+import { useI18n } from "@/providers/lang-provider";
+import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
+import { useAuthStore, getCurrentUser, updateUserProfile, signOut } from "@/lib/auth";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
+interface ValidationError {
+  value: string;
+  msg: string;
+  param: string;
+  location: string;
+}
+
+interface ApiError {
+  errors: ValidationError[];
+}
+
+function ProfileContent() {
+  const { t, lang } = useI18n();
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
+  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    password: "",
+    passwordConfirm: ""
+  });
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false
+  });
+  
+  // Use the auth store directly
+  const { user, setUser } = useAuthStore();
+  console.log("user",user)
+  useEffect(() => {
+    // If user is already in the store, use it
+    if (user) {
+      setFormData({
+        name: user.name,
+        email: user.email,
+        phone: user.phone || "",
+      });
+      setLoading(false);
+    } else {
+      // Otherwise, try to get from localStorage
+      const currentUser = getCurrentUser();
+      if (currentUser) {
+        setUser(currentUser);
+        setFormData({
+          name: currentUser.name,
+          email: currentUser.email,
+          phone: currentUser.phone || "",
+        });
+      }
+      setLoading(false);
+    }
+  }, [user, setUser]);
+
+  // Validate phone number for Egypt and Saudi Arabia
+  const validatePhoneNumber = (phone: string): boolean => {
+    if (!phone) return true; // Phone is optional
+    
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Egypt: starts with 20 and has 12 digits total (20xxxxxxxxxx)
+    // Saudi Arabia: starts with 966 and has 12 digits total (966xxxxxxxxxx)
+    const egyptPattern = /^20[0-9]{10}$/;
+    const saudiPattern = /^966[0-9]{9}$/;
+    
+    return egyptPattern.test(cleanPhone) || saudiPattern.test(cleanPhone);
+  };
+
+  // Format phone number for display
+  const formatPhoneNumber = (phone: string): string => {
+    if (!phone) return '';
+    
+    // Remove all non-digit characters
+    const cleanPhone = phone.replace(/\D/g, '');
+    
+    // Format for Egypt
+    if (cleanPhone.startsWith('20') && cleanPhone.length === 12) {
+      return `+20 ${cleanPhone.slice(2, 5)} ${cleanPhone.slice(5, 8)} ${cleanPhone.slice(8)}`;
+    }
+    
+    // Format for Saudi Arabia
+    if (cleanPhone.startsWith('966') && cleanPhone.length === 12) {
+      return `+966 ${cleanPhone.slice(3, 5)} ${cleanPhone.slice(5, 8)} ${cleanPhone.slice(8)}`;
+    }
+    
+    return phone;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous errors
+    setFieldErrors({});
+    
+    // Frontend validation
+    const errors: Record<string, string> = {};
+    
+    if (!formData.name.trim()) {
+      errors.name = t("nameRequired");
+    }
+    
+    if (!formData.email.trim()) {
+      errors.email = t("emailRequired");
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = t("invalidEmail");
+    }
+    
+    if (formData.phone && !validatePhoneNumber(formData.phone)) {
+      errors.phone = lang === "ar" 
+        ? "رقم الهاتف غير صالح. فقط أرقام مصر (20xxxxxxxxxx) أو السعودية (966xxxxxxxxxx) مقبولة"
+        : "Invalid phone number. Only Egypt (20xxxxxxxxxx) or Saudi Arabia (966xxxxxxxxxx) numbers are accepted";
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setFieldErrors(errors);
+      return;
+    }
+    
+    try {
+      setSaving(true);
+      
+      // Use the new updateUserProfile function
+      const updatedUser = await updateUserProfile({
+        name: formData.name,
+        email: formData.email,
+        phone: formData.phone,
+      });
+      
+      // The store and localStorage are already updated by updateUserProfile
+      toast.success(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      
+      // Handle API validation errors
+      if (error && typeof error === 'object' && 'errors' in error) {
+        const apiError = error as ApiError;
+        const errors: Record<string, string> = {};
+        
+        apiError.errors.forEach((err) => {
+          // Translate error messages
+          let message = err.msg;
+          if (err.msg === "E-mail already in user") {
+            message = lang === "ar" 
+              ? "البريد الإلكتروني مستخدم بالفعل" 
+              : "Email is already in use";
+          } else if (err.msg === "Invalid phone number only accepted Egy and SA Phone numbers") {
+            message = lang === "ar" 
+              ? "رقم الهاتف غير صالح. فقط أرقام مصر والسعودية مقبولة" 
+              : "Invalid phone number. Only Egypt and Saudi Arabia numbers are accepted";
+          }
+          
+          errors[err.param] = message;
+        });
+        
+        setFieldErrors(errors);
+        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+      } else {
+        toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
+      }
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Clear previous errors
+    setPasswordFieldErrors({});
+    
+    // Frontend validation
+    const errors: Record<string, string> = {};
+    
+    if (!passwordData.currentPassword.trim()) {
+      errors.currentPassword = lang === "ar" ? "كلمة المرور الحالية مطلوبة" : "Current password is required";
+    }
+    
+    if (!passwordData.password.trim()) {
+      errors.password = lang === "ar" ? "كلمة المرور الجديدة مطلوبة" : "New password is required";
+    } else if (passwordData.password.length < 6) {
+      errors.password = lang === "ar" ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters";
+    }
+    
+    if (!passwordData.passwordConfirm.trim()) {
+      errors.passwordConfirm = lang === "ar" ? "تأكيد كلمة المرور مطلوب" : "Password confirmation is required";
+    } else if (passwordData.password !== passwordData.passwordConfirm) {
+      errors.passwordConfirm = lang === "ar" ? "كلمات المرور غير متطابقة" : "Passwords do not match";
+    }
+    
+    if (Object.keys(errors).length > 0) {
+      setPasswordFieldErrors(errors);
+      return;
+    }
+    
+    try {
+      setChangingPassword(true);
+      
+      // Get the auth token from localStorage
+      const token = localStorage.getItem('auth_token');
+      
+      // Call the change password endpoint
+      const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          password: passwordData.password,
+          passwordConfirm: passwordData.passwordConfirm
+        })
+      });
+      
+      // Check if the response is HTML (error page) instead of JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error(lang === "ar" ? "فشل الاتصال بالخادم" : "Server connection failed");
+      }
+      
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.error("Error parsing JSON response:", parseError);
+        throw new Error(lang === "ar" ? "استجابة غير صالحة من الخادم" : "Invalid response from server");
+      }
+      
+      if (!response.ok) {
+        // Handle API validation errors
+        if (data.errors && Array.isArray(data.errors)) {
+          const errors: Record<string, string> = {};
+          
+          data.errors.forEach((err: ValidationError) => {
+            // Translate error messages
+            let message = err.msg;
+            if (err.msg === "Your current password is wrong") {
+              message = lang === "ar" 
+                ? "كلمة المرور الحالية غير صحيحة" 
+                : "Current password is incorrect";
+            }
+            
+            errors[err.param] = message;
+          });
+          
+          setPasswordFieldErrors(errors);
+          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+        } else {
+          throw new Error(data.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+        }
+      } else {
+        // Success
+        toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح. سيتم تسجيل خروجك الآن." : "Password changed successfully. You will be logged out now.");
+        
+        // Reset password form
+        setPasswordData({
+          currentPassword: "",
+          password: "",
+          passwordConfirm: ""
+        });
+        
+        // Sign out the user and redirect to login
+        setTimeout(async () => {
+          await signOut();
+          router.push('/login');
+        }, 500); // Give user time to read the success message
+      }
+    } catch (error) {
+      console.error("Error changing password:", error);
+      toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+    } finally {
+      setChangingPassword(false);
+    }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors((prev) => ({
+        ...prev,
+        [field]: "",
+      }));
+    }
+  };
+
+  const handlePasswordInputChange = (field: string, value: string) => {
+    setPasswordData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+    
+    // Clear error for this field when user starts typing
+    if (passwordFieldErrors[field]) {
+      setPasswordFieldErrors((prev) => ({
+        ...prev,
+        [field]: "",
+      }));
+    }
+  };
+
+  const togglePasswordVisibility = (field: 'current' | 'new' | 'confirm') => {
+    setShowPasswords(prev => ({
+      ...prev,
+      [field]: !prev[field]
+    }));
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-[70vh]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  return (
+    <main
+      className={`flex-1 p-6 sm:p-8 overflow-y-auto ${
+        lang === "ar" ? "text-right" : "text-left"
+      }`}
+      dir={lang === "ar" ? "rtl" : "ltr"}
+    >
+      <div
+        className={`max-w-7xl mx-auto space-y-8 ${
+          lang === "ar" ? "lg:pl-4" : "lg:pr-4"
+        }`}
+      >
+        {/* Header */}
+        <div>
+          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#6a5af9] to-[#00c6ff] bg-clip-text text-transparent">
+            {t("profile")}
+          </h1>
+          <p className="text-foreground mt-2 text-sm">{t("manageAccountData")}</p>
+        </div>
+
+        {/* Content Grid - Full Width Cards */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Account Information Card */}
+          <div className="ultra-card p-6 h-full flex flex-col">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              {t("accountInformation")}
+            </h2>
+            <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
+              <div className="flex-1 space-y-6">
+                {/* Name */}
+                <div>
+                  <Label
+                    htmlFor="name"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {t("fullName")}
+                  </Label>
+                  <div className="relative mt-2">
+                    <User
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        handleInputChange("name", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        fieldErrors.name ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "الاسم الكامل" : "Full Name"}
+                      required
+                    />
+                  </div>
+                  {fieldErrors.name && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {fieldErrors.name}
+                    </p>
+                  )}
+                </div>
+
+                {/* Email */}
+                <div>
+                  <Label
+                    htmlFor="email"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {t("email")}
+                  </Label>
+                  <div className="relative mt-2">
+                    <Mail
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="email"
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        handleInputChange("email", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        fieldErrors.email ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "example@email.com" : "example@email.com"}
+                      required
+                    />
+                  </div>
+                  {fieldErrors.email && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {fieldErrors.email}
+                    </p>
+                  )}
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <Label
+                    htmlFor="phone"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {t("phoneNumber")}
+                  </Label>
+                  <div className="relative mt-2">
+                    <Phone
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="phone"
+                      value={formData.phone}
+                      onChange={(e) =>
+                        handleInputChange("phone", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        fieldErrors.phone ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "+20 10x xxx xxxx أو +966 5x xxx xxxx" : "+20 10x xxx xxxx or +966 5x xxx xxxx"}
+                    />
+                  </div>
+                  {fieldErrors.phone && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {fieldErrors.phone}
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {lang === "ar" 
+                      ? "مقبول: أرقام مصر (+20) والسعودية (+966) فقط" 
+                      : "Accepted: Egypt (+20) and Saudi Arabia (+966) numbers only"}
+                  </p>
+                </div>
+              </div>
+
+              {/* Save Button */}
+              <button
+                type="submit"
+                disabled={saving}
+                className="btn-ultra w-full mt-4"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin inline-block" />
+                    {t("saving")}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4 mr-2 inline-block" />
+                    {t("saveChanges")}
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+
+          {/* Password Change Card */}
+          <div className="ultra-card p-6 h-full flex flex-col">
+            <h2 className="text-lg font-semibold text-foreground mb-4">
+              {lang === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+            </h2>
+            <form onSubmit={handlePasswordChange} className="space-y-4 flex-1 flex flex-col">
+              <div className="flex-1 space-y-4">
+                {/* Current Password */}
+                <div>
+                  <Label
+                    htmlFor="currentPassword"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {lang === "ar" ? "كلمة المرور الحالية" : "Current Password"}
+                  </Label>
+                  <div className="relative mt-2">
+                    <Lock
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="currentPassword"
+                      type={showPasswords.current ? "text" : "password"}
+                      value={passwordData.currentPassword}
+                      onChange={(e) =>
+                        handlePasswordInputChange("currentPassword", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        passwordFieldErrors.currentPassword ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      onClick={() => togglePasswordVisibility('current')}
+                    >
+                      {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {passwordFieldErrors.currentPassword && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {passwordFieldErrors.currentPassword}
+                    </p>
+                  )}
+                </div>
+
+                {/* New Password */}
+                <div>
+                  <Label
+                    htmlFor="password"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {lang === "ar" ? "كلمة المرور الجديدة" : "New Password"}
+                  </Label>
+                  <div className="relative mt-2">
+                    <Lock
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="password"
+                      type={showPasswords.new ? "text" : "password"}
+                      value={passwordData.password}
+                      onChange={(e) =>
+                        handlePasswordInputChange("password", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        passwordFieldErrors.password ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      onClick={() => togglePasswordVisibility('new')}
+                    >
+                      {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {passwordFieldErrors.password && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {passwordFieldErrors.password}
+                    </p>
+                  )}
+                </div>
+
+                {/* Confirm Password */}
+                <div>
+                  <Label
+                    htmlFor="passwordConfirm"
+                    className="text-sm font-medium text-foreground"
+                  >
+                    {lang === "ar" ? "تأكيد كلمة المرور" : "Confirm Password"}
+                  </Label>
+                  <div className="relative mt-2">
+                    <Lock
+                      className={`absolute top-3 h-4 w-4 text-foreground ${
+                        lang === "ar" ? "right-3" : "left-3"
+                      }`}
+                    />
+                    <Input
+                      id="passwordConfirm"
+                      type={showPasswords.confirm ? "text" : "password"}
+                      value={passwordData.passwordConfirm}
+                      onChange={(e) =>
+                        handlePasswordInputChange("passwordConfirm", e.target.value)
+                      }
+                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
+                        passwordFieldErrors.passwordConfirm ? "border-red-500" : ""
+                      }`}
+                      placeholder={lang === "ar" ? "أكد كلمة المرور الجديدة" : "Confirm new password"}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      onClick={() => togglePasswordVisibility('confirm')}
+                    >
+                      {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {passwordFieldErrors.passwordConfirm && (
+                    <p className="text-sm text-red-500 mt-1 flex items-center gap-1">
+                      <AlertCircle className="h-3 w-3" />
+                      {passwordFieldErrors.passwordConfirm}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Change Password Button */}
+              <button
+                type="submit"
+                disabled={changingPassword}
+                className="btn-ultra w-full mt-4"
+              >
+                {changingPassword ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin inline-block" />
+                    {lang === "ar" ? "جاري التغيير..." : "Changing..."}
+                  </>
+                ) : (
+                  <>
+                    <Lock className="h-4 w-4 mr-2 inline-block" />
+                    {lang === "ar" ? "تغيير كلمة المرور" : "Change Password"}
+                  </>
+                )}
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <ProtectedRoute>
+      <ProfileContent />
+    </ProtectedRoute>
+  );
+}

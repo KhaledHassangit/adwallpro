@@ -1,0 +1,112 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  phone     String?
+  password  String?
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ads Ad[]
+
+  @@map("users")
+}
+
+model Category {
+  id          String  @id @default(cuid())
+  slug        String  @unique
+  nameEn      String
+  nameAr      String
+  description String?
+  image       String?
+  isActive    Boolean @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  ads Ad[]
+
+  @@map("categories")
+}
+
+model Ad {
+  id          String    @id @default(cuid())
+  title       String
+  description String
+  price       Float?
+  currency    String    @default("USD")
+  images      String[]
+  imageUrl    String?
+  logoUrl     String?
+  phone       String?
+  whatsapp    String?
+  website     String?
+  isVip       Boolean   @default(false)
+  status      AdStatus  @default(PENDING)
+  reason      String?   // Rejection reason
+  categoryId  String
+  country     String
+  city        String
+  userId      String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  approvedAt  DateTime?
+  rejectedAt  DateTime?
+  reviewedAt  DateTime?
+
+  // Relations
+  category Category @relation(fields: [categoryId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@map("ads")
+}
+
+model Coupon {
+  id              String   @id @default(cuid())
+  code            String   @unique
+  discountPercent Int
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("coupons")
+}
+
+model Setting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String
+  type  String @default("string") // string, number, boolean, json
+
+  @@map("settings")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AdStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
