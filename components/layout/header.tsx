@@ -31,27 +31,26 @@ export function UltraHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const nav = [
+const nav = [
     { href: "/", label: t("home"), icon: Home },
     { href: "/categories", label: t("categories"), icon: Grid3X3 },
     { href: "/about", label: t("aboutUs"), icon: Info },
-    { href: "/faq", label: "FAQ", icon: HelpCircle },
+    { href: "/faq", label: t("FAQ"), icon: HelpCircle },
     { href: "/privacy-policy", label: t("privacyPolicy"), icon: Shield },
   ];
-
   return (
     <header
       className={cn(
-        "top-0 left-0 right-0 z-50 py-2.5 transition-all duration-500 bg-transparent"
+        "top-0 left-0 right-0 z-50 py-2.5 transition-all duration-500 bg-transparent w-full"
       )}
     >
-      <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 max-w-[1600px]">
+      <div className="mx-auto px-4 sm:px-6 md:px-8 lg:px-10 xl:px-12 2xl:px-16 max-w-screen-2xl">
         <div className="flex h-16 lg:h-18 items-center justify-between">
           {/* Logo */}
           <Logo t={t} />
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-1.5 sm:gap-2">
+          {/* Desktop Navigation - Now uses xl: breakpoint */}
+          <nav className="hidden xl:flex items-center gap-1.5 sm:gap-2">
             {nav.map((n) => {
               const Icon = n.icon;
               const isActive =
@@ -66,7 +65,7 @@ export function UltraHeader() {
                   key={n.href}
                   href={n.href}
                   className={cn(
-                    "group flex items-center gap-1.5 sm:gap-2.5 rounded-xl px-4 sm:px-5 py-2 sm:py-2.5 text-[15px] sm:text-base font-semibold transition-all duration-200",
+                    "group flex items-center gap-1.5 sm:gap-2.5 rounded-xl px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-[13px] sm:text-[15px] md:text-base font-semibold transition-all duration-200",
                     "hover:bg-primary-50 dark:hover:bg-primary-950/50",
                     isActive
                       ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 shadow"
@@ -74,7 +73,7 @@ export function UltraHeader() {
                   )}
                 >
                   <Icon className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 " />
-                  <span>{n.label}</span>
+                  <span className="hidden sm:inline">{n.label}</span>
                   {isActive && (
                     <Sparkles className="h-3 w-3 text-primary-500" />
                   )}
@@ -83,16 +82,17 @@ export function UltraHeader() {
             })}
           </nav>
 
-          {/* Desktop Actions */}
-          <div className="hidden lg:flex items-center gap-3 sm:gap-4">
+          {/* Desktop Actions - Now uses xl: breakpoint */}
+          <div className="hidden xl:flex items-center gap-3 sm:gap-4">
             <SignInDialog />
             <div className="h-6 w-px bg-gradient-to-b from-transparent via-border to-transparent" />
             <LanguageSwitcher />
             <ThemeToggle />
           </div>
 
-          {/* Mobile Menu Button */}
-          <div className="flex items-center gap-2 sm:gap-3 lg:hidden">
+          {/* Mobile Menu Button - Now uses xl:hidden */}
+          <div className="flex items-center gap-2 sm:gap-3 xl:hidden">
+            {/* LanguageSwitcher and ThemeToggle are always visible */}
             <LanguageSwitcher />
             <ThemeToggle />
             <Button
@@ -126,10 +126,10 @@ export function UltraHeader() {
         </div>
       </div>
 
-      {/* ✅ Mobile Menu — أصبح absolute بدون مساحة فارغة */}
+      {/* Mobile Menu - Now uses xl:hidden */}
       <div
         className={cn(
-          "lg:hidden absolute inset-x-0 top-16 sm:top-18 my-[20px] mx-auto transition-all duration-500 ease-out z-40",
+          "xl:hidden absolute inset-x-0 top-16 sm:top-18 my-[20px] mx-auto transition-all duration-500 ease-out z-40",
           mobileOpen
             ? "opacity-100 translate-y-0 pointer-events-auto"
             : "opacity-0 -translate-y-8 pointer-events-none"
@@ -169,7 +169,8 @@ export function UltraHeader() {
               })}
             </nav>
 
-            <div className="border-t pt-4 space-y-3">
+            <div className="border-t pt-4">
+              {/* Removed LanguageSwitcher and ThemeToggle from here */}
               <SignInDialog />
             </div>
           </div>

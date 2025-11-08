@@ -29,13 +29,13 @@ export default function SignupPage() {
 
     // التحقق من تطابق كلمات المرور
     if (formData.password !== formData.passwordConfirm) {
-      toast.error("كلمات المرور غير متطابقة");
+      toast.error(t("passwordsNotMatch"));
       return;
     }
 
     // التحقق من طول كلمة المرور
     if (formData.password.length < 6) {
-      toast.error("كلمة المرور يجب أن تحتوي على 6 أحرف على الأقل");
+      toast.error(t("passwordMinLength"));
       return;
     }
 
@@ -58,20 +58,20 @@ export default function SignupPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "فشل في إنشاء الحساب");
+        throw new Error(data.message || t("accountCreationFailed"));
       }
 
       // حفظ التوكن والمعلومات في localStorage
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("user_data", JSON.stringify(data.data.user));
 
-      toast.success("تم إنشاء الحساب بنجاح! مرحباً بك");
+      toast.success(t("accountCreatedSuccess"));
 
       // التوجه للصفحة الرئيسية
       router.push("/");
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error(error.message || "فشل في إنشاء الحساب");
+      toast.error(error.message || t("accountCreationFailed"));
     } finally {
       setLoading(false);
     }
@@ -82,24 +82,24 @@ export default function SignupPage() {
       <Card className="w-full max-w-md ultra-card transition-all border-0 shadow-2xl my-4">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <UserPlus className="h-8 w-8 text-primary" />
+            <UserPlus className="h-8 w-8 text-violet-500" />
           </div>
           <CardTitle className="text-2xl font-bold gradient-text">
-            إنشاء حساب جديد
+            {t("signupTitle")}
           </CardTitle>
-          <p className="text-muted-foreground">انضم إلى مجتمع AddWall</p>
+          <p className="text-muted-foreground">{t("signupSubtitle")}</p>
         </CardHeader>
 
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name">الاسم الكامل</Label>
+              <Label htmlFor="name">{t("fullName")}</Label>
               <div className="relative">
                 <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="name"
                   type="text"
-                  placeholder="اسمك الكامل"
+                  placeholder={t("fullNamePlaceholder")}
                   value={formData.name}
                   onChange={(e) =>
                     setFormData({ ...formData, name: e.target.value })
@@ -111,13 +111,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <Label htmlFor="email">البريد الإلكتروني</Label>
+              <Label htmlFor="email">{t("email")}</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="example@domain.com"
+                  placeholder={t("emailPlaceholder")}
                   value={formData.email}
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
@@ -129,13 +129,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <Label htmlFor="phone">رقم الهاتف (اختياري)</Label>
+              <Label htmlFor="phone">{t("phoneOptional")}</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder="+966501234567"
+                  placeholder={t("phonePlaceholder")}
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
@@ -146,13 +146,13 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <Label htmlFor="password">كلمة المرور</Label>
+              <Label htmlFor="password">{t("password")}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   value={formData.password}
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
@@ -174,18 +174,18 @@ export default function SignupPage() {
                 </button>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل
+                {t("passwordMinLength")}
               </p>
             </div>
 
             <div>
-              <Label htmlFor="passwordConfirm">تأكيد كلمة المرور</Label>
+              <Label htmlFor="passwordConfirm">{t("confirmPassword")}</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="passwordConfirm"
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
+                  placeholder={t("passwordPlaceholder")}
                   value={formData.passwordConfirm}
                   onChange={(e) =>
                     setFormData({
@@ -201,24 +201,24 @@ export default function SignupPage() {
               {formData.passwordConfirm &&
                 formData.password !== formData.passwordConfirm && (
                   <p className="text-xs text-destructive mt-1">
-                    كلمات المرور غير متطابقة
+                    {t("passwordsNotMatch")}
                   </p>
                 )}
             </div>
 
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
+            <Button type="submit" className="w-full btn-ultra"  disabled={loading}>
+              {loading ? t("creatingAccount") : t("createAccount")}
             </Button>
 
             <div className="text-center">
               <span className="text-sm text-muted-foreground">
-                لديك حساب بالفعل؟{" "}
+                {t("alreadyHaveAccount")}{" "}
               </span>
               <Link
                 href="/login"
-                className="text-sm text-primary hover:underline font-medium"
+                className="text-sm text-violet-500 hover:underline font-medium"
               >
-                تسجيل الدخول
+                {t("login")}
               </Link>
             </div>
           </form>

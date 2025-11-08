@@ -1,17 +1,10 @@
 import type React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
-import { Inter, Poppins, Outfit, Plus_Jakarta_Sans } from "next/font/google";
+import { Poppins, Almarai } from "next/font/google";
 import { Providers } from "./providers";
 import HeaderGuard from "@/components/layout/header-guard";
 import { Footer } from "@/components/layout/footer";
-
-const inter = Inter({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
-  display: "swap",
-  variable: "--font-inter",
-});
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -20,18 +13,11 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800", "900"],
+const almarai = Almarai({
+  subsets: ["arabic"],
+  weight: ["300", "400", "700", "800"],
   display: "swap",
-  variable: "--font-outfit",
-});
-
-const plusJakartaSans = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700", "800"],
-  display: "swap",
-  variable: "--font-plus-jakarta",
+  variable: "--font-almarai",
 });
 
 export const metadata: Metadata = {
@@ -56,12 +42,12 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="ar"
-      dir="rtl"
+      lang="en"
+      dir="ltr"
       suppressHydrationWarning
-      className={`${inter.variable} ${poppins.variable} ${outfit.variable} ${plusJakartaSans.variable}`}
+      className={`${poppins.variable} ${almarai.variable}`}
     >
-      <body className={`${outfit.className} font-sans antialiased`}>
+      <body className="font-sans antialiased">
         <Providers>
           <HeaderGuard />
           {children}

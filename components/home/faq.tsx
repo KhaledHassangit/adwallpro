@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, HelpCircle, Sparkles } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 export function FAQSection() {
   const { t, locale } = useI18n();
@@ -59,6 +60,8 @@ export function FAQSection() {
         "You can reach support via the contact form on the site or the support email; the team will respond as soon as possible.",
     },
   ];
+
+
 
   return (
     <section className="py-20">
@@ -129,7 +132,14 @@ export function FAQSection() {
         <div className="text-center mt-16">
           <div className="inline-flex items-center gap-2 text-sm text-muted-foreground">
             <Sparkles className="h-4 w-4 text-primary" />
-            <span>{t("faqContactUs")}</span>
+            <span>{t("faqHaveAnotherQuestion")}</span>
+            <Link
+              className="text-primary font-medium hover:underline"
+              href="mailto:adwallproadman10@gmail.com"
+
+            >
+              {t("faqContactUs")}
+            </Link>
           </div>
         </div>
       </div>

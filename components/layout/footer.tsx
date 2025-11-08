@@ -1,11 +1,10 @@
 "use client";
 
+import type { SyntheticEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Facebook, Instagram, Play } from "@/components/ui/icon";
 import { useI18n } from "@/providers/lang-provider";
-import { cn } from "@/lib/utils";
 
 export function Footer() {
   const { t } = useI18n();
@@ -18,43 +17,38 @@ export function Footer() {
   const socialLinks = [
     {
       name: "Facebook",
-      icon: Facebook,
+      imageSrc: "/images/facebook.svg",
       href: "https://www.facebook.com/share/17YHk9GDt1/",
-      bgColor: "bg-blue-600",
-      hoverGradient: "hover:bg-gradient-to-r hover:from-blue-500 hover:to-blue-700",
     },
     {
       name: "Instagram",
-      icon: Instagram,
+      imageSrc: "/images/instagram.svg",
       href: "https://www.instagram.com/adwallpro",
-      bgColor: "bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500",
-      hoverGradient: "hover:brightness-110",
     },
     {
       name: "TikTok",
-      imageSrc: "/images/social/tiktok.png",
+      imageSrc: "/images/tiktok.svg",
       href: "https://www.tiktok.com/@adwall.pro",
-      bgColor: "bg-black",
-      hoverGradient: "hover:brightness-110",
     },
     {
       name: "YouTube",
-      icon: Play,
+      imageSrc: "/images/youtube.svg",
       href: "https://www.youtube.com/@adwallproadmin",
-      bgColor: "bg-red-600",
-      hoverGradient: "hover:brightness-110",
     },
     {
       name: "Snapchat",
-      imageSrc: "/images/social/snapchat.webp",
+      imageSrc: "/images/snapchat.svg",
       href: "https://www.snapchat.com/add/adwallpro",
-      bgColor: "bg-yellow-400",
-      hoverGradient: "hover:brightness-110",
+    },
+    {
+      name: "LinkedIn",
+      imageSrc: "/images/linkedin.svg",
+      href: "https://www.linkedin.com/in/adwall-pro-admin-121357397",
     },
   ];
 
   return (
-    <footer className=" glass">
+    <footer className="glass">
       <div className="container py-8">
         <div className="text-center mb-12">
           <h3 className="text-2xl font-bold text-foreground mb-8">
@@ -65,35 +59,37 @@ export function Footer() {
             {socialLinks.map((social) => (
               <div
                 key={social.name}
-                className={cn(
-                  "group perspective-1000 w-16 h-16 rounded-2xl overflow-hidden shadow-2xl transition-all duration-300",
-                  social.bgColor,
-                  social.hoverGradient
-                )}
+                className="group relative"
               >
+                <div className="absolute -inset-2 bg-gradient-to-r from-primary/20 via-white/20 to-secondary/20 opacity-0 group-hover:opacity-100 transition-all duration-500 blur-md rounded-full"></div>
                 <Link
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full h-full"
+                  className="block relative"
                 >
-                  {social.icon ? (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <social.icon className="w-8 h-8 text-white" />
-                    </div>
-                  ) : (
+                  <div className="relative w-16 h-16 flex items-center justify-center transition-all duration-300 group-hover:scale-110">
                     <Image
-                      src={social.imageSrc!}
+                      src={social.imageSrc}
                       alt={social.name}
-                      width={64}
-                      height={64}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                      width={32}
+                      height={32}
+                      className="relative z-10 w-8 h-8 object-contain transition-all duration-300 group-hover:drop-shadow-lg"
+                      onError={(e: SyntheticEvent<HTMLImageElement>) => {
+                        // Fallback if image doesn't load
+                        const target = e.currentTarget as HTMLImageElement;
+                        target.style.display = 'none';
+                        const parent = target.parentElement as HTMLElement | null;
+                        if (parent) {
+                          parent.innerHTML = `<span style="color: white; font-weight: bold; font-size: 20px;">${social.name.charAt(0)}</span>`;
+                        }
+                      }}
                     />
-                  )}
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center">
+                    {social.name}
+                  </p>
                 </Link>
-                <p className="mt-2 text-sm font-medium text-muted-foreground group-hover:text-foreground transition-colors text-center">
-                  {social.name}
-                </p>
               </div>
             ))}
           </div>
@@ -112,5 +108,5 @@ export function Footer() {
         </div>
       </div>
     </footer>
-  );
+  ); 
 }

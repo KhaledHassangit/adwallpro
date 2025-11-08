@@ -19,6 +19,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import type { Category } from "@/types/types";
+import { LoadingSpinner } from "../common/loading-spinner";
 
 export function CategoriesAll() {
   const { locale, t } = useI18n();
@@ -38,7 +39,7 @@ export function CategoriesAll() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("https://adwallpro.com/api/v1/categories");
+      const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
@@ -55,7 +56,6 @@ export function CategoriesAll() {
       setCompaniesCount(counts);
     } catch (error) {
       setError(error instanceof Error ? error.message : "فشل في جلب التصنيفات");
-      toast.error("فشل في جلب التصنيفات");
     } finally {
       setLoading(false);
     }
@@ -74,13 +74,15 @@ export function CategoriesAll() {
     });
   }, [categories, searchQuery, locale]);
 
+  // Add this function to handle clearing the search
+  const handleClearSearch = () => {
+    setSearchQuery("");
+  };
+
   if (loading)
     return (
       <div className="flex items-center justify-center py-12">
-        <div className="text-center space-y-4">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
-          <p className="text-muted-foreground">جاري تحميل التصنيفات...</p>
-        </div>
+        <LoadingSpinner/>
       </div>
     );
 
@@ -91,11 +93,7 @@ export function CategoriesAll() {
           <div className="rounded-full bg-red-50 p-4 mb-4 mx-auto w-fit">
             <Search className="h-8 w-8 text-red-600" />
           </div>
-          <h3 className="text-lg font-semibold">خطأ في التحميل</h3>
           <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
-          <Button onClick={fetchCategories} className="rounded-xl">
-            إعادة المحاولة
-          </Button>
         </div>
       </div>
     );
@@ -180,11 +178,11 @@ export function CategoriesAll() {
       <div className="space-y-6">
         {filteredCategories.length === 0 ? (
           <EmptyState
-            title={t("noResults")}
+            title={t("noResultsFound")}
             description={t("noMatchingCategories")}
             action={{
               label: t("clearSearch"),
-              href: "#",
+              onClick: handleClearSearch,  
             }}
           />
         ) : viewMode === "grid" ? (

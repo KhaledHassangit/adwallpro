@@ -92,12 +92,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="flex min-h-screen relative ">
+    <div className="flex min-h-screen relative">
       {/* Sidebar */}
       <div
         ref={sidebarRef}
         className={cn(
-          "fixed lg:relative z-30 w-64 min-h-screen  transition-all duration-300 ease-in-out",
+          "fixed lg:relative z-30 w-64 h-screen lg:h-auto lg:min-h-screen transition-all duration-300 ease-in-out",
           "transform lg:translate-x-0",
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         )}
@@ -166,26 +166,29 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         {/* Header */}
         <div className="w-full glass border-b border-border/50 backdrop-blur-sm">
           <div className="container-premium flex items-center justify-between h-20">
-            {/* Toggle Button (mobile only) */}
-            <button
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
-            >
-              <Menu className="h-6 w-6" />
-            </button>
-
-            {/* User Info */}
+            {/* Left Side: Toggle Button and User Info */}
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-sky-500 flex items-center justify-center">
-                <User className="h-5 w-5 text-white" />
-              </div>
-              <div className="flex flex-col">
-                <p className="text-sm font-medium text-foreground truncate">
-                  {currentUser?.name || t("user")}
-                </p>
-                <p className="text-xs text-muted-foreground truncate">
-                  {currentUser?.email}
-                </p>
+              {/* Toggle Button (mobile only) */}
+              <button
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+
+              {/* User Info */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 via-purple-500 to-sky-500 flex items-center justify-center">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div className="flex flex-col">
+                  <p className="text-sm font-medium text-foreground truncate">
+                    {currentUser?.name || t("user")}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {currentUser?.email}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -202,9 +205,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="flex-1 relative">
           <div
             className={cn(
-              "fixed inset-0 z-20 bg-black/30 transition-all duration-300",
+              "fixed inset-0 z-20 transition-all duration-300",
               isSidebarOpen && !isLargeScreen
-                ? "backdrop-blur-sm opacity-100 pointer-events-auto"
+                ? "opacity-100 pointer-events-auto"
                 : "opacity-0 pointer-events-none"
             )}
             onClick={() => setIsSidebarOpen(false)}
