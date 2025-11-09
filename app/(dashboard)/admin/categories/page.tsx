@@ -44,10 +44,11 @@ function AdminCategoriesContent() {
           <CategoryStats refreshKey={refreshKey} />
 
           {/* Categories Table */}
-              <AdminCategoriesTable
-                key={refreshKey}
-                onRefresh={() => setRefreshKey((prev) => prev + 1)}
-              />
+          <AdminCategoriesTable
+            key={refreshKey}
+            onRefresh={() => setRefreshKey((prev) => prev + 1)}
+          />
+          
           {/* Create Category Dialog */}
           <CreateCategoryDialog
             open={showCreateDialog}

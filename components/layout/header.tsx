@@ -31,7 +31,7 @@ export function UltraHeader() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-const nav = [
+  const nav = [
     { href: "/", label: t("home"), icon: Home },
     { href: "/categories", label: t("categories"), icon: Grid3X3 },
     { href: "/about", label: t("aboutUs"), icon: Info },
@@ -68,14 +68,14 @@ const nav = [
                     "group flex items-center gap-1.5 sm:gap-2.5 rounded-xl px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 text-[13px] sm:text-[15px] md:text-base font-semibold transition-all duration-200",
                     "hover:bg-primary-50 dark:hover:bg-primary-950/50",
                     isActive
-                      ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 shadow"
-                      : "text-foreground/80 hover:text-primary-600"
+                      ? "bg-primary-50 dark:bg-primary-950/50 text-violet-500 shadow"
+                      : "text-foreground/80 hover:text-violet-500"
                   )}
                 >
                   <Icon className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 " />
-                  <span className="hidden sm:inline">{n.label}</span>
+                  <span className="hidden sm:inline ">{n.label}</span>
                   {isActive && (
-                    <Sparkles className="h-3 w-3 text-primary-500" />
+                    <Sparkles className="h-3 w-3 text-violet-500" />
                   )}
                 </Link>
               );

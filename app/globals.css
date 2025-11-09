@@ -516,7 +516,12 @@
   textarea::placeholder {
     color: hsl(var(--muted-foreground));
   }
-
+/* Add to your globals.css or component CSS */
+.disabled-input {
+  opacity: 0.5 !important;
+  background-color: rgba(243, 244, 246, 0.5) !important;
+  cursor: not-allowed !important;
+}
   /* Select dropdown styling */
   select {
     appearance: none;

@@ -13,7 +13,7 @@ import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n(); // Assuming locale is available from useI18n
   const router = useRouter();
   const { setUser, setToken } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -22,6 +22,9 @@ export default function LoginPage() {
     email: "",
     password: "",
   });
+
+  // Determine if the current language is RTL
+  const isRTL = locale === "ar";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,7 +61,7 @@ export default function LoginPage() {
   }; 
 
   return (
-    <div className="min-h-screen flex items-center bg-pattern-grid  justify-center  bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
+    <div className="min-h-screen flex items-center bg-pattern-grid justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4" dir={isRTL ? "rtl" : "ltr"}>
       <Card className="w-full max-w-md ultra-card transition-all border-0 shadow-2xl">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
@@ -75,7 +78,7 @@ export default function LoginPage() {
             <div>
               <Label htmlFor="email">{t("email")}</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Mail className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none`} />
                 <Input
                   id="email"
                   type="email"
@@ -84,7 +87,11 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, email: e.target.value })
                   }
-                  className="pl-10"
+                  className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  style={{
+                    paddingLeft: isRTL ? '0.75rem' : '2.5rem',
+                    paddingRight: isRTL ? '2.5rem' : '0.75rem'
+                  }}
                   required
                 />
               </div>
@@ -93,7 +100,7 @@ export default function LoginPage() {
             <div>
               <Label htmlFor="password">{t("password")}</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Lock className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none`} />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -102,13 +109,17 @@ export default function LoginPage() {
                   onChange={(e) =>
                     setFormData({ ...formData, password: e.target.value })
                   }
-                  className="pl-10 pr-10"
+                  className="pr-10 pl-10"
+                  style={{
+                    paddingLeft: isRTL ? '2.5rem' : '2.5rem',
+                    paddingRight: isRTL ? '2.5rem' : '2.5rem'
+                  }}
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                  className={`absolute ${isRTL ? "left-3" : "right-3"} top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground`}
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -122,7 +133,7 @@ export default function LoginPage() {
             <div className="flex items-center justify-between">
               <Link
                 href="/forgot-password"
-                className="text-sm text-primary hover:underline"
+                className="text-sm text-violet-500 hover:underline"
               >
                 {t("forgotPassword")}
               </Link>

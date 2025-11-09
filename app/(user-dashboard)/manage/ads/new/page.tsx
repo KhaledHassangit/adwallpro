@@ -175,7 +175,7 @@ function AddAdPageContent() {
         companyName: "",
         categoryId: "",
         description: "",
-        country: "السعودية",
+        country: "",
         city: "",
         email: user?.email || "",
         whatsapp: "",
@@ -218,7 +218,7 @@ function AddAdPageContent() {
         <form onSubmit={handleSubmit} className="max-w-6xl mx-auto">
           <div className="space-y-8">
             {/* Header */}
-          
+
 
             {/* Company Info */}
             <div className="ultra-card p-6 md:p-8 lg:p-10">
@@ -482,8 +482,8 @@ function AddAdPageContent() {
                 </Button>
 
                 <p className="text-sm md:text-base text-muted-foreground mt-6 max-w-2xl mx-auto leading-relaxed">
-                  بالنقر على "إرسال الطلب" فإنك توافق على شروط الاستخدام وسياسة
-                  الخصوصية
+                  {t("termsAndConditions")}
+
                 </p>
               </div>
             </div>

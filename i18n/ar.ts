@@ -367,14 +367,14 @@ export const ar = {
     fillFormAndReview:
         "املأ النموذج أدناه وسيتم مراجعة طلبك من قبل فريقنا خلال 24-48 ساعة",
     categoriesAvailable: "فئة متاحة للاختيار منها",
-        // Authentication
+    // Authentication
     login: "تسجيل الدخول",
     signup: "إنشاء حساب",
     signupTitle: "إنشاء حساب جديد",
     signupSubtitle: "انضم إلى مجتمع AddWall",
     loginTitle: "تسجيل الدخول",
     loginSubtitle: "مرحباً بك في AddWall",
-    
+
     // Form Fields
     fullNamePlaceholder: "اسمك الكامل",
     emailPlaceholder: "example@domain.com",
@@ -382,25 +382,228 @@ export const ar = {
     phonePlaceholder: "+966501234567",
     passwordPlaceholder: "••••••••",
     confirmPassword: "تأكيد كلمة المرور",
-    
+
     // Validation Messages
     passwordMinLength: "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل",
     passwordsNotMatch: "كلمات المرور غير متطابقة",
-    
+
     // Actions
     creatingAccount: "جاري إنشاء الحساب...",
     loggingIn: "جاري تسجيل الدخول...",
     createAccount: "إنشاء حساب",
-    
+
     // Links
     alreadyHaveAccount: "لديك حساب بالفعل؟",
     dontHaveAccount: "ليس لديك حساب؟",
     forgotPassword: "نسيت كلمة المرور؟",
-    
+
     // Success/Error Messages
     accountCreatedSuccess: "تم إنشاء الحساب بنجاح! مرحباً بك",
     loginSuccess: "تم تسجيل الدخول بنجاح",
     accountCreationFailed: "فشل في إنشاء الحساب",
     loginFailed: "فشل في تسجيل الدخول",
+
+
+    // Forgot password page translations
+    forgotPasswordTitle: "نسيت كلمة المرور؟",
+    forgotPasswordSubtitle: "سنرسل لك رمز استعادة على بريدك الإلكتروني",
+    verifyCodeTitle: "التحقق من الرمز",
+    verifyCodeSubtitle: "أدخل الرمز المرسل إلى بريدك الإلكتروني",
+    newPasswordTitle: "كلمة مرور جديدة",
+    newPasswordSubtitle: "أدخل كلمة المرور الجديدة",
+    sendResetCode: "إرسال رمز الاستعادة",
+    sending: "جاري الإرسال...",
+    verifyCode: "التحقق من الرمز",
+    verifying: "جاري التحقق...",
+    updatePassword: "تحديث كلمة المرور",
+    updating: "جاري التحديث...",
+    backToLogin: "العودة إلى تسجيل الدخول",
+    resetCode: "رمز الاستعادة",
+    newPassword: "كلمة المرور الجديدة",
+    resetCodeSent: "تم إرسال رمز الاستعادة إلى بريدك الإلكتروني",
+    resetCodeError: "فشل في إرسال رمز الاستعادة",
+    invalidResetCode: "رمز الاستعادة غير صحيح",
+    resetPasswordSuccess: "تم إعادة تعيين كلمة المرور بنجاح",
+    resetPasswordError: "فشل في إعادة تعيين كلمة المرور",
+
+
+    // Add Ad Page
+    companyInfoTitle: "معلومات الشركة",
+    companyNameLabel: "اسم الشركة",
+    companyNamePlaceholder: "أدخل اسم الشركة",
+    emailLabelForm: "البريد الإلكتروني",
+    companyDescriptionLabel: "وصف الشركة",
+    companyDescriptionPlaceholder: "اكتب وصفاً مفصلاً لشركتك...",
+    selectCompanyCategory: "اختر فئة الشركة",
+    noCategoriesAvailable: "لا توجد فئات متاحة",
+    reload: "إعادة تحميل",
+    selectCategory: "اختر الفئة",
+    countryLabel: "البلد",
+    countryPlaceholder: " السعودية",
+    cityLabel: "المدينة",
+    cityPlaceholder: " الرياض",
+    whatsappPlaceholder: " 966501234567",
+    websiteLabelForm: "الموقع الإلكتروني",
+    websitePlaceholder: " www.example.com",
+    facebookLabelForm: "رابط فيسبوك",
+    facebookPlaceholder: " www.facebook.com/company",
+    imageLabel: "شعار الشركة",
+    submittingAd: "جاري إرسال الإعلان...",
+    submitAdButton: "إرسال الطلب",
+    adAddedSuccessfully: "تمت إضافة الإعلان بنجاح",
+    failedToAddAd: "فشلت إضافة الإعلان",
+    unexpectedServerResponse: "استجابة غير متوقعة من الخادم",
+    failedToFetchCategories: "فشل جلب الفئات",
+    userDataNotFound: "بيانات المستخدم غير موجودة",
+    userIdNotFound: "معرف المستخدم غير موجود",
+    termsAndConditions: 'بالنقر على "إرسال الطلب" فإنك توافق على شروط الاستخدام وسياسة الخصوصية',
+    pendingApproval: "في انتظار الموافقة",
+
+    // Image Upload Component
+    imagePreviewAlt: "معاينة الصورة",
+    removeImage: "إزالة الصورة",
+    dragImageOrClick: "اسحب الصورة هنا أو انقر للاختيار",
+    imageFormats: "PNG, JPG حتى 5MB",
+    fileSizeTooLarge: "حجم الملف كبير جداً. الحد الأقصى 5MB",
+
+    // Admin Dashboard
+    adminDashboardTitle: "لوحة تحكم المشرف",
+    adminDashboardWelcome: "مرحباً بك في لوحة تحكم المشرف",
+    adminRecentActivity: "النشاط الأخير",
+    adminNewCompanyApproved: "تمت الموافقة على شركة جديدة",
+    adminNewUserRegistered: "تسجيل مستخدم جديد",
+    adminNewCategoryRequest: "طلب فئة جديد",
+    adminNewCouponCreated: "إنشاء قسيمة جديدة",
+    adminMinutesAgo: "دقائق مضت",
+    adminHourAgo: "ساعة مضت",
+
+    // Admin Users Management
+    adminUsersManagementTitle: "إدارة المستخدمين",
+    adminUsersManagementDesc: "عرض وإدارة جميع مستخدمي النظام",
+    adminAddNewUser: "إضافة مستخدم جديد",
+    adminTotalUsers: "إجمالي المستخدمين",
+    adminRegisteredUser: "مستخدم مسجل",
+    adminAdmins: "المشرفون",
+    adminAdminAccounts: "حسابات المشرفين",
+    adminRegularUsers: "المستخدمون العاديون",
+    adminForAdsUsers: "مستخدمون للإعلانات",
+    adminActiveThisWeek: "نشط هذا الأسبوع",
+    adminActiveLast7Days: "نشط في آخر 7 أيام",
+    adminFailedToFetchUserStats: "فشل في جلب إحصائيات المستخدمين",
+
+    // Admin Categories Management
+    adminCategoriesManagementTitle: "إدارة الفئات",
+    adminCategoriesManagementDesc: "عرض وإدارة جميع فئات النظام",
+    adminAddNewCategory: "إضافة فئة جديدة",
+
+    // Admin Coupons Management
+    adminCoupons: "إدارة القسائم",
+    adminCouponsDesc: "عرض وإدارة جميع قسائم الخصم",
+    adminCreateCoupon: "إنشاء قسيمة جديدة",
+    adminAllCoupons: "جميع القسائم",
+    active: "نشط",
+    inactive: "غير نشط",
+
+    // Create Coupon Modal
+    createCouponTitle: "إنشاء قسيمة جديدة",
+    couponCode: "رمز القسيمة",
+    couponCodePlaceholder: "أدخل رمز القسيمة",
+    discountValue: "قيمة الخصم",
+    discountPlaceholder: "أدخل قيمة الخصم",
+    discountType: "نوع الخصم",
+    percentage: "نسبة مئوية",
+    fixedAmount: "مبلغ ثابت",
+    createdDate: "تاريخ الإنشاء",
+    expiryDate: "تاريخ الانتهاء",
+    usageLimit: "حد الاستخدام",
+    usageLimitPlaceholder: "عدد المرات التي يمكن استخدام القسيمة",
+    unlimitedUsage: "استخدام غير محدود",
+    saveCoupon: "حفظ القسيمة",
+    couponCreatedSuccess: "تم إنشاء القسيمة بنجاح",
+    couponCreatedError: "فشل في إنشاء القسيمة",
+    couponCodeRequired: "رمز القسيمة مطلوب",
+    discountValueRequired: "قيمة الخصم مطلوبة",
+    expiryDateRequired: "تاريخ الانتهاء مطلوب",
+    invalidDiscountValue: "قيمة الخصم غير صالحة",
+    couponAlreadyExists: "رمز القسيمة موجود بالفعل",
+
+
+    // Delete Coupon Modal
+    deleteCouponTitle: "حذف القسيمة",
+    deleteCouponDescription: "هل أنت متأكد من أنك تريد حذف هذه القسيمة؟ هذا الإجراء لا يمكن التراجع عنه.",
+    deleteCoupon: "حذف القسيمة",
+
+    // Success/Error Messages
+    couponUpdatedSuccess: "تم تحديث القسيمة بنجاح",
+    couponUpdatedError: "فشل في تحديث القسيمة",
+    couponDeletedSuccess: "تم حذف القسيمة بنجاح",
+    couponDeletedError: "فشل في حذف القسيمة",
+    usedCount: "عدد الاستخدام",
+
+    // Admin Users Table
+    adminFailedToFetchUsers: "فشل في جلب المستخدمين",
+    adminFailedToDeleteUser: "فشل في حذف المستخدم",
+    adminDeleteUserConfirmation: "هل أنت متأكد من حذف هذا المستخدم؟",
+    adminUserDeletedSuccess: "تم حذف المستخدم بنجاح",
+    adminUserName: "الاسم",
+    adminUserEmail: "البريد الإلكتروني",
+    adminUserRole: "الدور",
+    adminUserPhone: "الهاتف",
+    adminUserRegistrationDate: "تاريخ التسجيل",
+    adminActions: "الإجراءات",
+    adminEdit: "تعديل",
+    adminDelete: "حذف",
+    adminNoUsersFound: "لا توجد مستخدمين لعرضهم",
+    adminPrevious: "السابق",
+    adminNext: "التالي",
+    adminPageOf: "صفحة {current} من {total}",
+    adminRoleAdmin: "مدير",
+    adminRoleUser: "مستخدم",
+    // Admin Categories Management
+    adminCategoryImage: "الصورة",
+    adminCategoryNameAr: "الاسم بالعربية",
+    adminCategoryNameEn: "الاسم بالإنجليزية",
+    adminCategoryColor: "اللون",
+    adminCategoryCreatedDate: "تاريخ الإنشاء",
+    adminCategoryTechnology: "التقنية",
+    adminCategoryFoodBeverage: "الطعام والمشروبات",
+    adminCategoryMarketing: "التسويق",
+    adminCategoryServices: "الخدمات",
+    adminCategoryOther: "أخرى",
+    adminDeleteCategoryConfirmation: "هل أنت متأكد من حذف هذه الفئة؟",
+    adminFailedToFetchCategories: "فشل في جلب الفئات",
+    adminFailedToDeleteCategory: "فشل في حذف الفئة",
+    adminCategoryDeletedSuccess: "تم حذف الفئة بنجاح",
+
+    // Admin Companies Management
+    adminCompaniesManagement: "إدارة الشركات",
+    adminCompaniesManagementDesc: "عرض وإدارة جميع شركات النظام",
+    adminFilterStatus: "فلترة الحالة",
+    adminAllCompanies: "جميع الشركات",
+    adminSearchCompanies: "البحث عن الشركات",
+    adminSelectCategory: "اختر الفئة",
+    adminAllCategories: "جميع الفئات",
+    adminSearchByCountry: "البحث بالبلد",
+    adminSearchByCity: "البحث بالمدينة",
+    adminClearFilters: "مسح الفلاتر",
+    adminCompanyName: "الشركة",
+    adminCompanyContact: "معلومات الاتصال",
+    adminCompanyLocation: "الموقع",
+    adminCompanyStatus: "الحالة",
+    adminWhatsApp: "واتساب",
+    adminApproved: "موافق عليه",
+    adminPending: "في انتظار الموافقة",
+    adminApprove: "موافقة",
+    adminReject: "رفض",
+    adminCompanyApprovedSuccess: "تمت الموافقة على الشركة بنجاح",
+    adminCompanyRejectedSuccess: "تم رفض الشركة بنجاح",
+    adminCompanyApproveError: "فشل في الموافقة على الشركة",
+    adminCompanyRejectError: "فشل في رفض الشركة",
+    adminCompaniesFetchError: "فشل في جلب الشركات",
+    adminCompaniesFetchErrorDesc: "فشل في جلب الشركات. يرجى المحاولة مرة أخرى.",
+    adminNoCompaniesFound: "لم يتم العثور على شركات",
+    adminTryAgain: "حاول مرة أخرى",
+    adminError: "خطأ",
+    adminSuccess: "نجاح",
 
 };

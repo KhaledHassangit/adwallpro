@@ -34,7 +34,7 @@ interface User {
 }
 
 export function AdminUsersTable() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -49,16 +49,16 @@ export function AdminUsersTable() {
           headers: {
             "Content-Type": "application/json",
             ...(typeof window !== "undefined" &&
-            localStorage.getItem("auth_token")
+              localStorage.getItem("auth_token")
               ? {
-                  Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-                }
+                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+              }
               : {}),
           },
         }
       );
 
-      if (!response.ok) throw new Error("Failed to fetch users");
+      if (!response.ok) throw new Error(t("adminFailedToFetchUsers"));
 
       const data = await response.json();
 
@@ -73,7 +73,7 @@ export function AdminUsersTable() {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error("فشل في جلب المستخدمين");
+      toast.error(t("adminFailedToFetchUsers"));
       // تعيين مصفوفة فارغة في حالة الخطأ لتجنب undefined
       setUsers([]);
       setTotalPages(1);
@@ -83,7 +83,7 @@ export function AdminUsersTable() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm("هل أنت متأكد من حذف هذا المستخدم؟")) return;
+    if (!confirm(t("adminDeleteUserConfirmation"))) return;
 
     try {
       const token =
@@ -101,13 +101,13 @@ export function AdminUsersTable() {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to delete user");
+      if (!response.ok) throw new Error(t("adminFailedToDeleteUser"));
 
-      toast.success("تم حذف المستخدم بنجاح");
+      toast.success(t("adminUserDeletedSuccess"));
       fetchUsers();
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error("فشل في حذف المستخدم");
+      toast.error(t("adminFailedToDeleteUser"));
     }
   };
 
@@ -125,12 +125,12 @@ export function AdminUsersTable() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>الاسم</TableHead>
-              <TableHead>البريد الإلكتروني</TableHead>
-              <TableHead>الدور</TableHead>
-              <TableHead>الهاتف</TableHead>
-              <TableHead>تاريخ التسجيل</TableHead>
-              <TableHead>الإجراءات</TableHead>
+              <TableHead>{t("adminUserName")}</TableHead>
+              <TableHead>{t("adminUserEmail")}</TableHead>
+              <TableHead>{t("adminUserRole")}</TableHead>
+              <TableHead>{t("adminUserPhone")}</TableHead>
+              <TableHead>{t("adminUserRegistrationDate")}</TableHead>
+              <TableHead>{t("adminActions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -145,12 +145,14 @@ export function AdminUsersTable() {
                         user.role === "admin" ? "destructive" : "secondary"
                       }
                     >
-                      {user.role === "admin" ? "مدير" : "مستخدم"}
+                      {user.role === "admin" ? t("adminRoleAdmin") : t("adminRoleUser")}
                     </Badge>
                   </TableCell>
                   <TableCell>{user.phone || "-"}</TableCell>
                   <TableCell>
-                    {new Date(user.createdAt).toLocaleDateString("ar-SA")}
+                    {new Date(user.createdAt).toLocaleDateString(
+                      lang === "ar" ? "ar-SA" : "en-US"
+                    )}
                   </TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -162,14 +164,14 @@ export function AdminUsersTable() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuItem>
                           <Edit className="h-4 w-4 mr-2" />
-                          تعديل
+                          {t("adminEdit")}
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => deleteUser(user._id)}
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
-                          حذف
+                          {t("adminDelete")}
                         </DropdownMenuItem>
                       </DropdownMenuContent>
                     </DropdownMenu>
@@ -182,7 +184,7 @@ export function AdminUsersTable() {
                   colSpan={6}
                   className="text-center text-muted-foreground py-8"
                 >
-                  لا توجد مستخدمون لعرضهم
+                  {t("adminNoUsersFound")}
                 </TableCell>
               </TableRow>
             )}
@@ -196,17 +198,17 @@ export function AdminUsersTable() {
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
           >
-            السابق
+            {t("adminPrevious")}
           </Button>
           <span className="text-sm text-muted-foreground">
-            صفحة {page} من {totalPages}
+            {`${t("adminPageOf")} ${page} / ${totalPages}`}
           </span>
           <Button
             variant="outline"
             onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
             disabled={page === totalPages}
           >
-            التالي
+            {t("adminNext")}
           </Button>
         </div>
       </CardContent>

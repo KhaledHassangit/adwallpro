@@ -1,32 +1,59 @@
 "use client";
 
-import React from "react";
-import Link from "next/link";
+import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/lang-provider";
-import { Ticket, PlusCircle } from "@/components/ui/icon";
-
+import {  PlusCircle, Edit, Trash2 } from "@/components/ui/icon";
+import { CreateCouponDialog } from "@/components/admin/CreateCouponDialog";
+import { EditCouponDialog } from "@/components/admin/EditCouponDialog";
+import { DeleteCouponDialog } from "@/components/admin/DeleteCouponDialog";
+import { AdminCouponsTable } from "@/components/admin/AdminCouponsTable";
 function AdminCouponsContent() {
   const { t } = useI18n();
+  const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
 
-  // Placeholder coupons data
-  const coupons = [
-    { id: "c1", code: "WELCOME10", discount: "10%", active: true },
-    { id: "c2", code: "SUMMER25", discount: "25%", active: false },
-  ];
+  const handleEdit = (coupon) => {
+    setSelectedCoupon(coupon);
+    setShowEditDialog(true);
+  };
+
+  const handleDelete = (coupon) => {
+    setSelectedCoupon(coupon);
+    setShowDeleteDialog(true);
+  };
+
+  const handleCreateSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+    setShowCreateDialog(false);
+  };
+
+  const handleEditSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+    setShowEditDialog(false);
+    setSelectedCoupon(null);
+  };
+
+  const handleDeleteSuccess = () => {
+    setRefreshKey((prev) => prev + 1);
+    setShowDeleteDialog(false);
+    setSelectedCoupon(null);
+  };
 
   return (
     <div className="flex-1 overflow-y-auto">
       <div className="container-premium pb-8 pt-4">
         <div className="max-w-7xl mx-auto">
+          {/* Header */}
           <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Ticket className="h-8 w-8 text-primary" />
               <div>
-                <h1 className="text-3xl font-bold text-foreground">
+                <h1 className="text-3xl font-bold gradient-text">
                   {t("adminCoupons")}
                 </h1>
                 <p className="text-muted-foreground mt-2">{t("adminCouponsDesc")}</p>
@@ -34,45 +61,45 @@ function AdminCouponsContent() {
             </div>
 
             <div className="flex items-center gap-2">
-              <Button asChild className="btn-ultra">
-                <Link href="/admin/coupons/new">
-                  <PlusCircle className="h-4 w-4 mr-2" />
-                  {t("adminCreateCoupon")}
-                </Link>
+              <Button
+                onClick={() => setShowCreateDialog(true)}
+                className="btn-ultra hover:bg-primary/90"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                {t("adminCreateCoupon")}
               </Button>
             </div>
           </div>
 
-          <div className="grid gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>{t("adminAllCoupons")}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {coupons.map((c) => (
-                    <div
-                      key={c.id}
-                      className="p-3 rounded-lg border bg-card flex items-center justify-between"
-                    >
-                      <div>
-                        <div className="font-medium">{c.code}</div>
-                        <div className="text-sm text-muted-foreground">{c.discount}</div>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Badge variant={c.active ? "default" : "outline"}>
-                          {c.active ? t("active") : t("inactive")}
-                        </Badge>
-                        <Button size="sm" variant="outline">
-                          {t("edit")}
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Coupons Table */}
+          <AdminCouponsTable
+            key={refreshKey}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+
+          {/* Create Coupon Dialog */}
+          <CreateCouponDialog
+            open={showCreateDialog}
+            onOpenChange={setShowCreateDialog}
+            onSuccess={handleCreateSuccess}
+          />
+
+          {/* Edit Coupon Dialog */}
+          <EditCouponDialog
+            open={showEditDialog}
+            onOpenChange={setShowEditDialog}
+            onSuccess={handleEditSuccess}
+            coupon={selectedCoupon}
+          />
+
+          {/* Delete Coupon Dialog */}
+          <DeleteCouponDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            onSuccess={handleDeleteSuccess}
+            coupon={selectedCoupon}
+          />
         </div>
       </div>
     </div>

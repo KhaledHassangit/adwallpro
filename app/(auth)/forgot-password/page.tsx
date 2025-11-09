@@ -12,13 +12,16 @@ import { toast } from "sonner";
 import { Mail, ArrowLeft, Key } from "lucide-react";
 
 export default function ForgotPasswordPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [step, setStep] = useState(1); // 1: email, 2: reset code, 3: new password
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  // Determine if the current language is RTL
+  const isRTL = locale === "ar";
 
   const handleSendResetCode = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,14 +42,14 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "فشل في إرسال رمز الاستعادة");
+        throw new Error(data.message || t("resetCodeError"));
       }
 
-      toast.success("تم إرسال رمز الاستعادة إلى بريدك الإلكتروني");
+      toast.success(t("resetCodeSent"));
       setStep(2);
     } catch (error: any) {
       console.error("Forgot password error:", error);
-      toast.error(error.message || "فشل في إرسال رمز الاستعادة");
+      toast.error(error.message || t("resetCodeError"));
     } finally {
       setLoading(false);
     }
@@ -71,14 +74,14 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "رمز الاستعادة غير صحيح");
+        throw new Error(data.message || t("invalidResetCode"));
       }
 
-      toast.success("تم التحقق من الرمز بنجاح");
+      toast.success(t("resetCodeSent"));
       setStep(3);
     } catch (error: any) {
       console.error("Verify reset code error:", error);
-      toast.error(error.message || "رمز الاستعادة غير صحيح");
+      toast.error(error.message || t("invalidResetCode"));
     } finally {
       setLoading(false);
     }
@@ -103,35 +106,35 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "فشل في إعادة تعيين كلمة المرور");
+        throw new Error(data.message || t("resetPasswordError"));
       }
 
-      toast.success("تم إعادة تعيين كلمة المرور بنجاح");
+      toast.success(t("resetPasswordSuccess"));
       router.push("/login");
     } catch (error: any) {
       console.error("Reset password error:", error);
-      toast.error(error.message || "فشل في إعادة تعيين كلمة المرور");
+      toast.error(error.message || t("resetPasswordError"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4">
-      <Card className="w-full max-w-md ultra-card border-0 shadow-2xl">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4" dir={isRTL ? "rtl" : "ltr"}>
+      <Card className="w-full max-w-md ultra-card transition-all border-0 shadow-2xl">
         <CardHeader className="text-center space-y-2">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-            <Key className="h-8 w-8 text-primary" />
+            <Key className="h-8 w-8 text-violet-500" />
           </div>
           <CardTitle className="text-2xl font-bold gradient-text">
-            {step === 1 && "نسيت كلمة المرور؟"}
-            {step === 2 && "التحقق من الرمز"}
-            {step === 3 && "كلمة مرور جديدة"}
+            {step === 1 && t("forgotPasswordTitle")}
+            {step === 2 && t("verifyCodeTitle")}
+            {step === 3 && t("newPasswordTitle")}
           </CardTitle>
           <p className="text-muted-foreground">
-            {step === 1 && "سنرسل لك رمز استعادة على بريدك الإلكتروني"}
-            {step === 2 && "أدخل الرمز المرسل إلى بريدك الإلكتروني"}
-            {step === 3 && "أدخل كلمة المرور الجديدة"}
+            {step === 1 && t("forgotPasswordSubtitle")}
+            {step === 2 && t("verifyCodeSubtitle")}
+            {step === 3 && t("newPasswordSubtitle")}
           </p>
         </CardHeader>
 
@@ -139,23 +142,27 @@ export default function ForgotPasswordPage() {
           {step === 1 && (
             <form onSubmit={handleSendResetCode} className="space-y-4">
               <div>
-                <Label htmlFor="email">البريد الإلكتروني</Label>
+                <Label htmlFor="email">{t("email")}</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Mail className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none`} />
                   <Input
                     id="email"
                     type="email"
-                    placeholder="example@domain.com"
+                    placeholder={t("emailPlaceholder")}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
+                    className={`${isRTL ? "pr-10" : "pl-10"}`}
+                    style={{
+                      paddingLeft: isRTL ? '0.75rem' : '2.5rem',
+                      paddingRight: isRTL ? '2.5rem' : '0.75rem'
+                    }}
                     required
                   />
                 </div>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "جاري الإرسال..." : "إرسال رمز الاستعادة"}
+              <Button type="submit" className="w-full btn-ultra" disabled={loading}>
+                {loading ? t("sending") : t("sendResetCode")}
               </Button>
             </form>
           )}
@@ -163,7 +170,7 @@ export default function ForgotPasswordPage() {
           {step === 2 && (
             <form onSubmit={handleVerifyResetCode} className="space-y-4">
               <div>
-                <Label htmlFor="resetCode">رمز الاستعادة</Label>
+                <Label htmlFor="resetCode">{t("resetCode")}</Label>
                 <Input
                   id="resetCode"
                   type="text"
@@ -175,8 +182,8 @@ export default function ForgotPasswordPage() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "جاري التحقق..." : "التحقق من الرمز"}
+              <Button type="submit" className="w-full btn-ultra" disabled={loading}>
+                {loading ? t("verifying") : t("verifyCode")}
               </Button>
             </form>
           )}
@@ -184,7 +191,7 @@ export default function ForgotPasswordPage() {
           {step === 3 && (
             <form onSubmit={handleResetPassword} className="space-y-4">
               <div>
-                <Label htmlFor="newPassword">كلمة المرور الجديدة</Label>
+                <Label htmlFor="newPassword">{t("newPassword")}</Label>
                 <Input
                   id="newPassword"
                   type="password"
@@ -195,12 +202,12 @@ export default function ForgotPasswordPage() {
                   minLength={6}
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  يجب أن تحتوي على 6 أحرف على الأقل
+                  {t("passwordMinLength")}
                 </p>
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "جاري التحديث..." : "تحديث كلمة المرور"}
+              <Button type="submit" className="w-full btn-ultra" disabled={loading}>
+                {loading ? t("updating") : t("updatePassword")}
               </Button>
             </form>
           )}
@@ -208,10 +215,19 @@ export default function ForgotPasswordPage() {
           <div className="mt-6 text-center">
             <Link
               href="/login"
-              className="inline-flex items-center text-sm text-primary hover:underline"
+              className={`inline-flex items-center text-sm text-violet-500 hover:underline font-medium`}
             >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              العودة إلى تسجيل الدخول
+              {isRTL ? (
+                <>
+                  {t("backToLogin")}
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                </>
+              ) : (
+                <>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  {t("backToLogin")}
+                </>
+              )}
             </Link>
           </div>
         </CardContent>

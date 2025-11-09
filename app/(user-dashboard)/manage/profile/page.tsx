@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ProtectedRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/lang-provider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { useAuthStore, getCurrentUser, updateUserProfile, signOut } from "@/lib/auth";
+import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -27,7 +27,7 @@ function ProfileContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [changingPassword, setChangingPassword] = useState(false);
-  const [formData, setFormData] = useState({ name: "", email: "", phone: "" });
+  const [formData, setFormData] = useState({ name: "", phone: "" });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
     password: "",
@@ -40,16 +40,15 @@ function ProfileContent() {
     new: false,
     confirm: false
   });
-  
+
   // Use the auth store directly
   const { user, setUser } = useAuthStore();
-  console.log("user",user)
+
   useEffect(() => {
     // If user is already in the store, use it
     if (user) {
       setFormData({
         name: user.name,
-        email: user.email,
         phone: user.phone || "",
       });
       setLoading(false);
@@ -60,115 +59,123 @@ function ProfileContent() {
         setUser(currentUser);
         setFormData({
           name: currentUser.name,
-          email: currentUser.email,
           phone: currentUser.phone || "",
         });
       }
       setLoading(false);
     }
-  }, [user, setUser]);
+  }, [user]); // Remove setUser from the dependency array
 
   // Validate phone number for Egypt and Saudi Arabia
   const validatePhoneNumber = (phone: string): boolean => {
     if (!phone) return true; // Phone is optional
-    
+
     // Remove all non-digit characters
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     // Egypt: starts with 20 and has 12 digits total (20xxxxxxxxxx)
     // Saudi Arabia: starts with 966 and has 12 digits total (966xxxxxxxxxx)
     const egyptPattern = /^20[0-9]{10}$/;
     const saudiPattern = /^966[0-9]{9}$/;
-    
+
     return egyptPattern.test(cleanPhone) || saudiPattern.test(cleanPhone);
   };
 
   // Format phone number for display
   const formatPhoneNumber = (phone: string): string => {
     if (!phone) return '';
-    
+
     // Remove all non-digit characters
     const cleanPhone = phone.replace(/\D/g, '');
-    
+
     // Format for Egypt
     if (cleanPhone.startsWith('20') && cleanPhone.length === 12) {
       return `+20 ${cleanPhone.slice(2, 5)} ${cleanPhone.slice(5, 8)} ${cleanPhone.slice(8)}`;
     }
-    
+
     // Format for Saudi Arabia
     if (cleanPhone.startsWith('966') && cleanPhone.length === 12) {
       return `+966 ${cleanPhone.slice(3, 5)} ${cleanPhone.slice(5, 8)} ${cleanPhone.slice(8)}`;
     }
-    
+
     return phone;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault(); // Prevent default form submission
+
     // Clear previous errors
     setFieldErrors({});
-    
+
     // Frontend validation
     const errors: Record<string, string> = {};
-    
+
     if (!formData.name.trim()) {
       errors.name = t("nameRequired");
     }
-    
-    if (!formData.email.trim()) {
-      errors.email = t("emailRequired");
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errors.email = t("invalidEmail");
-    }
-    
+
     if (formData.phone && !validatePhoneNumber(formData.phone)) {
-      errors.phone = lang === "ar" 
+      errors.phone = lang === "ar"
         ? "رقم الهاتف غير صالح. فقط أرقام مصر (20xxxxxxxxxx) أو السعودية (966xxxxxxxxxx) مقبولة"
         : "Invalid phone number. Only Egypt (20xxxxxxxxxx) or Saudi Arabia (966xxxxxxxxxx) numbers are accepted";
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors);
       return;
     }
-    
+
     try {
       setSaving(true);
-      
-      // Use the new updateUserProfile function
+
+      // Debug: Check current token before update
+      console.log("Current auth token before update:", getAuthToken());
+
+      // Use the new updateUserProfile function - REMOVED EMAIL FROM UPDATE
       const updatedUser = await updateUserProfile({
         name: formData.name,
-        email: formData.email,
         phone: formData.phone,
       });
-      
+
+      // Debug: Check if token is still valid after update
+      console.log("Auth token after update:", getAuthToken());
+      console.log("Updated user data:", updatedUser);
+
+      // Refresh user data to ensure consistency
+      await refreshUserData();
+
+      // Explicitly update the form data with the new user data
+      setFormData({
+        name: updatedUser.name,
+        phone: updatedUser.phone || "",
+      });
+
       // The store and localStorage are already updated by updateUserProfile
       toast.success(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
-      
+
       // Handle API validation errors
       if (error && typeof error === 'object' && 'errors' in error) {
         const apiError = error as ApiError;
         const errors: Record<string, string> = {};
-        
+
         apiError.errors.forEach((err) => {
           // Translate error messages
           let message = err.msg;
           if (err.msg === "E-mail already in user") {
-            message = lang === "ar" 
-              ? "البريد الإلكتروني مستخدم بالفعل" 
+            message = lang === "ar"
+              ? "البريد الإلكتروني مستخدم بالفعل"
               : "Email is already in use";
           } else if (err.msg === "Invalid phone number only accepted Egy and SA Phone numbers") {
-            message = lang === "ar" 
-              ? "رقم الهاتف غير صالح. فقط أرقام مصر والسعودية مقبولة" 
+            message = lang === "ar"
+              ? "رقم الهاتف غير صالح. فقط أرقام مصر والسعودية مقبولة"
               : "Invalid phone number. Only Egypt and Saudi Arabia numbers are accepted";
           }
-          
+
           errors[err.param] = message;
         });
-        
+
         setFieldErrors(errors);
         toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
       } else {
@@ -180,41 +187,41 @@ function ProfileContent() {
   };
 
   const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+    e.preventDefault(); // Prevent default form submission
+
     // Clear previous errors
     setPasswordFieldErrors({});
-    
+
     // Frontend validation
     const errors: Record<string, string> = {};
-    
+
     if (!passwordData.currentPassword.trim()) {
       errors.currentPassword = lang === "ar" ? "كلمة المرور الحالية مطلوبة" : "Current password is required";
     }
-    
+
     if (!passwordData.password.trim()) {
       errors.password = lang === "ar" ? "كلمة المرور الجديدة مطلوبة" : "New password is required";
     } else if (passwordData.password.length < 6) {
       errors.password = lang === "ar" ? "كلمة المرور يجب أن تكون 6 أحرف على الأقل" : "Password must be at least 6 characters";
     }
-    
+
     if (!passwordData.passwordConfirm.trim()) {
       errors.passwordConfirm = lang === "ar" ? "تأكيد كلمة المرور مطلوب" : "Password confirmation is required";
     } else if (passwordData.password !== passwordData.passwordConfirm) {
       errors.passwordConfirm = lang === "ar" ? "كلمات المرور غير متطابقة" : "Passwords do not match";
     }
-    
+
     if (Object.keys(errors).length > 0) {
       setPasswordFieldErrors(errors);
       return;
     }
-    
+
     try {
       setChangingPassword(true);
-      
+
       // Get the auth token from localStorage
       const token = localStorage.getItem('auth_token');
-      
+
       // Call the change password endpoint
       const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {
         method: 'PUT',
@@ -228,13 +235,13 @@ function ProfileContent() {
           passwordConfirm: passwordData.passwordConfirm
         })
       });
-      
+
       // Check if the response is HTML (error page) instead of JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         throw new Error(lang === "ar" ? "فشل الاتصال بالخادم" : "Server connection failed");
       }
-      
+
       let data;
       try {
         data = await response.json();
@@ -242,24 +249,24 @@ function ProfileContent() {
         console.error("Error parsing JSON response:", parseError);
         throw new Error(lang === "ar" ? "استجابة غير صالحة من الخادم" : "Invalid response from server");
       }
-      
+
       if (!response.ok) {
         // Handle API validation errors
         if (data.errors && Array.isArray(data.errors)) {
           const errors: Record<string, string> = {};
-          
+
           data.errors.forEach((err: ValidationError) => {
             // Translate error messages
             let message = err.msg;
             if (err.msg === "Your current password is wrong") {
-              message = lang === "ar" 
-                ? "كلمة المرور الحالية غير صحيحة" 
+              message = lang === "ar"
+                ? "كلمة المرور الحالية غير صحيحة"
                 : "Current password is incorrect";
             }
-            
+
             errors[err.param] = message;
           });
-          
+
           setPasswordFieldErrors(errors);
           toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
         } else {
@@ -267,8 +274,8 @@ function ProfileContent() {
         }
       } else {
         // Success
-        toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح. سيتم تسجيل خروجك الآن." : "Password changed successfully. You will be logged out now.");
-        
+        toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
+
         // Reset password form
         setPasswordData({
           currentPassword: "",
@@ -276,11 +283,15 @@ function ProfileContent() {
           passwordConfirm: ""
         });
         
-        // Sign out the user and redirect to login
+        // Don't sign out the user, just show a success message
+        // If you want to keep the security practice of signing out, 
+        // uncomment the following lines:
+        /*
         setTimeout(async () => {
           await signOut();
           router.push('/login');
-        }, 500); // Give user time to read the success message
+        }, 1500);
+        */
       }
     } catch (error) {
       console.error("Error changing password:", error);
@@ -295,7 +306,7 @@ function ProfileContent() {
       ...prev,
       [field]: value,
     }));
-    
+
     // Clear error for this field when user starts typing
     if (fieldErrors[field]) {
       setFieldErrors((prev) => ({
@@ -310,7 +321,7 @@ function ProfileContent() {
       ...prev,
       [field]: value,
     }));
-    
+
     // Clear error for this field when user starts typing
     if (passwordFieldErrors[field]) {
       setPasswordFieldErrors((prev) => ({
@@ -337,15 +348,13 @@ function ProfileContent() {
 
   return (
     <main
-      className={`flex-1 p-6 sm:p-8 overflow-y-auto ${
-        lang === "ar" ? "text-right" : "text-left"
-      }`}
+      className={`flex-1 p-6 sm:p-8 overflow-y-auto ${lang === "ar" ? "text-right" : "text-left"
+        }`}
       dir={lang === "ar" ? "rtl" : "ltr"}
     >
       <div
-        className={`max-w-7xl mx-auto space-y-8 ${
-          lang === "ar" ? "lg:pl-4" : "lg:pr-4"
-        }`}
+        className={`max-w-7xl mx-auto space-y-8 ${lang === "ar" ? "lg:pl-4" : "lg:pr-4"
+          }`}
       >
         {/* Header */}
         <div>
@@ -362,7 +371,7 @@ function ProfileContent() {
             <h2 className="text-lg font-semibold text-foreground mb-4">
               {t("accountInformation")}
             </h2>
-            <form onSubmit={handleSubmit} className="space-y-6 flex-1 flex flex-col">
+            <form onSubmit={handleSubmit} noValidate className="space-y-6 flex-1 flex flex-col">
               <div className="flex-1 space-y-6">
                 {/* Name */}
                 <div>
@@ -374,9 +383,8 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <User
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="name"
@@ -384,11 +392,9 @@ function ProfileContent() {
                       onChange={(e) =>
                         handleInputChange("name", e.target.value)
                       }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        fieldErrors.name ? "border-red-500" : ""
-                      }`}
+                      className={`${lang === "ar" ? "pr-12 pl-3" : "pl-12 pr-3"} ${fieldErrors.name ? "border-red-500 focus:border-red-500" : ""
+                        }`}
                       placeholder={lang === "ar" ? "الاسم الكامل" : "Full Name"}
-                      required
                     />
                   </div>
                   {fieldErrors.name && (
@@ -399,7 +405,7 @@ function ProfileContent() {
                   )}
                 </div>
 
-                {/* Email */}
+                {/* Email - Made read-only */}
                 <div>
                   <Label
                     htmlFor="email"
@@ -409,22 +415,16 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <Mail
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="email"
                       type="email"
-                      value={formData.email}
-                      onChange={(e) =>
-                        handleInputChange("email", e.target.value)
-                      }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        fieldErrors.email ? "border-red-500" : ""
-                      }`}
+                      disabled
+                      value={user?.email || ""} // Controlled input
+                      className={`disabled-input ${lang === "ar" ? "!pr-12 !pl-3" : "!pl-12 !pr-3"}`}
                       placeholder={lang === "ar" ? "example@email.com" : "example@email.com"}
-                      required
                     />
                   </div>
                   {fieldErrors.email && (
@@ -433,6 +433,11 @@ function ProfileContent() {
                       {fieldErrors.email}
                     </p>
                   )}
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {lang === "ar"
+                      ? "لا يمكن تغيير البريد الإلكتروني. تواصل مع الدعم إذا كنت بحاجة إلى تغييره."
+                      : "Email cannot be changed. Contact support if you need to change it."}
+                  </p>
                 </div>
 
                 {/* Phone */}
@@ -445,9 +450,8 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <Phone
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="phone"
@@ -455,9 +459,8 @@ function ProfileContent() {
                       onChange={(e) =>
                         handleInputChange("phone", e.target.value)
                       }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        fieldErrors.phone ? "border-red-500" : ""
-                      }`}
+                      className={`${lang === "ar" ? "pr-12 pl-3" : "pl-12 pr-3"} ${fieldErrors.phone ? "border-red-500 focus:border-red-500" : ""
+                        }`}
                       placeholder={lang === "ar" ? "+20 10x xxx xxxx أو +966 5x xxx xxxx" : "+20 10x xxx xxxx or +966 5x xxx xxxx"}
                     />
                   </div>
@@ -468,8 +471,8 @@ function ProfileContent() {
                     </p>
                   )}
                   <p className="text-xs text-muted-foreground mt-1">
-                    {lang === "ar" 
-                      ? "مقبول: أرقام مصر (+20) والسعودية (+966) فقط" 
+                    {lang === "ar"
+                      ? "مقبول: أرقام مصر (+20) والسعودية (+966) فقط"
                       : "Accepted: Egypt (+20) and Saudi Arabia (+966) numbers only"}
                   </p>
                 </div>
@@ -501,7 +504,7 @@ function ProfileContent() {
             <h2 className="text-lg font-semibold text-foreground mb-4">
               {lang === "ar" ? "تغيير كلمة المرور" : "Change Password"}
             </h2>
-            <form onSubmit={handlePasswordChange} className="space-y-4 flex-1 flex flex-col">
+            <form onSubmit={handlePasswordChange} noValidate className="space-y-4 flex-1 flex flex-col">
               <div className="flex-1 space-y-4">
                 {/* Current Password */}
                 <div>
@@ -513,9 +516,8 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <Lock
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="currentPassword"
@@ -524,15 +526,13 @@ function ProfileContent() {
                       onChange={(e) =>
                         handlePasswordInputChange("currentPassword", e.target.value)
                       }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        passwordFieldErrors.currentPassword ? "border-red-500" : ""
-                      }`}
+                      className={`${lang === "ar" ? "!pr-12 !pl-12" : "!pl-12 !pr-12"} ${passwordFieldErrors.currentPassword ? "border-red-500 focus:border-red-500" : ""
+                        }`}
                       placeholder={lang === "ar" ? "أدخل كلمة المرور الحالية" : "Enter current password"}
-                      required
                     />
                     <button
                       type="button"
-                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
                       onClick={() => togglePasswordVisibility('current')}
                     >
                       {showPasswords.current ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -556,9 +556,8 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <Lock
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="password"
@@ -567,15 +566,13 @@ function ProfileContent() {
                       onChange={(e) =>
                         handlePasswordInputChange("password", e.target.value)
                       }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        passwordFieldErrors.password ? "border-red-500" : ""
-                      }`}
+                      className={`${lang === "ar" ? "!pr-12 !pl-12" : "!pl-12 !pr-12"} ${passwordFieldErrors.password ? "border-red-500 focus:border-red-500" : ""
+                        }`}
                       placeholder={lang === "ar" ? "أدخل كلمة المرور الجديدة" : "Enter new password"}
-                      required
                     />
                     <button
                       type="button"
-                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
                       onClick={() => togglePasswordVisibility('new')}
                     >
                       {showPasswords.new ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -599,9 +596,8 @@ function ProfileContent() {
                   </Label>
                   <div className="relative mt-2">
                     <Lock
-                      className={`absolute top-3 h-4 w-4 text-foreground ${
-                        lang === "ar" ? "right-3" : "left-3"
-                      }`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 h-4 w-4 text-foreground ${lang === "ar" ? "right-3" : "left-3"
+                        }`}
                     />
                     <Input
                       id="passwordConfirm"
@@ -610,15 +606,13 @@ function ProfileContent() {
                       onChange={(e) =>
                         handlePasswordInputChange("passwordConfirm", e.target.value)
                       }
-                      className={`${lang === "ar" ? "pr-10" : "pl-10"} ${
-                        passwordFieldErrors.passwordConfirm ? "border-red-500" : ""
-                      }`}
+                      className={`${lang === "ar" ? "!pr-12 !pl-12" : "!pl-12 !pr-12"} ${passwordFieldErrors.passwordConfirm ? "border-red-500 focus:border-red-500" : ""
+                        }`}
                       placeholder={lang === "ar" ? "أكد كلمة المرور الجديدة" : "Confirm new password"}
-                      required
                     />
                     <button
                       type="button"
-                      className={`absolute top-3 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
+                      className={`absolute top-1/2 transform -translate-y-1/2 ${lang === "ar" ? "left-3" : "right-3"} text-foreground`}
                       onClick={() => togglePasswordVisibility('confirm')}
                     >
                       {showPasswords.confirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}

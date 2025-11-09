@@ -46,9 +46,15 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading: boolean) => set({ isLoading }),
       logout: () => set({ user: null, token: null }),
       updateUser: (userData: Partial<User>) =>
-        set((state) => ({
-          user: state.user ? { ...state.user, ...userData } : null,
-        })),
+        set((state) => {
+          if (!state.user) return { user: null };
+          
+          // Create a new user object with updated data
+          const updatedUser = { ...state.user, ...userData };
+          
+          // Let Zustand's persist middleware handle localStorage
+          return { user: updatedUser };
+        }),
     }),
     { name: "auth-storage" }
   )
@@ -200,7 +206,7 @@ export const getAuthHeaders = (): Record<string, string> => {
 };
 
 // ====================
-// 🧩 Update Profile (New Correct API)
+// 🧩 Update Profile (Fixed to prevent sign-out)
 // ====================
 export const updateUserProfile = async (
   userData: { name: string; email: string; phone?: string }
@@ -209,6 +215,7 @@ export const updateUserProfile = async (
   if (!token) throw new Error("Authentication required");
 
   console.log("🔥 USING UPDATE API:", `${API_BASE}/users/updateMe`);
+  console.log("🔥 Sending data:", userData);
 
   const response = await fetch(`${API_BASE}/users/updateMe`, {
     method: "PUT",
@@ -223,14 +230,47 @@ export const updateUserProfile = async (
   console.log("UpdateMe Response:", data);
 
   if (!response.ok) {
+    // Check if the error is related to token invalidation
+    if (response.status === 401) {
+      console.error("Token was invalidated during profile update");
+      // Clear invalid token
+      useAuthStore.getState().logout();
+    }
     throw new Error(data.message || "Failed to update profile");
   }
 
-  // ✅ Update store & localStorage
-  useAuthStore.getState().updateUser(data);
-  localStorage.setItem("user_data", JSON.stringify(data));
+  // Make sure we have the complete user object
+  const updatedUser = data.user || data;
+  
+  // ✅ Update store only (localStorage will be updated by persist middleware)
+  useAuthStore.getState().updateUser(updatedUser);
 
-  return data;
+  return updatedUser;
+};
+
+// ====================
+// 🧩 Refresh User Data
+// ====================
+export const refreshUserData = async (): Promise<User> => {
+  const token = getAuthToken();
+  if (!token) throw new Error("Authentication required");
+
+  const response = await fetch(`${API_BASE}/users/me`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    throw new Error(data.message || "Failed to refresh user data");
+  }
+
+  const user = data.user || data;
+  useAuthStore.getState().setUser(user);
+  return user;
 };
 
 // ====================

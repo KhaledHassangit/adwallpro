@@ -56,6 +56,7 @@ function useCompanies(
   currentPage: number,
   refreshKey: number
 ) {
+  const {t} = useI18n();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -72,7 +73,7 @@ function useCompanies(
       setError(null);
 
       try {
-        let url = `https://adwallpro.com/api/v1/companies?page=${currentPage}&limit=10`;
+        let url = `http://72.60.178.180:8000/api/v1/companies/?page=${currentPage}&limit=10`;
         
         // Add status filter
         if (statusFilter === "approved") {
@@ -83,7 +84,7 @@ function useCompanies(
         
         // Add search query
         if (searchQuery) {
-          url = `https://adwallpro.com/api/v1/companies/search?name=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`;
+          url = `http://72.60.178.180:8000/api/v1/companies/search?name=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`;
           if (statusFilter === "approved") {
             url += `&isApproved=true`;
           } else if (statusFilter === "pending") {
@@ -93,7 +94,7 @@ function useCompanies(
         
         // Add category filter
         if (categoryId && categoryId !== "all") {
-          url = `https://adwallpro.com/api/v1/companies/category/${categoryId}?page=${currentPage}&limit=10`;
+          url = `http://72.60.178.180:8000/api/v1/companies/category/${categoryId}?page=${currentPage}&limit=10`;
           if (statusFilter === "approved") {
             url += `&isApproved=true`;
           } else if (statusFilter === "pending") {
@@ -104,9 +105,9 @@ function useCompanies(
         // Add location filters
         if (countryFilter || cityFilter) {
           if (categoryId && categoryId !== "all") {
-            url = `https://adwallpro.com/api/v1/companies/category/${categoryId}/search-location?page=${currentPage}&limit=10&`;
+            url = `http://72.60.178.180:8000/api/v1/companies/category/${categoryId}/search-location?page=${currentPage}&limit=10&`;
           } else {
-            url = `https://adwallpro.com/api/v1/companies/search-location?page=${currentPage}&limit=10&`;
+            url = `http://72.60.178.180:8000/api/v1/companies/search-location?page=${currentPage}&limit=10&`;
           }
           
           if (countryFilter) {
@@ -139,10 +140,10 @@ function useCompanies(
           totalResults: data.results,
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(err instanceof Error ? err.message : t("adminCompaniesFetchError"));
         toast({
-          title: "Error",
-          description: "Failed to fetch companies. Please try again.",
+          title: t("adminError"),
+          description: t("adminCompaniesFetchErrorDesc"),
           variant: "destructive",
         });
       } finally {
@@ -168,6 +169,7 @@ function PaginationControls({
   onPageChange: (page: number) => void;
   loading: boolean;
 }) {
+  const { t } = useI18n();
   const pages = [];
   const maxVisiblePages = 5;
   
@@ -184,8 +186,8 @@ function PaginationControls({
 
   return (
     <div className="flex items-center justify-between px-2 py-4">
-      <div className="text-sm ">
-        Page <span className="font-semibold ">{currentPage}</span> of <span className="font-semibold ">{totalPages}</span>
+      <div className="text-sm">
+        {`${t("adminPageOf")} ${currentPage} / ${totalPages}`}
       </div>
       <div className="flex items-center space-x-1">
         <button
@@ -201,13 +203,12 @@ function PaginationControls({
             <button
               onClick={() => onPageChange(1)}
               disabled={loading}
-              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg
-               glass transition-all duration-200 text-sm font-medium   disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg glass transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               1
             </button>
             {startPage > 2 && (
-              <span className="flex items-center justify-center w-9 h-9 ">
+              <span className="flex items-center justify-center w-9 h-9">
                 <MoreHorizontal className="w-4 h-4" />
               </span>
             )}
@@ -221,8 +222,8 @@ function PaginationControls({
             disabled={loading}
             className={`relative inline-flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-200 text-sm font-medium ${
               currentPage === page
-                ? "bg-gradient-to-r from-blue-500 to-purple-600  text-white shadow-lg shadow-blue-500/25"
-                : "glass  disabled:opacity-50 disabled:cursor-not-allowed"
+                ? "bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-500/25"
+                : "glass disabled:opacity-50 disabled:cursor-not-allowed"
             }`}
           >
             {page}
@@ -239,7 +240,7 @@ function PaginationControls({
             <button
               onClick={() => onPageChange(totalPages)}
               disabled={loading}
-              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg glass hover:bg-white/10 transition-all duration-200 text-sm font-medium  disabled:opacity-50 disabled:cursor-not-allowed"
+              className="relative inline-flex items-center justify-center w-9 h-9 rounded-lg glass hover:bg-white/10 transition-all duration-200 text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {totalPages}
             </button>
@@ -278,6 +279,7 @@ function AdminCompaniesTable({
   onPageChange: (page: number) => void;
   onRefresh: () => void;
 }) {
+  const { t } = useI18n();
   const { companies, loading, error, pagination } = useCompanies(
     statusFilter,
     searchQuery,
@@ -291,7 +293,7 @@ function AdminCompaniesTable({
   const handleApprove = async (companyId: string) => {
     try {
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/${companyId}/approve`,
+        `http://72.60.178.180:8000/api/v1/companies/${companyId}/approve`,
         {
           method: "PATCH",
           headers: {
@@ -305,14 +307,14 @@ function AdminCompaniesTable({
       }
 
       toast({
-        title: "Success",
-        description: "Company has been approved.",
+        title: t("adminSuccess"),
+        description: t("adminCompanyApprovedSuccess"),
       });
       onRefresh();
     } catch (err) {
       toast({
-        title: "Error",
-        description: "Failed to approve company. Please try again.",
+        title: t("adminError"),
+        description: t("adminCompanyApproveError"),
         variant: "destructive",
       });
     }
@@ -321,7 +323,7 @@ function AdminCompaniesTable({
   const handleReject = async (companyId: string) => {
     try {
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/${companyId}/reject`,
+        `http://72.60.178.180:8000/api/v1/companies/${companyId}/reject`,
         {
           method: "PATCH",
           headers: {
@@ -335,14 +337,14 @@ function AdminCompaniesTable({
       }
 
       toast({
-        title: "Success",
-        description: "Company has been rejected.",
+        title: t("adminSuccess"),
+        description: t("adminCompanyRejectedSuccess"),
       });
       onRefresh();
     } catch (err) {
       toast({
-        title: "Error",
-        description: "Failed to reject company. Please try again.",
+        title: t("adminError"),
+        description: t("adminCompanyRejectError"),
         variant: "destructive",
       });
     }
@@ -361,7 +363,7 @@ function AdminCompaniesTable({
       <div className="text-center py-8">
         <p className="text-red-500">{error}</p>
         <Button onClick={onRefresh} className="mt-4">
-          Try Again
+          {t("adminTryAgain")}
         </Button>
       </div>
     );
@@ -370,7 +372,7 @@ function AdminCompaniesTable({
   if (companies.length === 0 && !loading) {
     return (
       <div className="text-center py-8">
-        <p className="text-muted-foreground">No companies found</p>
+        <p className="text-muted-foreground">{t("adminNoCompaniesFound")}</p>
       </div>
     );
   }
@@ -380,11 +382,11 @@ function AdminCompaniesTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Company</TableHead>
-            <TableHead>Contact</TableHead>
-            <TableHead>Location</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead>Actions</TableHead>
+            <TableHead>{t("adminCompanyName")}</TableHead>
+            <TableHead>{t("adminCompanyContact")}</TableHead>
+            <TableHead>{t("adminCompanyLocation")}</TableHead>
+            <TableHead>{t("adminCompanyStatus")}</TableHead>
+            <TableHead>{t("adminActions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -411,7 +413,7 @@ function AdminCompaniesTable({
                   <div className="text-sm">{company.email}</div>
                   {company.whatsapp && (
                     <div className="text-sm text-muted-foreground">
-                      WhatsApp: {company.whatsapp}
+                      {t("adminWhatsApp")}: {company.whatsapp}
                     </div>
                   )}
                 </div>
@@ -431,7 +433,7 @@ function AdminCompaniesTable({
                       : "bg-orange-100 text-orange-800 hover:bg-orange-200"
                   }
                 >
-                  {company.isApproved ? "Approved" : "Pending"}
+                  {company.isApproved ? t("adminApproved") : t("adminPending")}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -442,7 +444,7 @@ function AdminCompaniesTable({
                       onClick={() => handleApprove(company._id)}
                       className="bg-green-600 hover:bg-green-700"
                     >
-                      Approve
+                      {t("adminApprove")}
                     </Button>
                   )}
                   <Button
@@ -451,7 +453,7 @@ function AdminCompaniesTable({
                     onClick={() => handleReject(company._id)}
                     className="text-red-600 border-red-600 hover:bg-red-50"
                   >
-                    Reject
+                    {t("adminReject")}
                   </Button>
                 </div>
               </TableCell>
@@ -497,11 +499,11 @@ function AdminCompaniesContent() {
 
   // Mock categories - in a real app, you'd fetch these from an API
   const categories = [
-    { _id: "68d42f4af6fb8fa5ecf83f7b", name: "Technology" },
-    { _id: "68e7fa45e16ebc3c6051ea28", name: "Food & Beverage" },
-    { _id: "68ef6e7dfa1c956169576d15", name: "Marketing" },
-    { _id: "68d03813f6fb8fa5ecf83b8f", name: "Services" },
-    { _id: "68e7f9eee16ebc3c6051ea21", name: "Other" },
+    { _id: "68d42f4af6fb8fa5ecf83f7b", name: t("adminCategoryTechnology") },
+    { _id: "68e7fa45e16ebc3c6051ea28", name: t("adminCategoryFoodBeverage") },
+    { _id: "68ef6e7dfa1c956169576d15", name: t("adminCategoryMarketing") },
+    { _id: "68d03813f6fb8fa5ecf83b8f", name: t("adminCategoryServices") },
+    { _id: "68e7f9eee16ebc3c6051ea21", name: t("adminCategoryOther") },
   ];
 
   return (
@@ -513,10 +515,10 @@ function AdminCompaniesContent() {
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-3xl font-bold gradient-text">
-                  {t("companiesManagement")}
+                  {t("adminCompaniesManagement")}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                  {t("companiesManagementDesc")}
+                  {t("adminCompaniesManagementDesc")}
                 </p>
               </div>
             </div>
@@ -525,12 +527,12 @@ function AdminCompaniesContent() {
               <Filter className="h-4 w-4 text-muted-foreground" />
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-[180px] glass">
-                  <SelectValue placeholder={t("filterStatus")} />
+                  <SelectValue placeholder={t("adminFilterStatus")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">{t("allCompanies")}</SelectItem>
-                  <SelectItem value="pending">{t("pending")}</SelectItem>
-                  <SelectItem value="approved">{t("approved")}</SelectItem>
+                  <SelectItem value="all">{t("adminAllCompanies")}</SelectItem>
+                  <SelectItem value="pending">{t("adminPending")}</SelectItem>
+                  <SelectItem value="approved">{t("adminApproved")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -544,7 +546,7 @@ function AdminCompaniesContent() {
                 <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
-                    placeholder={t("searchCompanies")}
+                    placeholder={t("adminSearchCompanies")}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="pl-10 glass"
@@ -555,10 +557,10 @@ function AdminCompaniesContent() {
                 <div className="w-full md:w-48">
                   <Select value={categoryId} onValueChange={setCategoryId}>
                     <SelectTrigger className="glass">
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder={t("adminSelectCategory")} />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All Categories</SelectItem>
+                      <SelectItem value="all">{t("adminAllCategories")}</SelectItem>
                       {categories.map((category) => (
                         <SelectItem key={category._id} value={category._id}>
                           {category.name}
@@ -571,7 +573,7 @@ function AdminCompaniesContent() {
                 {/* Country Filter */}
                 <div className="w-full md:w-48">
                   <Input
-                    placeholder={t("searchByCountry")}
+                    placeholder={t("adminSearchByCountry")}
                     value={countryFilter}
                     onChange={(e) => setCountryFilter(e.target.value)}
                     className="glass"
@@ -581,7 +583,7 @@ function AdminCompaniesContent() {
                 {/* City Filter */}
                 <div className="w-full md:w-48">
                   <Input
-                    placeholder={t("searchByCity")}
+                    placeholder={t("adminSearchByCity")}
                     value={cityFilter}
                     onChange={(e) => setCityFilter(e.target.value)}
                     className="glass"
@@ -600,18 +602,15 @@ function AdminCompaniesContent() {
                     }}
                     className="whitespace-nowrap glass"
                   >
-                    {t("clearFilters")}
+                    {t("adminClearFilters")}
                   </Button>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          {/* Quick Stats */}
-
           {/* Companies Table */}
           <Card className="hover:shadow-lg transition-shadow ultra-card p-6">
-           
             <CardContent>
               <AdminCompaniesTable
                 statusFilter={statusFilter}

@@ -1,4 +1,0 @@
-export const PRICES = {
-  VIP_MONTHLY_USD: 29,
-  STANDARD_MONTHLY_USD: 9,
-}
