@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/lang-provider";
@@ -18,7 +17,7 @@ function AdminCouponsContent() {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleEdit = (coupon) => {
+  const handleEdit = (coupon ) => {
     setSelectedCoupon(coupon);
     setShowEditDialog(true);
   };
