@@ -212,6 +212,15 @@ export const ar = {
     activeFilters: "الفلاتر النشطة:",
     searchTerm: "البحث:",
 
+    createAdminTitle: "إنشاء مدير",
+    createAdminDescription: "إنشاء حساب مدير جديد مع صلاحيات موسعة.",
+    adminAddNewAdmin: "إضافة مدير جديد",
+    adminCreatedSuccessfully: "تم إنشاء المدير بنجاح",
+    failedToCreateAdmin: "فشل في إنشاء المدير",
+    createAdmin: "إنشاء مدير",
+    passwordsDoNotMatch: "كلمات المرور غير متطابقة",
+    creating: "جاري الإنشاء...",
+    confirmPassword: "تأكيد كلمة المرور",
     // Company Pages
     noCategoriesFound: "لا توجد شركات في هذه الفئة حالياً",
     noCategoriesFoundDesc:
@@ -389,7 +398,6 @@ export const ar = {
     phoneWithCountryCodeNote: "يرجى تضمين رمز بلدك ",
     phoneRequired: "رقم الهاتف مطلوب",
     passwordPlaceholder: "••••••••",
-    confirmPassword: "تأكيد كلمة المرور",
 
     // Validation Messages
     passwordMinLength: "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل",

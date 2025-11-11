@@ -1,3 +1,4 @@
+// create-admin-dialog.tsx
 "use client";
 
 import { useState } from "react";
@@ -10,31 +11,25 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { toast } from "sonner";
+import { useI18n } from "@/providers/LanguageProvider";
 
-interface CreateUserDialogProps {
+interface CreateAdminDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CreateUserDialog({
+export function CreateAdminDialog({
   open,
   onOpenChange,
-}: CreateUserDialogProps) {
+}: CreateAdminDialogProps) {
+  const { t } = useI18n();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     password: "",
     passwordConfirm: "",
-    role: "user",
     phone: "",
   });
 
@@ -43,14 +38,14 @@ export function CreateUserDialog({
 
     // التحقق من تطابق كلمات المرور
     if (formData.password !== formData.passwordConfirm) {
-      toast.error("كلمات المرور غير متطابقة");
+      toast.error(t("passwordsDoNotMatch"));
       return;
     }
 
     setLoading(true);
 
     try {
-      const response = await fetch("https://adwallpro.com/api/v1/users", {
+      const response = await fetch("http://72.60.178.180:8000/api/v1/users/admins", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -61,125 +56,98 @@ export function CreateUserDialog({
           email: formData.email,
           password: formData.password,
           passwordConfirm: formData.passwordConfirm,
-          role: formData.role,
           phone: formData.phone,
         }),
       });
 
-      if (!response.ok) throw new Error("Failed to create user");
+      if (!response.ok) throw new Error(t("failedToCreateAdmin"));
 
-      toast.success("تم إنشاء المستخدم بنجاح");
+      toast.success(t("adminCreatedSuccessfully"));
       onOpenChange(false);
       setFormData({
         name: "",
         email: "",
         password: "",
         passwordConfirm: "",
-        role: "user",
         phone: "",
       });
-      window.location.reload();
     } catch (error) {
-      console.error("Error creating user:", error);
-      toast.error("فشل في إنشاء المستخدم");
+      console.error("Error creating admin:", error);
+      toast.error(t("failedToCreateAdmin"));
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleInputChange = (field: string, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>إضافة مستخدم جديد</DialogTitle>
+          <DialogTitle>{t("createAdminTitle")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="name">الاسم *</Label>
+            <Label htmlFor="name">{t("name")}</Label>
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => handleInputChange("name", e.target.value)}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="email">البريد الإلكتروني *</Label>
+            <Label htmlFor="email">{t("email")}</Label>
             <Input
               id="email"
               type="email"
               value={formData.email}
-              onChange={(e) =>
-                setFormData({ ...formData, email: e.target.value })
-              }
+              onChange={(e) => handleInputChange("email", e.target.value)}
               required
             />
           </div>
 
           <div>
-            <Label htmlFor="password">كلمة المرور *</Label>
+            <Label htmlFor="password">{t("password")}</Label>
             <Input
               id="password"
               type="password"
               value={formData.password}
-              onChange={(e) =>
-                setFormData({ ...formData, password: e.target.value })
-              }
+              onChange={(e) => handleInputChange("password", e.target.value)}
               required
               minLength={6}
             />
           </div>
 
           <div>
-            <Label htmlFor="passwordConfirm">تأكيد كلمة المرور *</Label>
+            <Label htmlFor="passwordConfirm">{t("confirmPassword")}</Label>
             <Input
               id="passwordConfirm"
               type="password"
               value={formData.passwordConfirm}
-              onChange={(e) =>
-                setFormData({ ...formData, passwordConfirm: e.target.value })
-              }
+              onChange={(e) => handleInputChange("passwordConfirm", e.target.value)}
               required
               minLength={6}
             />
             {formData.passwordConfirm &&
               formData.password !== formData.passwordConfirm && (
                 <p className="text-xs text-destructive mt-1">
-                  كلمات المرور غير متطابقة
+                  {t("passwordsDoNotMatch")}
                 </p>
               )}
           </div>
 
           <div>
-            <Label htmlFor="role">الدور</Label>
-            <Select
-              value={formData.role}
-              onValueChange={(value) =>
-                setFormData({ ...formData, role: value })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="user">مستخدم</SelectItem>
-                <SelectItem value="admin">مدير</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
-            <Label htmlFor="phone">رقم الهاتف</Label>
+            <Label htmlFor="phone">{t("phone")}</Label>
             <Input
               id="phone"
               value={formData.phone}
-              onChange={(e) =>
-                setFormData({ ...formData, phone: e.target.value })
-              }
-              placeholder="+966501234567"
+              onChange={(e) => handleInputChange("phone", e.target.value)}
+              placeholder="+201024994092"
             />
           </div>
 
@@ -189,10 +157,17 @@ export function CreateUserDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              إلغاء
+              {t("cancel")}
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "جاري الإنشاء..." : "إنشاء"}
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  {t("creating")}
+                </div>
+              ) : (
+                t("createAdmin")
+              )}
             </Button>
           </div>
         </form>

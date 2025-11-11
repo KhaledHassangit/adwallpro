@@ -204,6 +204,16 @@ export const en = {
     websiteLabel: "Website",
     facebookLabel: "Facebook",
 
+    createAdminTitle: "Create Admin",
+    createAdminDescription: "Create a new admin account with elevated privileges.",
+    adminAddNewAdmin: "Add New Admin",
+    adminCreatedSuccessfully: "Admin created successfully",
+    failedToCreateAdmin: "Failed to create admin",
+    createAdmin: "Create Admin",
+    passwordsDoNotMatch: "Passwords do not match",
+    creating: "Creating...",
+    confirmPassword: "Confirm Password",
+
     // Forms
     companyNameFormLabel: "Company Name",
     companyNameFormPlaceholder: "Enter company name",
@@ -353,7 +363,6 @@ export const en = {
     phoneWithCountryCodeNote: "Please include your country code ",
     phoneRequired: "Phone number is required",
     passwordPlaceholder: "••••••••",
-    confirmPassword: "Confirm Password",
 
     // Validation Messages
     passwordMinLength: "Password must be at least 6 characters",

@@ -1,3 +1,4 @@
+// AdminUsersPage.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,7 +16,7 @@ import {
   Shield,
   Crown,
 } from "@/components/ui/icon";
-import { CreateUserDialog } from "@/components/admin/create-user-dialog";
+import { CreateAdminDialog } from "@/components/admin/CreateAdminDialog";
 
 interface UserStats {
   totalUsers: number;
@@ -30,6 +31,7 @@ interface UserStats {
 function AdminUsersContent() {
   const { t } = useI18n();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
+  const [showCreateAdminDialog, setShowCreateAdminDialog] = useState(false);
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -82,18 +84,20 @@ function AdminUsersContent() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="btn-ultra hover:bg-primary/90"
-            >
-              <UserPlus className="h-4 w-4 mr-2" />
-              {t("adminAddNewUser")}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => setShowCreateAdminDialog(true)}
+                className="btn-ultra hover:bg-primary/90"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                {t("adminAddNewAdmin")}
+              </Button>
+            </div>
           </div>
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            <Card className="ultra-card  transition-all">
+            <Card className="ultra-card transition-all">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {t("adminTotalUsers")}
@@ -112,7 +116,7 @@ function AdminUsersContent() {
               </CardContent>
             </Card>
 
-            <Card className="ultra-card  transition-all">
+            <Card className="ultra-card transition-all">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {t("adminAdmins")}
@@ -129,7 +133,7 @@ function AdminUsersContent() {
               </CardContent>
             </Card>
 
-            <Card className="ultra-card  transition-all">
+            <Card className="ultra-card transition-all">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {t("adminRegularUsers")}
@@ -148,7 +152,7 @@ function AdminUsersContent() {
               </CardContent>
             </Card>
 
-            <Card className="ultra-card  transition-all">
+            <Card className="ultra-card transition-all">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   {t("adminActiveThisWeek")}
@@ -167,12 +171,12 @@ function AdminUsersContent() {
           </div>
 
           {/* Users Table */}
-              <AdminUsersTable />
+          <AdminUsersTable />
 
-          {/* Create User Dialog */}
-          <CreateUserDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
+          {/* Create Admin Dialog */}
+          <CreateAdminDialog
+            open={showCreateAdminDialog}
+            onOpenChange={setShowCreateAdminDialog}
           />
         </div>
       </div>
