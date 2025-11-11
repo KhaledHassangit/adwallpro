@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { SignInDialog } from "@/components/auth/sign-in-dialog";

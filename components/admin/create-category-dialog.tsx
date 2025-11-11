@@ -29,7 +29,7 @@ export function CreateCategoryDialog({
     nameAr: "",
     nameEn: "",
     color: "#FF6B6B",
-    image: null as string | null,
+    image: null as File | string | null,
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -43,12 +43,19 @@ export function CreateCategoryDialog({
       formDataToSend.append("nameEn", formData.nameEn);
       formDataToSend.append("color", formData.color);
 
-      // Only append image if it exists (base64 string)
-      if (formData.image && formData.image.startsWith("data:")) {
-        // Convert base64 to blob
-        const response = await fetch(formData.image);
-        const blob = await response.blob();
-        formDataToSend.append("image", blob, "category-image.jpg");
+      // Handle image if it exists
+      if (formData.image) {
+        // Check if it's a File object
+        if (formData.image instanceof File) {
+          formDataToSend.append("image", formData.image);
+        } 
+        // Check if it's a base64 string
+        else if (typeof formData.image === "string" && formData.image.startsWith("data:")) {
+          // Convert base64 to blob
+          const response = await fetch(formData.image);
+          const blob = await response.blob();
+          formDataToSend.append("image", blob, "category-image.jpg");
+        }
       }
 
       const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {

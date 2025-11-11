@@ -3,7 +3,7 @@
 import Image from "next/image"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { useI18n } from "@/providers/lang-provider"
+import { useI18n } from "@/providers/LanguageProvider"
 import type { Ad } from "@/types/types"
 import { MapPin, Phone, Globe, Mail, MessageCircle, Star, ExternalLink } from "lucide-react"
 import { useState } from "react"

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ProtectedRoute } from "@/components/auth/route-guard";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData } from "@/lib/auth";
 import { toast } from "sonner";

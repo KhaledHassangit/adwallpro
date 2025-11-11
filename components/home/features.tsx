@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/icon";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 
 function UltraFeatureCard({
   icon: Icon,

@@ -3,7 +3,7 @@
 import type React from "react";
 
 import { ThemeProvider } from "@/components/theme-provider";
-import { LangProvider } from "@/providers/lang-provider";
+import { LangProvider } from "@/providers/LanguageProvider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 

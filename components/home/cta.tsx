@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import Link from "next/link";
 import { ArrowRight, Sparkles, Star } from "@/components/ui/icon";
 

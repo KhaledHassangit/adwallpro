@@ -135,7 +135,13 @@ export const en = {
     addNewAd: "Add New Ad",
     personalProfile: "Personal Profile",
     user: "User",
-
+    couponActive: "Active",
+    notSet: "Not Set",
+    updateCoupon: "Update Coupon",
+    editCouponTitle: "Edit Coupon",
+    editCouponDescription: "Update the coupon details below.",
+    startDate: "Start Date",
+    createCouponDescription: "Create a new discount coupon for your customers.",
     // Hero Section
     heroNewBadge: "New: Add your company for free with quick review",
     heroTitle: "Smart Advertising Platform",
@@ -343,8 +349,9 @@ export const en = {
     // Form Fields
     fullNamePlaceholder: "Your full name",
     emailPlaceholder: "example@domain.com",
-    phoneOptional: "Phone Number (Optional)",
-    phonePlaceholder: "+966501234567",
+    phoneWithCountryCodePlaceholder: "Phone with country code ",
+    phoneWithCountryCodeNote: "Please include your country code ",
+    phoneRequired: "Phone number is required",
     passwordPlaceholder: "••••••••",
     confirmPassword: "Confirm Password",
 
@@ -566,5 +573,23 @@ export const en = {
     adminTryAgain: "Try Again",
     adminError: "Error",
     adminSuccess: "Success",
+    errorFetchingUserStats: "Failed to fetch user statistics",
+
+    // Card titles
+    totalUsers: "Total Users",
+    admins: "Admins",
+    regularUsers: "Regular Users",
+    activeThisWeek: "Active This Week",
+
+    // Card subtitles
+    registeredUser: "Registered user in the system",
+    adminAccounts: "Administrative accounts",
+    adUsers: "Users for ads",
+    activeUserLast7Days: "Active user in the last 7 days",
+
+    // Other labels
+    ofTotal: "Of total",
+    usageLimitRequired: "Usage limit is required",
+    invalidUsageLimit: "Please enter a valid usage limit",
 
 };

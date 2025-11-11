@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { getCurrentUser, SignInButton } from "@/components/auth/sign-in-dialog";
 import { getCategories } from "@/lib/store";
 import { countries } from "@/data/countries";

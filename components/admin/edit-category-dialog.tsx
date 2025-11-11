@@ -40,39 +40,59 @@ export function EditCategoryDialog({
     nameAr: "",
     nameEn: "",
     color: "#FF6B6B",
-    image: null as string | null,
+    image: null as File | string | null,
   });
 
   useEffect(() => {
     if (category) {
+      console.log("Setting form data from category:", category);
       setFormData({
         nameAr: category.nameAr || "",
         nameEn: category.nameEn || "",
         color: category.color || "#FF6B6B",
         image: category.image || null,
       });
+    } else {
+      // Reset form when category is null
+      setFormData({
+        nameAr: "",
+        nameEn: "",
+        color: "#FF6B6B",
+        image: null,
+      });
     }
   }, [category]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!category) return;
+    if (!category) {
+      toast.error("لم يتم تحديد الفئة للتعديل");
+      return;
+    }
 
     setLoading(true);
 
     try {
-      // Create FormData for file upload
       const formDataToSend = new FormData();
       formDataToSend.append("nameAr", formData.nameAr);
       formDataToSend.append("nameEn", formData.nameEn);
       formDataToSend.append("color", formData.color);
 
-      // Only append image if it's a new one (base64 string)
-      if (formData.image && formData.image.startsWith("data:")) {
-        // Convert base64 to blob
-        const response = await fetch(formData.image);
-        const blob = await response.blob();
-        formDataToSend.append("image", blob, "category-image.jpg");
+      if (formData.image) {
+        if (formData.image instanceof File) {
+          // It's a new file from the user's computer
+          formDataToSend.append("image", formData.image);
+        } else if (typeof formData.image === "string") {
+          if (formData.image.startsWith("data:")) {
+            // It's a new base64 image
+            const response = await fetch(formData.image);
+            const blob = await response.blob();
+            formDataToSend.append("image", blob, "category-image.jpg");
+          } else {
+            // It's the existing image URL
+            formDataToSend.append("imageUrl", formData.image);
+          }
+        }
       }
 
       const response = await fetch(
@@ -94,6 +114,8 @@ export function EditCategoryDialog({
         throw new Error(errorMessage);
       }
 
+      const result = await response.json();
+      console.log("Update successful:", result);
       toast.success("تم تحديث الفئة بنجاح");
       onOpenChange(false);
       onSuccess();
@@ -124,6 +146,7 @@ export function EditCategoryDialog({
               }
               placeholder="مثال: مطاعم"
               required
+              disabled={loading}
             />
           </div>
 
@@ -137,6 +160,7 @@ export function EditCategoryDialog({
               }
               placeholder="Example: Restaurants"
               required
+              disabled={loading}
             />
           </div>
 
@@ -151,6 +175,7 @@ export function EditCategoryDialog({
                   setFormData({ ...formData, color: e.target.value })
                 }
                 className="w-16 h-10 p-1 rounded"
+                disabled={loading}
               />
               <Input
                 value={formData.color}
@@ -159,6 +184,7 @@ export function EditCategoryDialog({
                 }
                 placeholder="#FF6B6B"
                 className="flex-1"
+                disabled={loading}
               />
             </div>
           </div>
@@ -166,17 +192,21 @@ export function EditCategoryDialog({
           <div>
             <Label>صورة الفئة</Label>
             <ImageUpload
-              onImageChange={(image) => setFormData({ ...formData, image })}
+              onImageChange={(image) => {
+                console.log("Image changed:", image ? "New image selected" : "Image removed");
+                setFormData({ ...formData, image });
+              }}
               defaultImage={category?.image}
+              disabled={loading}
             />
-            {formData.image && formData.image.startsWith("data:") && (
+            {/* FINAL FIX: Add an explicit `typeof` check before calling `.startsWith()` */}
+            {formData.image && (
               <p className="text-sm text-muted-foreground mt-2">
-                تم اختيار صورة جديدة
-              </p>
-            )}
-            {formData.image && !formData.image.startsWith("data:") && (
-              <p className="text-sm text-muted-foreground mt-2">
-                الصورة الحالية
+                {formData.image instanceof File
+                  ? "تم اختيار صورة جديدة"
+                  : typeof formData.image === 'string' && formData.image.startsWith("data:")
+                  ? "تم اختيار صورة جديدة"
+                  : "الصورة الحالية"}
               </p>
             )}
           </div>
@@ -186,6 +216,7 @@ export function EditCategoryDialog({
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
+              disabled={loading}
             >
               إلغاء
             </Button>

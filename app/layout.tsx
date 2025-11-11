@@ -1,10 +1,10 @@
 import type React from "react";
 import type { Metadata } from "next";
-import "./globals.css";
 import { Poppins, Almarai } from "next/font/google";
-import { Providers } from "./providers";
+import { Providers } from "../providers/ThemeProvider";
 import HeaderGuard from "@/components/layout/header-guard";
 import { Footer } from "@/components/layout/footer";
+import "./globals.css"
 
 const poppins = Poppins({
   subsets: ["latin"],

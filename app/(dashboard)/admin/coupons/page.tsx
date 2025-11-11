@@ -3,8 +3,8 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
-import { useI18n } from "@/providers/lang-provider";
-import {  PlusCircle, Edit, Trash2 } from "@/components/ui/icon";
+import { useI18n } from "@/providers/LanguageProvider";
+import { PlusCircle } from "@/components/ui/icon";
 import { CreateCouponDialog } from "@/components/admin/CreateCouponDialog";
 import { EditCouponDialog } from "@/components/admin/EditCouponDialog";
 import { DeleteCouponDialog } from "@/components/admin/DeleteCouponDialog";
@@ -17,7 +17,7 @@ function AdminCouponsContent() {
   const [selectedCoupon, setSelectedCoupon] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const handleEdit = (coupon ) => {
+  const handleEdit = (coupon) => {
     setSelectedCoupon(coupon);
     setShowEditDialog(true);
   };

@@ -1,7 +1,6 @@
 "use server";
 
 import { adsApi, usersApi, categoriesApi } from "@/lib/api";
-import { PRICES } from "@/data/pricing";
 
 // Ads Actions
 export async function addAdAction(formData: FormData) {

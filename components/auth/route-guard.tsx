@@ -60,18 +60,15 @@ export function RouteGuard({
         return;
       }
 
-      // If user is authenticated and trying to access auth pages, redirect to dashboard
-      if (currentUser && window.location.pathname.startsWith("/auth/")) {
-        console.log(
-          "User is authenticated and on auth page, redirecting to appropriate dashboard"
-        );
-        if (userIsAdmin) {
-          console.log("Redirecting admin to /dashboard/admin");
-          router.push("/admin");
-        } else {
-          console.log("Redirecting user to /user-dashboard/manage");
-          router.push("/manage");
-        }
+      // 🚫 Prevent signed-in users from accessing login/signup/forgot-password
+      if (
+        currentUser &&
+        ["/login", "/signup", "/forgot-password"].includes(
+          window.location.pathname
+        )
+      ) {
+        console.log("User already signed in, redirecting to home...");
+        router.push("/");
         return;
       }
 

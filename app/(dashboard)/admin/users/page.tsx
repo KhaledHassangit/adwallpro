@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { AdminUsersTable } from "@/components/admin/admin-users-table";
 import { toast } from "sonner";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import {
   Users,
   UserPlus,

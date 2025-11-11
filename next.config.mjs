@@ -17,15 +17,7 @@ const nextConfig = {
       },
     ],
   },
-  experimental: {
-    optimizeCss: true,
-    serverActions: true,
-    serverComponentsExternalPackages: [],
-  },
-  webpack: (config) => {
-    config.resolve.fallback = { fs: false, module: false };
-    return config;
-  },
+
 };
 
 export default nextConfig;

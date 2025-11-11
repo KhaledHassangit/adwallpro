@@ -11,7 +11,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { Edit, Trash2, MoreHorizontal, Tags } from "@/components/ui/icon";
 import {
   DropdownMenu,
@@ -41,10 +41,8 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(
-    null
-  );
-  console.log("selectedCategory",selectedCategory)
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+
   const fetchCategories = async () => {
     try {
       setLoading(true);
@@ -55,13 +53,16 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
         },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch categories");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to fetch categories");
+      }
 
       const data = await response.json();
       setCategories(data.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      toast.error("فشل في جلب الفئات");
+      toast.error(error instanceof Error ? error.message : "فشل في جلب الفئات");
     } finally {
       setLoading(false);
     }
@@ -81,18 +82,22 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to delete category");
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || "Failed to delete category");
+      }
 
       toast.success("تم حذف الفئة بنجاح");
       fetchCategories();
       onRefresh?.();
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error("فشل في حذف الفئة");
+      toast.error(error instanceof Error ? error.message : "فشل في حذف الفئة");
     }
   };
 
   const handleEditCategory = (category: Category) => {
+    console.log("Editing category:", category);
     setSelectedCategory(category);
     setEditDialogOpen(true);
   };
@@ -100,6 +105,14 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
   const handleEditSuccess = () => {
     fetchCategories();
     onRefresh?.();
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setEditDialogOpen(open);
+    if (!open) {
+      // Clear selected category when dialog closes
+      setTimeout(() => setSelectedCategory(null), 300);
+    }
   };
 
   useEffect(() => {
@@ -133,6 +146,10 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
                       src={category.image}
                       alt={category.nameAr}
                       className="w-12 h-12 rounded-lg object-cover"
+                      onError={(e) => {
+                        console.error("Image failed to load:", category.image);
+                        e.currentTarget.src = "";
+                      }}
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center">
@@ -189,7 +206,7 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
       {/* Edit Category Dialog */}
       <EditCategoryDialog
         open={editDialogOpen}
-        onOpenChange={setEditDialogOpen}
+        onOpenChange={handleDialogClose}
         category={selectedCategory}
         onSuccess={handleEditSuccess}
       />

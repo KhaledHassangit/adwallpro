@@ -1,5 +1,5 @@
 
-import { LangProvider } from "@/providers/lang-provider"
+import { LangProvider } from "@/providers/LanguageProvider"
 import { ThemeProvider } from "@/components/theme-provider"
 
 export function AppProviders({ children }: { children: React.ReactNode }) {

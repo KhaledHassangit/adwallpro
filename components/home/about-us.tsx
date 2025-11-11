@@ -1,6 +1,6 @@
 "use client";
 
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   Building2,

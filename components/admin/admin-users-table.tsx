@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { api } from "@/lib/api";
 import { Edit, Trash2, MoreHorizontal } from "@/components/ui/icon";
 import {
@@ -92,7 +92,7 @@ export function AdminUsersTable() {
           : null;
 
       const response = await fetch(
-        `https://adwallpro.com/api/v1/users/${userId}`,
+        `http://72.60.178.180:8000/api/v1/users/${userId}`,
         {
           method: "DELETE",
           headers: {
@@ -162,10 +162,6 @@ export function AdminUsersTable() {
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem>
-                          <Edit className="h-4 w-4 mr-2" />
-                          {t("adminEdit")}
-                        </DropdownMenuItem>
                         <DropdownMenuItem
                           className="text-destructive"
                           onClick={() => deleteUser(user._id)}

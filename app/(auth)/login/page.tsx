@@ -7,13 +7,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { signIn, useAuthStore } from "@/lib/auth";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
-  const { t, locale } = useI18n(); // Assuming locale is available from useI18n
+  const { t, locale } = useI18n();
   const router = useRouter();
   const { setUser, setToken } = useAuthStore();
   const [loading, setLoading] = useState(false);
@@ -23,7 +23,6 @@ export default function LoginPage() {
     password: "",
   });
 
-  // Determine if the current language is RTL
   const isRTL = locale === "ar";
 
   const handleSubmit = async (e: React.FormEvent) => {

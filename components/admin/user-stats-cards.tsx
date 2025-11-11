@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, UserCheck, Activity } from "lucide-react";
 import { toast } from "sonner";
+import { useI18n } from "@/providers/LanguageProvider";
 
 interface UserStats {
   totalUsers: number;
@@ -16,6 +17,7 @@ interface UserStats {
 }
 
 export function UserStatsCards() {
+  const { t } = useI18n();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -45,7 +47,7 @@ export function UserStatsCards() {
       if (!response.ok) {
         const errorText = await response.text();
         console.error("API Error response:", errorText);
-        throw new Error(`فشل في جلب إحصائيات المستخدمين: ${response.status}`);
+        throw new Error(`${t("errorFetchingUserStats")}: ${response.status}`);
       }
 
       const data = await response.json();
@@ -53,7 +55,7 @@ export function UserStatsCards() {
       setUserStats(data.data);
     } catch (error) {
       console.error("Error fetching user stats:", error);
-      toast.error("فشل في جلب إحصائيات المستخدمين");
+      toast.error(t("errorFetchingUserStats"));
     } finally {
       setLoading(false);
     }
@@ -83,36 +85,36 @@ export function UserStatsCards() {
 
   const statCards = [
     {
-      title: "إجمالي المستخدمين",
+      title: t("totalUsers"),
       value: userStats?.totalUsers.toLocaleString() || "0",
-      subtitle: "مستخدم مسجل في النظام",
+      subtitle: t("registeredUser"),
       icon: Users,
       color: "text-blue-600",
       bgColor: "bg-blue-50 dark:bg-blue-950/50",
       percentage: "100%",
     },
     {
-      title: "المدراء",
+      title: t("admins"),
       value: userStats?.adminsCount || 0,
-      subtitle: "حسابات إدارية",
+      subtitle: t("adminAccounts"),
       icon: Shield,
       color: "text-red-600",
       bgColor: "bg-red-50 dark:bg-red-950/50",
       percentage: `${userStats?.adminPercentage || 0}%`,
     },
     {
-      title: "المستخدمون العاديون",
+      title: t("regularUsers"),
       value: userStats?.regularUsersCount.toLocaleString() || "0",
-      subtitle: "مستخدمين للإعلانات",
+      subtitle: t("adUsers"),
       icon: UserCheck,
       color: "text-green-600",
       bgColor: "bg-green-50 dark:bg-green-950/50",
       percentage: `${userStats?.regularUserPercentage || 0}%`,
     },
     {
-      title: "نشط هذا الأسبوع",
+      title: t("activeThisWeek"),
       value: userStats?.activeThisWeek || 0,
-      subtitle: "مستخدم نشط في آخر 7 أيام",
+      subtitle: t("activeUserLast7Days"),
       icon: Activity,
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-950/50",
@@ -148,7 +150,7 @@ export function UserStatsCards() {
                 <div className={`text-xs font-medium ${stat.color}`}>
                   {stat.percentage}
                 </div>
-                <div className="text-xs text-muted-foreground">من الإجمالي</div>
+                <div className="text-xs text-muted-foreground">{t("ofTotal")}</div>
               </div>
             </CardContent>
           </Card>

@@ -19,7 +19,7 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { toast } from "sonner";
 import { Plus, Tags } from "@/components/ui/icon";
 import { getCurrentUser } from "@/lib/auth";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 
 interface Category {
   _id: string;
@@ -35,15 +35,19 @@ function AddAdPageContent() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [formData, setFormData] = useState({
     companyName: "",
-    categoryId: "",
+    companyNameEn: "",
     description: "",
-    country: t(""),
+    descriptionEn: "",
+    country: "",
     city: "",
     email: "",
     whatsapp: "",
     facebook: "",
     website: "",
+    adType: "normal", // Default to "normal"
+    video: "", // For VIP ads
     logo: null as string | null,
+    categoryId: "", // Added missing categoryId
   });
 
   const user = getCurrentUser();
@@ -120,20 +124,31 @@ function AddAdPageContent() {
         throw new Error(t("userIdNotFound"));
       }
 
+      // Check if categoryId is selected
+      if (!formData.categoryId) {
+        throw new Error(t("categoryRequired"));
+      }
+
       // إنشاء FormData لإرسال البيانات
       const formDataToSend = new FormData();
       formDataToSend.append("userId", userId);
       formDataToSend.append("companyName", formData.companyName);
-      formDataToSend.append("categoryId", formData.categoryId);
+      formDataToSend.append("companyNameEn", formData.companyNameEn);
       formDataToSend.append("description", formData.description);
+      formDataToSend.append("descriptionEn", formData.descriptionEn);
       formDataToSend.append("country", formData.country);
       formDataToSend.append("city", formData.city);
       formDataToSend.append("email", formData.email);
       formDataToSend.append("whatsapp", formData.whatsapp);
       formDataToSend.append("facebook", formData.facebook);
       formDataToSend.append("website", formData.website);
-
-      // إضافة ownerId أيضاً
+      formDataToSend.append("adType", formData.adType);
+      formDataToSend.append("categoryId", formData.categoryId); // Now this will work
+      
+      // Only add video if adType is "vip" and video URL is provided
+      if (formData.adType === "vip" && formData.video) {
+        formDataToSend.append("video", formData.video);
+      }
 
       // إضافة الشعار إذا كان موجود
       if (formData.logo && formData.logo.startsWith("data:")) {
@@ -173,15 +188,19 @@ function AddAdPageContent() {
       // إعادة تعيين النموذج
       setFormData({
         companyName: "",
-        categoryId: "",
+        companyNameEn: "",
         description: "",
+        descriptionEn: "",
         country: "",
         city: "",
         email: user?.email || "",
         whatsapp: "",
         facebook: "",
         website: "",
+        adType: "normal",
+        video: "",
         logo: null,
+        categoryId: "", // Reset categoryId
       });
 
       // إعادة توجيه إلى صفحة الإعلانات
@@ -219,7 +238,6 @@ function AddAdPageContent() {
           <div className="space-y-8">
             {/* Header */}
 
-
             {/* Company Info */}
             <div className="ultra-card p-6 md:p-8 lg:p-10">
               <h3 className="text-xl md:text-2xl lg:text-3xl font-bold gradient-text mb-8 text-center">
@@ -250,6 +268,71 @@ function AddAdPageContent() {
                     />
                   </div>
                   <div className="space-y-3">
+                    <Label
+                      htmlFor="companyNameEn"
+                      className="text-base font-semibold"
+                    >
+                      {t("companyNameEnLabel")}
+                    </Label>
+                    <Input
+                      id="companyNameEn"
+                      value={formData.companyNameEn}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          companyNameEn: e.target.value,
+                        })
+                      }
+                      placeholder={t("companyNameEnPlaceholder")}
+                      required
+                      className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="description"
+                      className="text-base font-semibold"
+                    >
+                      {t("companyDescriptionLabel")}
+                    </Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({ ...formData, description: e.target.value })
+                      }
+                      placeholder={t("companyDescriptionPlaceholder")}
+                      rows={4}
+                      required
+                      className="rounded-xl text-base border-2 focus:border-primary/50 transition-all duration-200 resize-none"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <Label
+                      htmlFor="descriptionEn"
+                      className="text-base font-semibold"
+                    >
+                      {t("companyDescriptionEnLabel")}
+                    </Label>
+                    <Textarea
+                      id="descriptionEn"
+                      value={formData.descriptionEn}
+                      onChange={(e) =>
+                        setFormData({ ...formData, descriptionEn: e.target.value })
+                      }
+                      placeholder={t("companyDescriptionEnPlaceholder")}
+                      rows={4}
+                      required
+                      className="rounded-xl text-base border-2 focus:border-primary/50 transition-all duration-200 resize-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid gap-6 md:grid-cols-2">
+                  <div className="space-y-3">
                     <Label htmlFor="email" className="text-base font-semibold">
                       {t("emailLabelForm")}
                     </Label>
@@ -265,27 +348,45 @@ function AddAdPageContent() {
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
+                  <div className="space-y-3">
+                    <Label className="text-base font-semibold">
+                      {t("adTypeLabel")}
+                    </Label>
+                    <Select
+                      value={formData.adType}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, adType: value })
+                      }
+                      required
+                    >
+                      <SelectTrigger className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200">
+                        <SelectValue placeholder={t("selectAdType")} />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background border border-border shadow-md z-50">
+                        <SelectItem value="normal">{t("normalAd")}</SelectItem>
+                        <SelectItem value="vip">{t("vipAd")}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
-                <div className="space-y-3">
-                  <Label
-                    htmlFor="description"
-                    className="text-base font-semibold"
-                  >
-                    {t("companyDescriptionLabel")}
-                  </Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                    placeholder={t("companyDescriptionPlaceholder")}
-                    rows={4}
-                    required
-                    className="rounded-xl text-base border-2 focus:border-primary/50 transition-all duration-200 resize-none"
-                  />
-                </div>
+                {/* Video URL field - only show for VIP ads */}
+                {formData.adType === "vip" && (
+                  <div className="space-y-3">
+                    <Label htmlFor="video" className="text-base font-semibold">
+                      {t("videoUrlLabel")}
+                    </Label>
+                    <Input
+                      id="video"
+                      value={formData.video}
+                      onChange={(e) =>
+                        setFormData({ ...formData, video: e.target.value })
+                      }
+                      placeholder={t("videoUrlPlaceholder")}
+                      className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
+                    />
+                  </div>
+                )}
 
                 {/* Category Selection */}
                 <div className="space-y-3">
@@ -343,6 +444,11 @@ function AddAdPageContent() {
                         ))}
                       </SelectContent>
                     </Select>
+                  )}
+                  {!formData.categoryId && (
+                    <p className="text-sm text-destructive mt-1">
+                      {t("categoryRequired")}
+                    </p>
                   )}
                 </div>
 
@@ -483,7 +589,6 @@ function AddAdPageContent() {
 
                 <p className="text-sm md:text-base text-muted-foreground mt-6 max-w-2xl mx-auto leading-relaxed">
                   {t("termsAndConditions")}
-
                 </p>
               </div>
             </div>

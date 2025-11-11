@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button"
 import { getAllAds, getUsers } from "@/lib/store"
 import { adminDeleteUserAction, deleteAdAction } from "@/app/actions"
-import { useI18n } from "@/providers/lang-provider"
+import { useI18n } from "@/providers/LanguageProvider"
 import { useMemo, useTransition } from "react"
 import { Users, Building2, Trash2 } from "lucide-react"
 

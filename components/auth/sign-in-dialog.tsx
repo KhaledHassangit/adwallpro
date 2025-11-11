@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { signOut, getCurrentUser, useAuthStore, type User } from "@/lib/auth";
 import { LogIn, LogOut, Shield, UserIcon, Sparkles } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";

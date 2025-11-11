@@ -156,6 +156,13 @@ export const ar = {
     addNewAd: "إضافة إعلان ",
     personalProfile: "الملف الشخصي",
     user: "مستخدم",
+    couponActive: "نشط",
+    notSet: "غير محدد",
+    updateCoupon: "تحديث القسيمة",
+    editCouponTitle: "تعديل القسيمة",
+    editCouponDescription: "تحديث تفاصيل القسيمة أدناه.",
+    startDate: "تاريخ البدء",
+    createCouponDescription: "إنشاء قسيمة خصم جديدة لعملائك.",
 
     // Hero Section
     heroNewBadge: "جديد: إضافة شركتك مجاناً مع مراجعة سريعة",
@@ -376,10 +383,11 @@ export const ar = {
     loginSubtitle: "مرحباً بك في AddWall",
 
     // Form Fields
-    fullNamePlaceholder: "اسمك الكامل",
+    fullNamePlaceholder: "الاسم الكامل",
     emailPlaceholder: "example@domain.com",
-    phoneOptional: "رقم الهاتف (اختياري)",
-    phonePlaceholder: "+966501234567",
+    phoneWithCountryCodePlaceholder: "رقم الهاتف مع رمز البلد ",
+    phoneWithCountryCodeNote: "يرجى تضمين رمز بلدك ",
+    phoneRequired: "رقم الهاتف مطلوب",
     passwordPlaceholder: "••••••••",
     confirmPassword: "تأكيد كلمة المرور",
 
@@ -605,5 +613,26 @@ export const ar = {
     adminTryAgain: "حاول مرة أخرى",
     adminError: "خطأ",
     adminSuccess: "نجاح",
+
+    // ar.ts
+    // Error messages
+    errorFetchingUserStats: "فشل في جلب إحصائيات المستخدمين",
+
+    // Card titles
+    totalUsers: "إجمالي المستخدمين",
+    admins: "المدراء",
+    regularUsers: "المستخدمون العاديون",
+    activeThisWeek: "نشط هذا الأسبوع",
+
+    // Card subtitles
+    registeredUser: "مستخدم مسجل في النظام",
+    adminAccounts: "حسابات إدارية",
+    adUsers: "مستخدمين للإعلانات",
+    activeUserLast7Days: "مستخدم نشط في آخر 7 أيام",
+
+    // Other labels
+    ofTotal: "من الإجمالي",
+    usageLimitRequired: "حد الاستخدام مطلوب",
+    invalidUsageLimit: "يرجى إدخال حد استخدام صالح",
 
 };

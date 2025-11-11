@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { toast } from "sonner";
 
 interface Coupon {
@@ -42,15 +42,56 @@ export function DeleteCouponDialog({
 
     setLoading(true);
     try {
-      // In a real app, you would make an API call here
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Get the auth token from localStorage
+      const authToken = localStorage.getItem("auth_token");
+      
+      if (!authToken) {
+        throw new Error("Authentication token not found. Please log in again.");
+      }
+
+      // Make the API call to delete the coupon
+      const response = await fetch(`http://72.60.178.180:8000/api/v1/coupons/${coupon.id}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${authToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        // Try to get error details
+        let errorMessage = "Failed to delete coupon";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } catch (e) {
+          console.log("Could not parse error response");
+        }
+        throw new Error(errorMessage);
+      }
+
+      console.log("Coupon deleted successfully");
       
       toast.success(t("couponDeletedSuccess"));
       onSuccess();
       onOpenChange(false);
     } catch (error) {
       console.error("Error deleting coupon:", error);
-      toast.error(t("couponDeletedError"));
+      
+      // More detailed error message
+      let errorMessage = t("couponDeletedError");
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      }
+      
+      // Check for specific error types
+      if (errorMessage.includes("fetch")) {
+        errorMessage = "Network error. Please check your connection and try again.";
+      } else if (errorMessage.includes("Failed to fetch")) {
+        errorMessage = "Could not connect to the server. Please try again later.";
+      }
+      
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -101,6 +142,7 @@ export function DeleteCouponDialog({
             variant="destructive"
             onClick={handleDelete}
             disabled={loading}
+            className="bg-red-600 hover:bg-red-700 text-white"
           >
             {loading ? (
               <div className="flex items-center gap-2">

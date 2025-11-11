@@ -4,8 +4,8 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
-import { Building2, Filter, AlertCircle, Search, Loader2, ChevronLeft, ChevronRight, MoreHorizontal } from "@/components/ui/icon";
-import { useI18n } from "@/providers/lang-provider";
+import { Building2, Filter, AlertCircle, Search, Loader2, ChevronLeft, ChevronRight, MoreHorizontal, X } from "@/components/ui/icon";
+import { useI18n } from "@/providers/LanguageProvider";
 import {
   Select,
   SelectContent,
@@ -18,6 +18,14 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Company {
   _id: string;
@@ -45,6 +53,15 @@ interface CompaniesResponse {
   };
   data: Company[];
 }
+
+// Helper function to get auth headers
+const getAuthHeaders = () => {
+  const token = localStorage.getItem("auth_token");
+  return {
+    "Content-Type": "application/json",
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
 
 // Custom hook for fetching companies
 function useCompanies(
@@ -125,7 +142,9 @@ function useCompanies(
           }
         }
 
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: getAuthHeaders()
+        });
         
         if (!response.ok) {
           throw new Error(`Error: ${response.status}`);
@@ -259,6 +278,63 @@ function PaginationControls({
   );
 }
 
+// Confirmation Modal Component
+function ConfirmationModal({
+  isOpen,
+  onClose,
+  onConfirm,
+  title,
+  description,
+  confirmText,
+  cancelText,
+  variant = "default",
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  title: string;
+  description: string;
+  confirmText: string;
+  cancelText: string;
+  variant?: "default" | "destructive";
+}) {
+  const { t } = useI18n();
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            {variant === "destructive" && (
+              <AlertCircle className="h-5 w-5 text-red-500" />
+            )}
+            {title}
+          </DialogTitle>
+          <DialogDescription>
+            {description}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="outline"
+            onClick={onClose}
+            className="glass"
+          >
+            {cancelText}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            variant={variant === "destructive" ? "destructive" : "default"}
+            className={variant === "default" ? "bg-green-600 hover:bg-green-700" : ""}
+          >
+            {confirmText}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Companies Table Component
 function AdminCompaniesTable({
   statusFilter,
@@ -290,15 +366,34 @@ function AdminCompaniesTable({
     0 // We'll use a separate refresh mechanism
   );
 
+  // Modal states
+  const [approveModal, setApproveModal] = useState<{
+    isOpen: boolean;
+    companyId: string;
+    companyName: string;
+  }>({
+    isOpen: false,
+    companyId: "",
+    companyName: "",
+  });
+
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean;
+    companyId: string;
+    companyName: string;
+  }>({
+    isOpen: false,
+    companyId: "",
+    companyName: "",
+  });
+
   const handleApprove = async (companyId: string) => {
     try {
       const response = await fetch(
         `http://72.60.178.180:8000/api/v1/companies/${companyId}/approve`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: getAuthHeaders(),
         }
       );
 
@@ -310,6 +405,7 @@ function AdminCompaniesTable({
         title: t("adminSuccess"),
         description: t("adminCompanyApprovedSuccess"),
       });
+      setApproveModal({ isOpen: false, companyId: "", companyName: "" });
       onRefresh();
     } catch (err) {
       toast({
@@ -320,15 +416,13 @@ function AdminCompaniesTable({
     }
   };
 
-  const handleReject = async (companyId: string) => {
+  const handleDelete = async (companyId: string) => {
     try {
       const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/companies/${companyId}/reject`,
+        `http://72.60.178.180:8000/api/v1/company/${companyId}`,
         {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          method: "DELETE",
+          headers: getAuthHeaders(),
         }
       );
 
@@ -338,13 +432,14 @@ function AdminCompaniesTable({
 
       toast({
         title: t("adminSuccess"),
-        description: t("adminCompanyRejectedSuccess"),
+        description: t("adminCompanyDeletedSuccess"),
       });
+      setDeleteModal({ isOpen: false, companyId: "", companyName: "" });
       onRefresh();
     } catch (err) {
       toast({
         title: t("adminError"),
-        description: t("adminCompanyRejectError"),
+        description: t("adminCompanyDeleteError"),
         variant: "destructive",
       });
     }
@@ -441,7 +536,11 @@ function AdminCompaniesTable({
                   {!company.isApproved && (
                     <Button
                       size="sm"
-                      onClick={() => handleApprove(company._id)}
+                      onClick={() => setApproveModal({
+                        isOpen: true,
+                        companyId: company._id,
+                        companyName: company.companyName,
+                      })}
                       className="bg-green-600 hover:bg-green-700"
                     >
                       {t("adminApprove")}
@@ -450,10 +549,14 @@ function AdminCompaniesTable({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleReject(company._id)}
+                    onClick={() => setDeleteModal({
+                      isOpen: true,
+                      companyId: company._id,
+                      companyName: company.companyName,
+                    })}
                     className="text-red-600 border-red-600 hover:bg-red-50"
                   >
-                    {t("adminReject")}
+                    {t("adminDelete")}
                   </Button>
                 </div>
               </TableCell>
@@ -478,6 +581,30 @@ function AdminCompaniesTable({
           />
         </div>
       )}
+
+      {/* Approve Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={approveModal.isOpen}
+        onClose={() => setApproveModal({ isOpen: false, companyId: "", companyName: "" })}
+        onConfirm={() => handleApprove(approveModal.companyId)}
+        title={t("adminConfirmApprove")}
+        description={`${t("adminConfirmApproveDesc")} ${approveModal.companyName}`}
+        confirmText={t("adminApprove")}
+        cancelText={t("adminCancel")}
+        variant="default"
+      />
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={() => setDeleteModal({ isOpen: false, companyId: "", companyName: "" })}
+        onConfirm={() => handleDelete(deleteModal.companyId)}
+        title={t("adminConfirmDelete")}
+        description={`${t("adminConfirmDeleteDesc")} ${deleteModal.companyName}`}
+        confirmText={t("adminDelete")}
+        cancelText={t("adminCancel")}
+        variant="destructive"
+      />
     </div>
   );
 }

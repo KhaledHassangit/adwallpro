@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, User, UserPlus, Phone } from "lucide-react";
 
@@ -43,6 +43,12 @@ export default function SignupPage() {
       return;
     }
 
+    // التحقق من رقم الهاتف
+    if (!formData.phone) {
+      toast.error(t("phoneRequired"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -56,6 +62,7 @@ export default function SignupPage() {
           email: formData.email,
           password: formData.password,
           passwordConfirm: formData.passwordConfirm,
+          phone: formData.phone, // Now including phone in the request body
         }),
       });
 
@@ -141,24 +148,28 @@ export default function SignupPage() {
             </div>
 
             <div>
-              <Label htmlFor="phone">{t("phoneOptional")}</Label>
+              <Label htmlFor="phone">{t("phone")}</Label>
               <div className="relative">
                 <Phone className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none`} />
                 <Input
                   id="phone"
                   type="tel"
-                  placeholder={t("phonePlaceholder")}
+                  placeholder={t("phoneWithCountryCodePlaceholder")}
                   value={formData.phone}
                   onChange={(e) =>
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   className={`${isRTL ? "pr-10" : "pl-10"}`}
                   style={{
-                    paddingLeft: isRTL ? '0.75rem' : '2.5rem',
-                    paddingRight: isRTL ? '2.5rem' : '0.75rem'
+                    paddingLeft: isRTL ? '!0.75rem' : '!2.5rem',
+                    paddingRight: isRTL ? '!2.5rem' : '!0.75rem'
                   }}
+                  required
                 />
               </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                {t("phoneWithCountryCodeNote")}
+              </p>
             </div>
 
             <div>

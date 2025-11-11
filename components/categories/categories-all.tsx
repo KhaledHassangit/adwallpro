@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { getMultipleCategoriesCount } from "@/lib/companies-api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";

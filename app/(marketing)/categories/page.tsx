@@ -2,7 +2,7 @@
 
 import { CategoriesAll } from "@/components/categories/categories-all";
 import { Breadcrumb } from "@/components/common/breadcrumb";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { Sparkles } from "lucide-react";
 
 export default function CategoriesPage() {

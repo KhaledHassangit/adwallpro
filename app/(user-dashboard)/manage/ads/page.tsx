@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ProtectedRoute } from "@/components/auth/route-guard";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import {
   Building2,
   PlusCircle,
@@ -114,7 +114,7 @@ function UserAdsContent() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch("https://adwallpro.com/api/v1/categories", {
+      const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
         },
@@ -134,7 +134,7 @@ function UserAdsContent() {
     try {
       setLoading(true);
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/user/${currentUser._id}`,
+        `http://72.60.178.180:8000/api/v1/companies/user/${currentUser._id}`,
         {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
@@ -196,7 +196,7 @@ function UserAdsContent() {
     try {
       setDeleting(true);
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/${companyToDelete}`,
+        `http://72.60.178.180:8000/api/v1/companies/${companyToDelete}`,
         {
           method: "DELETE",
           headers: {
@@ -288,7 +288,7 @@ function UserAdsContent() {
       }
       
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/${companyToEdit._id}`,
+        `http://72.60.178.180:8000/api/v1/companies/${companyToEdit._id}`,
         {
           method: "PUT",
           headers: {

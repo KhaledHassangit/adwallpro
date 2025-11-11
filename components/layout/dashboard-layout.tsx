@@ -5,9 +5,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu } from "lucide-react";
+import { LogOut, Menu, User2 } from "lucide-react";
 import { useAuthStore, signOut, getCurrentUser, isAdmin } from "@/lib/auth";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import Logo from "../Logo";
@@ -30,7 +30,7 @@ function getAdminNavItems(t: (key: string) => string) {
     { title: t("usersManagement"), href: "/admin/users", icon: Users },
     { title: t("categoriesManagement"), href: "/admin/categories", icon: Tags },
     { title: t("couponsManagement"), href: "/admin/coupons", icon: Ticket },
-    // { title: t("settings"), href: "/admin/settings", icon: Settings },
+    { title: t("personalProfile"), href: "/admin/profile", icon: User2 },
   ];
 }
 
@@ -47,7 +47,7 @@ interface DashboardLayoutProps {
 }
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const pathname = usePathname();
   const { user } = useAuthStore();
   const currentUser = getCurrentUser();
@@ -56,6 +56,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Check if current language is RTL
+  const isRTL = locale === "ar";
 
   const navItems = userIsAdmin ? getAdminNavItems(t) : getUserNavItems(t);
 
@@ -92,14 +95,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }, []);
 
   return (
-    <div className="flex min-h-screen relative">
+    <div className="flex min-h-screen relative" dir={isRTL ? "rtl" : "ltr"}>
       {/* Sidebar */}
       <div
         ref={sidebarRef}
         className={cn(
           "fixed lg:relative z-30 w-64 h-screen lg:h-auto lg:min-h-screen transition-all duration-300 ease-in-out",
-          "transform lg:translate-x-0",
-          isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+          // Adjust transform classes for RTL
+          isRTL
+            ? isSidebarOpen
+              ? "translate-x-0 right-0"
+              : "translate-x-full right-0"
+            : isSidebarOpen
+            ? "translate-x-0 left-0"
+            : "-translate-x-full left-0"
         )}
       >
         <div className="flex flex-col h-full glass border-r border-border/50">
@@ -167,7 +176,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         <div className="w-full glass border-b border-border/50 backdrop-blur-sm">
           <div className="container-premium flex items-center justify-between h-20">
             {/* Left Side: Toggle Button and User Info */}
-            <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex items-center gap-3",
+              isRTL && "order-2"
+            )}>
               {/* Toggle Button (mobile only) */}
               <button
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
@@ -193,7 +205,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
             </div>
 
             {/* Right Side Actions */}
-            <div className="flex items-center gap-3">
+            <div className={cn(
+              "flex items-center gap-3",
+              isRTL && "order-1"
+            )}>
               <LanguageSwitcher />
               <div className="h-6 w-px bg-border/50" />
               <ThemeToggle />

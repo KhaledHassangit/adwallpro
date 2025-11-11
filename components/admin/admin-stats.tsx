@@ -10,7 +10,7 @@ import {
   getRejectedAds,
 } from "@/lib/store";
 import { useMemo } from "react";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import {
   Building2,
   Users,

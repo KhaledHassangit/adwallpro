@@ -17,7 +17,7 @@ import {
 import { useAuthStore, isAuthenticated } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/common/breadcrumb";

@@ -2,7 +2,7 @@
 
 import { Globe } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 
 export function LanguageSwitcher() {
   const { locale, setLocale } = useI18n();

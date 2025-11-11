@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Play, Pause } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 
 function getSlides(t: (key: string) => string) {
   return [

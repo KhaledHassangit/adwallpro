@@ -4,9 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { useState, useEffect } from "react";
-import { getMultipleCategoriesCount } from "@/lib/companies-api";
 import { ArrowRight, Eye, Loader2 } from "@/components/ui/icon";
 import { toast } from "sonner";
 import type { Category } from "@/types/types";
@@ -28,15 +27,13 @@ export function CategoriesSlider() {
       setLoading(true);
       setError(null);
 
-      const response = await fetch("https://adwallpro.com/api/v1/categories");
+      const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
       const categoriesData: Category[] = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
       setCategories(categoriesData);
 
-      const counts = await getMultipleCategoriesCount(categoriesData.map((c) => c.slug));
-      setCompaniesCount(counts);
     } catch (error) {
       setError(error instanceof Error ? error.message : "فشل في جلب التصنيفات");
       toast.error("فشل في جلب التصنيفات");

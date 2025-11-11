@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { AdminCategoriesTable } from "@/components/admin/admin-categories-table";
 import { CategoryStats } from "@/components/admin/category-stats";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 import { Tags, Plus, AlertCircle } from "@/components/ui/icon";
 import { CreateCategoryDialog } from "@/components/admin/create-category-dialog";
 

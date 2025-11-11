@@ -6,14 +6,15 @@ import { useState, useRef } from "react";
 import { Upload, X } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
-import { useI18n } from "@/providers/lang-provider";
+import { useI18n } from "@/providers/LanguageProvider";
 
 interface ImageUploadProps {
   onImageChange: (dataUrl: string | null) => void;
   defaultImage?: string | null;
+  disabled?: boolean;
 }
 
-export function ImageUpload({ onImageChange, defaultImage }: ImageUploadProps) {
+export function ImageUpload({ onImageChange, defaultImage, disabled = false }: ImageUploadProps) {
   const { t, lang } = useI18n();
   const [preview, setPreview] = useState<string | null>(defaultImage || null);
   const [dragOver, setDragOver] = useState(false);
@@ -57,18 +58,20 @@ export function ImageUpload({ onImageChange, defaultImage }: ImageUploadProps) {
   return (
     <div className="space-y-4">
       <div
-        className={`relative aspect-[16/9] rounded-2xl border-2 border-dashed transition-all cursor-pointer ${
-          dragOver
-            ? "border-primary-400 bg-primary-50"
-            : "border-gray-300 hover:border-primary-300 hover:bg-primary-50/50"
+        className={`relative aspect-[16/9] rounded-2xl border-2 border-dashed transition-all ${
+          disabled 
+            ? "cursor-not-allowed opacity-60 border-gray-200" 
+            : dragOver
+            ? "border-primary-400 bg-primary-50 cursor-pointer"
+            : "border-gray-300 hover:border-primary-300 hover:bg-primary-50/50 cursor-pointer"
         }`}
-        onDragOver={(e) => {
+        onDragOver={disabled ? undefined : (e) => {
           e.preventDefault();
           setDragOver(true);
         }}
-        onDragLeave={() => setDragOver(false)}
-        onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
+        onDragLeave={disabled ? undefined : () => setDragOver(false)}
+        onDrop={disabled ? undefined : handleDrop}
+        onClick={disabled ? undefined : () => fileInputRef.current?.click()}
       >
         {preview ? (
           <>
@@ -78,19 +81,21 @@ export function ImageUpload({ onImageChange, defaultImage }: ImageUploadProps) {
               fill
               className="object-cover rounded-2xl"
             />
-            <Button
-              type="button"
-              variant="destructive"
-              size="icon"
-              className="absolute top-2 right-2 h-8 w-8 rounded-full"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeImage();
-              }}
-              aria-label={t("removeImage")}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            {!disabled && (
+              <Button
+                type="button"
+                variant="destructive"
+                size="icon"
+                className="absolute top-2 right-2 h-8 w-8 rounded-full"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  removeImage();
+                }}
+                aria-label={t("removeImage")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
           </>
         ) : (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 text-muted-foreground">
@@ -109,6 +114,7 @@ export function ImageUpload({ onImageChange, defaultImage }: ImageUploadProps) {
         accept="image/*"
         onChange={handleFileSelect}
         className="hidden"
+        disabled={disabled}
       />
     </div>
   );
