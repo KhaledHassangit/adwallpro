@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tags, TrendingUp, CheckCircle } from "@/components/ui/icon";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
+import { useI18n } from "@/providers/LanguageProvider";
 
 interface CategoryStats {
   totalCategories: number;
@@ -16,10 +17,11 @@ interface CategoryStatsProps {
 }
 
 export function CategoryStats({ refreshKey }: CategoryStatsProps) {
+  const { t, lang } = useI18n();
   const [stats, setStats] = useState<CategoryStats>({
     totalCategories: 0,
-    mostUsedCategory: "جاري التحميل...",
-    systemStatus: "جاري التحميل...",
+    mostUsedCategory: t("adminLoading"),
+    systemStatus: t("adminLoading"),
   });
   const [loading, setLoading] = useState(true);
 
@@ -54,12 +56,14 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
 
           // Find the most used category (for now, just use the first one or a default)
           const mostUsed =
-            categories.length > 0 ? categories[0].nameAr : "لا توجد فئات";
+            categories.length > 0 
+              ? lang === "ar" ? categories[0].nameAr : categories[0].nameEn
+              : t("adminNoCategories");
 
           setStats({
             totalCategories: categories.length,
             mostUsedCategory: mostUsed,
-            systemStatus: categories.length > 0 ? "ممتاز" : "لا توجد فئات",
+            systemStatus: categories.length > 0 ? t("adminExcellent") : t("adminNoCategories"),
           });
         } else {
           throw new Error("Failed to fetch categories");
@@ -68,16 +72,16 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
         const data = await response.json();
         setStats({
           totalCategories: data.totalCategories || 0,
-          mostUsedCategory: data.mostUsedCategory || "لا توجد فئات",
-          systemStatus: data.systemStatus || "ممتاز",
+          mostUsedCategory: data.mostUsedCategory || t("adminNoCategories"),
+          systemStatus: data.systemStatus || t("adminExcellent"),
         });
       }
     } catch (error) {
       console.error("Error fetching category stats:", error);
       setStats({
         totalCategories: 0,
-        mostUsedCategory: "خطأ في التحميل",
-        systemStatus: "خطأ في التحميل",
+        mostUsedCategory: t("adminErrorLoading"),
+        systemStatus: t("adminErrorLoading"),
       });
     } finally {
       setLoading(false);
@@ -86,24 +90,24 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
 
   useEffect(() => {
     fetchStats();
-  }, [refreshKey]);
+  }, [refreshKey, lang]);
 
   if (loading) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="ultra-card  transition-all">
+        <Card className="ultra-card transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">إجمالي الفئات</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("adminTotalCategories")}</CardTitle>
             <Tags className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <LoadingSpinner />
           </CardContent>
         </Card>
-            <Card className="ultra-card  transition-all">
+        <Card className="ultra-card transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              الأكثر استخداماً
+              {t("adminMostUsedCategory")}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-green-500" />
           </CardHeader>
@@ -111,9 +115,9 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
             <LoadingSpinner />
           </CardContent>
         </Card>
-            <Card className="ultra-card  transition-all">
+        <Card className="ultra-card transition-all">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">حالة النظام</CardTitle>
+            <CardTitle className="text-sm font-medium">{t("adminSystemStatus")}</CardTitle>
             <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -126,23 +130,23 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <Card className="ultra-card  transition-all">
+      <Card className="ultra-card transition-all">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">إجمالي الفئات</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("adminTotalCategories")}</CardTitle>
           <Tags className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">{stats.totalCategories}</div>
           <p className="text-xs text-muted-foreground mt-2">
-            فئات نشطة في المنصة
+            {t("adminActiveCategories")}
           </p>
         </CardContent>
       </Card>
 
-            <Card className="ultra-card  transition-all">
+      <Card className="ultra-card transition-all">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            الأكثر استخداماً
+            {t("adminMostUsedCategory")}
           </CardTitle>
           <TrendingUp className="h-4 w-4 text-green-500" />
         </CardHeader>
@@ -151,14 +155,14 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
             {stats.mostUsedCategory}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            أعلى عدد من الشركات
+            {t("adminHighestCompanyCount")}
           </p>
         </CardContent>
       </Card>
 
-            <Card className="ultra-card  transition-all">
+      <Card className="ultra-card transition-all">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">حالة النظام</CardTitle>
+          <CardTitle className="text-sm font-medium">{t("adminSystemStatus")}</CardTitle>
           <CheckCircle className="h-4 w-4 text-green-500" />
         </CardHeader>
         <CardContent>
@@ -166,7 +170,7 @@ export function CategoryStats({ refreshKey }: CategoryStatsProps) {
             {stats.systemStatus}
           </div>
           <p className="text-xs text-muted-foreground mt-2">
-            جميع الفئات تعمل بشكل طبيعي
+            {t("adminAllCategoriesWorking")}
           </p>
         </CardContent>
       </Card>

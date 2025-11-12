@@ -14,13 +14,17 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/providers/LanguageProvider";
 import { api } from "@/lib/api";
-import { Edit, Trash2, MoreHorizontal } from "@/components/ui/icon";
+import { Trash2 } from "@/components/ui/icon";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { toast } from "sonner";
 
@@ -39,6 +43,8 @@ export function AdminUsersTable() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const fetchUsers = async () => {
     try {
@@ -82,8 +88,8 @@ export function AdminUsersTable() {
     }
   };
 
-  const deleteUser = async (userId: string) => {
-    if (!confirm(t("adminDeleteUserConfirmation"))) return;
+  const deleteUser = async () => {
+    if (!userToDelete) return;
 
     try {
       const token =
@@ -92,7 +98,7 @@ export function AdminUsersTable() {
           : null;
 
       const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/users/${userId}`,
+        `http://72.60.178.180:8000/api/v1/users/${userToDelete._id}`,
         {
           method: "DELETE",
           headers: {
@@ -105,10 +111,17 @@ export function AdminUsersTable() {
 
       toast.success(t("adminUserDeletedSuccess"));
       fetchUsers();
+      setDeleteDialogOpen(false);
+      setUserToDelete(null);
     } catch (error) {
       console.error("Error deleting user:", error);
       toast.error(t("adminFailedToDeleteUser"));
     }
+  };
+
+  const handleDeleteClick = (user: User) => {
+    setUserToDelete(user);
+    setDeleteDialogOpen(true);
   };
 
   useEffect(() => {
@@ -120,94 +133,113 @@ export function AdminUsersTable() {
   }
 
   return (
-    <Card className="ultra-card border p-6">
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("adminUserName")}</TableHead>
-              <TableHead>{t("adminUserEmail")}</TableHead>
-              <TableHead>{t("adminUserRole")}</TableHead>
-              <TableHead>{t("adminUserPhone")}</TableHead>
-              <TableHead>{t("adminUserRegistrationDate")}</TableHead>
-              <TableHead>{t("adminActions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {users?.length ? (
-              users.map((user) => (
-                <TableRow key={user._id}>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        user.role === "admin" ? "destructive" : "secondary"
-                      }
-                    >
-                      {user.role === "admin" ? t("adminRoleAdmin") : t("adminRoleUser")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{user.phone || "-"}</TableCell>
-                  <TableCell>
-                    {new Date(user.createdAt).toLocaleDateString(
-                      lang === "ar" ? "ar-SA" : "en-US"
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => deleteUser(user._id)}
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          {t("adminDelete")}
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+    <>
+      <Card className="ultra-card border p-6">
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="text-center">{t("adminUserName")}</TableHead>
+                <TableHead className="text-center">{t("adminUserEmail")}</TableHead>
+                <TableHead className="text-center">{t("adminUserRole")}</TableHead>
+                <TableHead className="text-center">{t("adminUserPhone")}</TableHead>
+                <TableHead className="text-center">{t("adminUserRegistrationDate")}</TableHead>
+                <TableHead className="text-center">{t("adminActions")}</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {users?.length ? (
+                users.map((user) => (
+                  <TableRow key={user._id}>
+                    <TableCell className="font-medium text-center">{user.name}</TableCell>
+                    <TableCell className="text-center">{user.email}</TableCell>
+                    <TableCell className="text-center">
+                      <Badge
+                        variant={
+                          user.role === "admin" ? "destructive" : "secondary"
+                        }
+                        className="mx-auto w-fit"
+                      >
+                        {user.role === "admin" ? t("adminRoleAdmin") : t("adminRoleUser")}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-center">{user.phone || "-"}</TableCell>
+                    <TableCell className="text-center">
+                      {new Date(user.createdAt).toLocaleDateString(
+                        lang === "ar" ? "ar-SA" : "en-US"
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteClick(user)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-muted-foreground py-8"
+                  >
+                    {t("adminNoUsersFound")}
                   </TableCell>
                 </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center text-muted-foreground py-8"
-                >
-                  {t("adminNoUsersFound")}
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+              )}
+            </TableBody>
+          </Table>
 
-        {/* Pagination */}
-        <div className="flex items-center justify-between mt-4">
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            {t("adminPrevious")}
-          </Button>
-          <span className="text-sm text-muted-foreground">
-            {`${t("adminPageOf")} ${page} / ${totalPages}`}
-          </span>
-          <Button
-            variant="outline"
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            {t("adminNext")}
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Pagination */}
+          <div className="flex items-center justify-between mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              {t("adminPrevious")}
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {`${t("adminPageOf")} ${page} / ${totalPages}`}
+            </span>
+            <Button
+              variant="outline"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              {t("adminNext")}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("adminDeleteUserTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {userToDelete ? 
+                `${t("adminDeleteUserConfirmation")} ${userToDelete.name}?` : 
+                `${t("adminDeleteUserConfirmation")} ${t("adminThisUser")}?`
+              }
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteUser}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {t("adminDelete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

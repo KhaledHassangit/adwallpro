@@ -29,7 +29,7 @@ interface Category {
 }
 
 function AddAdPageContent() {
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -63,7 +63,7 @@ function AddAdPageContent() {
         },
       });
 
-      if (!response.ok) throw new Error("Failed to fetch categories");
+      if (!response.ok) throw new Error(t("failedToFetchCategories"));
 
       const data = await response.json();
       console.log("Categories API response:", data);
@@ -177,7 +177,7 @@ function AddAdPageContent() {
       if (!response.ok) {
         const errorData = await response.json();
         console.log("Error response:", errorData);
-        throw new Error(errorData.message || "Failed to create company");
+        throw new Error(errorData.message || t("failedToAddAd"));
       }
 
       const successData = await response.json();
@@ -217,7 +217,7 @@ function AddAdPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8 pt-24">
+      <div className="container mx-auto px-4 py-8 ">
         <Breadcrumb
           items={[
             { label: t("myAds"), href: "/manage/ads" },
@@ -437,7 +437,7 @@ function AddAdPageContent() {
                                 style={{ backgroundColor: category.color }}
                               />
                               <span className="font-medium text-base">
-                                {category.nameAr}
+                                {lang === "ar" ? category.nameAr : category.nameEn}
                               </span>
                             </div>
                           </SelectItem>
@@ -558,7 +558,7 @@ function AddAdPageContent() {
                 {formData.logo && (
                   <div className="mt-4 p-3 bg-green-50 border border-green-200 rounded-xl">
                     <p className="text-sm text-green-700 font-medium text-center">
-                      ✓ New logo selected successfully
+                      {lang === "ar" ? "✓ تم اختيار الشعار بنجاح" : "✓ New logo selected successfully"}
                     </p>
                   </div>
                 )}

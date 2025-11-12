@@ -27,6 +27,7 @@ function getAdminNavItems(t: (key: string) => string) {
   return [
     { title: t("overview"), href: "/admin", icon: LayoutDashboard },
     { title: t("companiesManagementNav"), href: "/admin/companies", icon: Building2 },
+    { title: t("plansManagement"), href: "/admin/plans", icon: PlusCircle },
     { title: t("usersManagement"), href: "/admin/users", icon: Users },
     { title: t("categoriesManagement"), href: "/admin/categories", icon: Tags },
     { title: t("couponsManagement"), href: "/admin/coupons", icon: Ticket },
@@ -38,7 +39,7 @@ function getUserNavItems(t: (key: string) => string) {
   return [
     { title: t("dashboardControl"), href: "/manage", icon: LayoutDashboard },
     { title: t("adsManagement"), href: "/manage/ads", icon: Eye },
-    { title: t("personalProfile"), href: "/manage/profile", icon: Users },
+    { title: t("personalProfile"), href: "/manage/profile", icon: User2 },
   ];
 }
 
@@ -107,8 +108,8 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               ? "translate-x-0 right-0"
               : "translate-x-full right-0"
             : isSidebarOpen
-            ? "translate-x-0 left-0"
-            : "-translate-x-full left-0"
+              ? "translate-x-0 left-0"
+              : "-translate-x-full left-0"
         )}
       >
         <div className="flex flex-col h-full glass border-r border-border/50">

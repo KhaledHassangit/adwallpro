@@ -85,7 +85,7 @@ export function CreateAdminDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{t("createAdminTitle")}</DialogTitle>
         </DialogHeader>
@@ -159,7 +159,7 @@ export function CreateAdminDialog({
             >
               {t("cancel")}
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" className="btn-ultra" disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />

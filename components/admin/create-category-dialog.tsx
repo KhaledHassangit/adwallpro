@@ -9,9 +9,12 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { toast } from "sonner";
+import { useI18n } from "@/providers/LanguageProvider";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface CreateCategoryDialogProps {
   open: boolean;
@@ -24,10 +27,13 @@ export function CreateCategoryDialog({
   onOpenChange,
   onSuccess,
 }: CreateCategoryDialogProps) {
+  const { t, lang } = useI18n();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nameAr: "",
     nameEn: "",
+    descriptionAr: "",
+    descriptionEn: "",
     color: "#FF6B6B",
     image: null as File | string | null,
   });
@@ -41,6 +47,8 @@ export function CreateCategoryDialog({
       const formDataToSend = new FormData();
       formDataToSend.append("nameAr", formData.nameAr);
       formDataToSend.append("nameEn", formData.nameEn);
+      formDataToSend.append("descriptionAr", formData.descriptionAr);
+      formDataToSend.append("descriptionEn", formData.descriptionEn);
       formDataToSend.append("color", formData.color);
 
       // Handle image if it exists
@@ -70,18 +78,25 @@ export function CreateCategoryDialog({
         const errorData = await response.json();
         console.error("Server error:", errorData);
         const errorMessage =
-          errorData.message || errorData.error || "فشل في إنشاء الفئة";
+          errorData.message || errorData.error || t("adminFailedToCreateCategory");
         throw new Error(errorMessage);
       }
 
-      toast.success("تم إنشاء الفئة بنجاح");
+      toast.success(t("adminCategoryCreatedSuccess"));
       onOpenChange(false);
-      setFormData({ nameAr: "", nameEn: "", color: "#FF6B6B", image: null });
+      setFormData({ 
+        nameAr: "", 
+        nameEn: "", 
+        descriptionAr: "", 
+        descriptionEn: "", 
+        color: "#FF6B6B", 
+        image: null 
+      });
       onSuccess?.();
     } catch (error) {
       console.error("Error creating category:", error);
       const errorMessage =
-        error instanceof Error ? error.message : "فشل في إنشاء الفئة";
+        error instanceof Error ? error.message : t("adminFailedToCreateCategory");
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -92,83 +107,117 @@ export function CreateCategoryDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>إضافة فئة جديدة</DialogTitle>
+          <DialogTitle>{t("adminAddNewCategory")}</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <Label htmlFor="nameAr">الاسم بالعربية *</Label>
-            <Input
-              id="nameAr"
-              value={formData.nameAr}
-              onChange={(e) =>
-                setFormData({ ...formData, nameAr: e.target.value })
-              }
-              placeholder="مثال: مطاعم"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="nameEn">الاسم بالإنجليزية *</Label>
-            <Input
-              id="nameEn"
-              value={formData.nameEn}
-              onChange={(e) =>
-                setFormData({ ...formData, nameEn: e.target.value })
-              }
-              placeholder="Example: Restaurants"
-              required
-            />
-          </div>
-
-          <div>
-            <Label htmlFor="color">اللون</Label>
-            <div className="flex items-center gap-2">
+        <div className="max-h-[70vh] overflow-y-auto pr-2">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="nameAr">{t("adminNameAr")} *</Label>
               <Input
-                id="color"
-                type="color"
-                value={formData.color}
+                id="nameAr"
+                value={formData.nameAr}
                 onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
+                  setFormData({ ...formData, nameAr: e.target.value })
                 }
-                className="w-16 h-10 p-1 rounded"
-              />
-              <Input
-                value={formData.color}
-                onChange={(e) =>
-                  setFormData({ ...formData, color: e.target.value })
-                }
-                placeholder="#FF6B6B"
-                className="flex-1"
+                placeholder={lang === "ar" ? "مثال: مطاعم" : "Example: Restaurants"}
+                required
               />
             </div>
-          </div>
 
-          <div>
-            <Label>صورة الفئة</Label>
-            <ImageUpload
-              onImageChange={(image) => setFormData({ ...formData, image })}
-            />
-            {formData.image && (
-              <p className="text-sm text-muted-foreground mt-2">
-                تم اختيار صورة جديدة
-              </p>
-            )}
-          </div>
+            <div>
+              <Label htmlFor="descriptionAr">{t("adminDescriptionAr")} *</Label>
+              <Textarea
+                id="descriptionAr"
+                value={formData.descriptionAr}
+                onChange={(e) =>
+                  setFormData({ ...formData, descriptionAr: e.target.value })
+                }
+                placeholder={lang === "ar" ? "وصف الفئة باللغة العربية" : "Category description in Arabic"}
+                required
+                rows={3}
+              />
+            </div>
 
-          <div className="flex justify-end gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-            >
-              إلغاء
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? "جاري الإنشاء..." : "إنشاء"}
-            </Button>
-          </div>
-        </form>
+            <div>
+              <Label htmlFor="nameEn">{t("adminNameEn")} *</Label>
+              <Input
+                id="nameEn"
+                value={formData.nameEn}
+                onChange={(e) =>
+                  setFormData({ ...formData, nameEn: e.target.value })
+                }
+                placeholder="Example: Restaurants"
+                required
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="descriptionEn">{t("adminDescriptionEn")} *</Label>
+              <Textarea
+                id="descriptionEn"
+                value={formData.descriptionEn}
+                onChange={(e) =>
+                  setFormData({ ...formData, descriptionEn: e.target.value })
+                }
+                placeholder="Category description in English"
+                required
+                rows={3}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="color">{t("adminColor")}</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="color"
+                  type="color"
+                  value={formData.color}
+                  onChange={(e) =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
+                  className="w-16 h-10 p-1 rounded"
+                />
+                <Input
+                  value={formData.color}
+                  onChange={(e) =>
+                    setFormData({ ...formData, color: e.target.value })
+                  }
+                  placeholder="#FF6B6B"
+                  className="flex-1"
+                />
+              </div>
+            </div>
+
+            <div>
+              <Label>{t("adminCategoryImage")}</Label>
+              <div className="mt-2">
+                <ImageUpload
+                  onImageChange={(image) => setFormData({ ...formData, image })}
+                />
+              </div>
+              {formData.image && (
+                <p className="text-sm text-muted-foreground mt-2">
+                  {t("adminNewImageSelected")}
+                </p>
+              )}
+            </div>
+          </form>
+        </div>
+        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            {t("adminCancel")}
+          </Button>
+          <Button type="submit"             
+          className="btn-ultra"
+ disabled={loading} onClick={handleSubmit}>
+            {loading ? t("adminCreating") : t("adminCreate")}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

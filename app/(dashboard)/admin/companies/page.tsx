@@ -29,28 +29,40 @@ import {
 
 interface Company {
   _id: string;
-  userId: string;
+  userId: {
+    _id: string;
+    name: string;
+    email: string;
+  };
   companyName: string;
-  categoryId: string;
+  companyNameEn: string;
   description: string;
-  image: string;
+  descriptionEn: string;
+  logo: string;
   country: string;
   city: string;
   email: string;
   whatsapp: string;
   facebook: string;
   website: string;
-  isApproved: boolean;
+  status: string;
+  adType: string;
+  ratingsQuantity: number;
+  categoryId: {
+    nameAr: string;
+    nameEn: string;
+    color: string;
+  };
+  views: number;
   createdAt: string;
+  updatedAt: string;
+  slug: string;
+  __v: number;
 }
 
 interface CompaniesResponse {
+  status: string;
   results: number;
-  paginationResult: {
-    currentPage: number;
-    limit: number;
-    numberOfPages: number;
-  };
   data: Company[];
 }
 
@@ -92,20 +104,20 @@ function useCompanies(
       try {
         let url = `http://72.60.178.180:8000/api/v1/companies/?page=${currentPage}&limit=10`;
         
-        // Add status filter
+        // Add status filter - note: your API uses 'status' field instead of 'isApproved'
         if (statusFilter === "approved") {
-          url += `&isApproved=true`;
+          url += `&status=approved`;
         } else if (statusFilter === "pending") {
-          url += `&isApproved=false`;
+          url += `&status=pending`;
         }
         
         // Add search query
         if (searchQuery) {
           url = `http://72.60.178.180:8000/api/v1/companies/search?name=${encodeURIComponent(searchQuery)}&page=${currentPage}&limit=10`;
           if (statusFilter === "approved") {
-            url += `&isApproved=true`;
+            url += `&status=approved`;
           } else if (statusFilter === "pending") {
-            url += `&isApproved=false`;
+            url += `&status=pending`;
           }
         }
         
@@ -113,9 +125,9 @@ function useCompanies(
         if (categoryId && categoryId !== "all") {
           url = `http://72.60.178.180:8000/api/v1/companies/category/${categoryId}?page=${currentPage}&limit=10`;
           if (statusFilter === "approved") {
-            url += `&isApproved=true`;
+            url += `&status=approved`;
           } else if (statusFilter === "pending") {
-            url += `&isApproved=false`;
+            url += `&status=pending`;
           }
         }
         
@@ -136,12 +148,13 @@ function useCompanies(
           }
           
           if (statusFilter === "approved") {
-            url += `${countryFilter || cityFilter ? '&' : ''}isApproved=true`;
+            url += `${countryFilter || cityFilter ? '&' : ''}status=approved`;
           } else if (statusFilter === "pending") {
-            url += `${countryFilter || cityFilter ? '&' : ''}isApproved=false`;
+            url += `${countryFilter || cityFilter ? '&' : ''}status=pending`;
           }
         }
 
+        console.log("Fetching companies from:", url);
         const response = await fetch(url, {
           headers: getAuthHeaders()
         });
@@ -151,14 +164,20 @@ function useCompanies(
         }
         
         const data: CompaniesResponse = await response.json();
-        setCompanies(data.data);
+        console.log("API Response:", data);
+        
+        setCompanies(data.data || []);
+        
+        // Calculate pagination based on results and fixed limit
+        const limit = 10;
         setPagination({
-          currentPage: data.paginationResult.currentPage,
-          limit: data.paginationResult.limit,
-          numberOfPages: data.paginationResult.numberOfPages,
+          currentPage: currentPage,
+          limit: limit,
+          numberOfPages: Math.ceil(data.results / limit),
           totalResults: data.results,
         });
       } catch (err) {
+        console.error("Error fetching companies:", err);
         setError(err instanceof Error ? err.message : t("adminCompaniesFetchError"));
         toast({
           title: t("adminError"),
@@ -171,7 +190,7 @@ function useCompanies(
     };
 
     fetchCompanies();
-  }, [statusFilter, searchQuery, countryFilter, cityFilter, categoryId, currentPage, refreshKey]);
+  }, [statusFilter, searchQuery, countryFilter, cityFilter, categoryId, currentPage, refreshKey, t]);
 
   return { companies, loading, error, pagination };
 }
@@ -189,6 +208,12 @@ function PaginationControls({
   loading: boolean;
 }) {
   const { t } = useI18n();
+  
+  // Safety check for invalid totalPages
+  if (!totalPages || totalPages <= 0) {
+    return null;
+  }
+  
   const pages = [];
   const maxVisiblePages = 5;
   
@@ -490,7 +515,7 @@ function AdminCompaniesTable({
               <TableCell>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-10 w-10">
-                    <AvatarImage src={company.image} alt={company.companyName} />
+                    <AvatarImage src={company.logo} alt={company.companyName} />
                     <AvatarFallback>
                       {company.companyName.substring(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -521,19 +546,19 @@ function AdminCompaniesTable({
               </TableCell>
               <TableCell>
                 <Badge
-                  variant={company.isApproved ? "default" : "secondary"}
+                  variant={company.status === "approved" ? "default" : "secondary"}
                   className={
-                    company.isApproved
+                    company.status === "approved"
                       ? "bg-green-100 text-green-800 hover:bg-green-200"
                       : "bg-orange-100 text-orange-800 hover:bg-orange-200"
                   }
                 >
-                  {company.isApproved ? t("adminApproved") : t("adminPending")}
+                  {company.status === "approved" ? t("adminApproved") : t("adminPending")}
                 </Badge>
               </TableCell>
               <TableCell>
                 <div className="flex gap-2">
-                  {!company.isApproved && (
+                  {company.status !== "approved" && (
                     <Button
                       size="sm"
                       onClick={() => setApproveModal({

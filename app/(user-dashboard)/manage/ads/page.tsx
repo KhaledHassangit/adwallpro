@@ -50,7 +50,9 @@ import {
 interface Company {
   _id: string;
   companyName: string;
+  companyNameEn?: string;
   description: string;
+  descriptionEn?: string;
   categoryId: {
     _id: string;
     nameAr: string;
@@ -59,6 +61,7 @@ interface Company {
   isApproved: boolean;
   createdAt: string;
   image?: string;
+  logo?: any;
   email?: string;
   __v?: number;
   city?: string;
@@ -142,7 +145,7 @@ function UserAdsContent() {
         }
       );
 
-      if (!response.ok) throw new Error("Failed to fetch data");
+      if (!response.ok) throw new Error(t("failedToFetchAds"));
       const data = await response.json();
       const companies = data?.data || data || [];
       setCompanies(companies);
@@ -232,18 +235,48 @@ function UserAdsContent() {
     setCompanyToDelete(null);
   };
 
+  // Helper function to convert logo data to a usable image URL
+  const getLogoImageUrl = (logo: any) => {
+    if (!logo) return "";
+    
+    // If logo is already a string URL, return it
+    if (typeof logo === 'string') return logo;
+    
+    // If logo has a data property with type and data
+    if (logo.data && Array.isArray(logo.data)) {
+      // Convert the array of numbers to a Uint8Array
+      const uint8Array = new Uint8Array(logo.data);
+      
+      // Create a Blob from the Uint8Array
+      const blob = new Blob([uint8Array], { type: 'image/jpeg' });
+      
+      // Create a URL for the Blob
+      return URL.createObjectURL(blob);
+    }
+    
+    return "";
+  };
+
   const openEditModal = (company: Company) => {
+    console.log("Opening edit modal for company:", company);
     setCompanyToEdit(company);
+    
+    // Extract category ID properly
+    const categoryId = company.categoryId?._id || company.categoryId || "";
+    
+    // Handle image - check for both image and logo properties
+    const companyImage = company.image || getLogoImageUrl(company.logo);
+    
     setEditForm({
       companyName: company.companyName,
       description: company.description,
-      categoryId: company.categoryId?._id || "",
+      categoryId: categoryId,
       city: company.city || "",
       country: company.country || "",
       website: company.website || "",
       whatsapp: company.whatsapp || "",
       facebook: company.facebook || "",
-      image: company.image || "",
+      image: companyImage,
     });
     setFormErrors({});
     setEditModalOpen(true);
@@ -278,13 +311,13 @@ function UserAdsContent() {
     try {
       setSaving(true);
       
-      // Create a copy of the form data
+      // Create a copy of form data
       const formData = { ...editForm };
       
       // Handle image if it's a base64 string (newly uploaded)
       if (formData.image && formData.image.startsWith('data:')) {
         // If your API requires separate image upload, handle it here
-        // For now, we'll send it as part of the form data
+        // For now, we'll send it as part of form data
       }
       
       const response = await fetch(
@@ -374,9 +407,43 @@ function UserAdsContent() {
   };
 
   // Helper function to get category name based on language
-  const getCategoryName = (categoryId) => {
-    if (!categoryId) return t("unknown");
-    return lang === "ar" ? categoryId.nameAr : categoryId.nameEn;
+  const getCategoryName = (category: Company['categoryId']) => {
+    if (!category) return t("unknown");
+    
+    // If category is already an object with nameAr and nameEn
+    if (category.nameAr && category.nameEn) {
+      return lang === "ar" ? category.nameAr : category.nameEn;
+    }
+    
+    // If category is just an ID string, try to find it in the categories list
+    if (typeof category === 'string') {
+      const foundCategory = categories.find((c) => c._id === category);
+      if (foundCategory) {
+        return lang === "ar" ? foundCategory.nameAr : foundCategory.nameEn;
+      }
+    }
+    
+    return t("unknown");
+  };
+
+  // Helper function to get company name based on language
+  const getCompanyName = (company: Company) => {
+    if (lang === "ar" && company.companyName) {
+      return company.companyName;
+    } else if (lang === "en" && company.companyNameEn) {
+      return company.companyNameEn;
+    }
+    return company.companyName || t("undefined");
+  };
+
+  // Helper function to get company description based on language
+  const getCompanyDescription = (company: Company) => {
+    if (lang === "ar" && company.description) {
+      return company.description;
+    } else if (lang === "en" && company.descriptionEn) {
+      return company.descriptionEn;
+    }
+    return company.description || t("noDescription");
   };
 
   const filteredCompanies = companies.filter((company) => {
@@ -522,10 +589,10 @@ function UserAdsContent() {
                     {/* Info Section */}
                     <div className="flex items-start gap-4 flex-1 min-w-0">
                       <div className="w-16 h-16 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        {company.image ? (
+                        {company.image || company.logo ? (
                           <img
-                            src={company.image}
-                            alt={company.companyName || "Company"}
+                            src={company.image || getLogoImageUrl(company.logo)}
+                            alt={getCompanyName(company)}
                             className="w-full h-full object-cover rounded-lg"
                           />
                         ) : (
@@ -536,12 +603,12 @@ function UserAdsContent() {
                       <div className="flex-1 min-w-0 break-words">
                         <div className="flex flex-wrap items-center gap-2 mb-2">
                           <h3 className="text-lg font-semibold truncate max-w-full">
-                            {company.companyName || "شركة غير محددة"}
+                            {getCompanyName(company)}
                           </h3>
                           {getStatusBadge(company)}
                         </div>
                         <p className="text-muted-foreground text-sm mb-3 break-words line-clamp-3">
-                          {company.description || t("noDescription")}
+                          {getCompanyDescription(company)}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                           <span>{t("categoryLabel")} {getCategoryName(company.categoryId)}</span>
@@ -566,7 +633,7 @@ function UserAdsContent() {
                     <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end w-full sm:w-auto">
                       <Button variant="outline" size="sm" onClick={() => openEditModal(company)}>
                         <Edit className="h-4 w-4 mr-1" />
-                        {t("editAd")}
+                        {t("edit")}
                       </Button>
                       <Button
                         variant="outline"
@@ -575,7 +642,7 @@ function UserAdsContent() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
-                        {t("deleteAd")}
+                        {t("delete")}
                       </Button>
                     </div>
                   </div>
@@ -603,7 +670,6 @@ function UserAdsContent() {
                 onClick={closeDeleteModal}
                 disabled={deleting}
               >
-                <X className="h-4 w-4 mr-2" />
                 {t("cancel")}
               </Button>
               <Button
@@ -633,7 +699,7 @@ function UserAdsContent() {
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Edit className="h-5 w-5 text-primary" />
-                {t("editAd")}
+                {t("editAd")}: {companyToEdit ? getCompanyName(companyToEdit) : ""}
               </DialogTitle>
               <DialogDescription>
                 {t("editAdDescription")}
@@ -678,7 +744,7 @@ function UserAdsContent() {
                   >
                     <Camera className="h-12 w-12 text-primary/50 mb-2" />
                     <span className="text-sm text-muted-foreground">
-                      {t("clickToUploadImage")}
+                      {t("dragImageOrClick")}
                     </span>
                   </div>
                 )}
@@ -706,7 +772,6 @@ function UserAdsContent() {
                     value={editForm.companyName}
                     onChange={(e) => handleInputChange("companyName", e.target.value)}
                     className={formErrors.companyName ? "border-red-500" : ""}
-                    required
                   />
                   {formErrors.companyName && (
                     <p className="text-sm text-red-500">{formErrors.companyName}</p>
@@ -717,7 +782,6 @@ function UserAdsContent() {
                   <Select
                     value={editForm.categoryId}
                     onValueChange={(value) => handleInputChange("categoryId", value)}
-                    required
                   >
                     <SelectTrigger className={formErrors.categoryId ? "border-red-500" : ""}>
                       <SelectValue placeholder={t("selectCategory")} />
@@ -744,11 +808,10 @@ function UserAdsContent() {
                   onChange={(e) => handleInputChange("description", e.target.value)}
                   rows={3}
                   className={formErrors.description ? "border-red-500" : ""}
-                  required
                 />
                 {formErrors.description && (
                   <p className="text-sm text-red-500">{formErrors.description}</p>
-                )}
+                  )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -780,7 +843,7 @@ function UserAdsContent() {
                 <div className="space-y-2">
                   <Label htmlFor="website">
                     <Globe className="h-4 w-4 inline mr-1" />
-                    {t("website")}
+                    {t("websiteLabel")}
                   </Label>
                   <Input
                     id="website"
@@ -795,9 +858,9 @@ function UserAdsContent() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="whatsapp">
+                  <Label htmlFor="Whatsapp">
                     <Phone className="h-4 w-4 inline mr-1" />
-                    {t("whatsapp")}
+                    {t("whatsappLabel")}
                   </Label>
                   <Input
                     id="whatsapp"
@@ -811,7 +874,7 @@ function UserAdsContent() {
               <div className="space-y-2">
                 <Label htmlFor="facebook">
                   <Facebook className="h-4 w-4 inline mr-1" />
-                  {t("facebook")}
+                  {t("facebookLabel")}
                 </Label>
                 <Input
                   id="facebook"
@@ -823,7 +886,7 @@ function UserAdsContent() {
                 />
                 {formErrors.facebook && (
                   <p className="text-sm text-red-500">{formErrors.facebook}</p>
-                )}
+                  )}
               </div>
 
               <DialogFooter>
@@ -833,10 +896,9 @@ function UserAdsContent() {
                   onClick={closeEditModal}
                   disabled={saving}
                 >
-                  <X className="h-4 w-4 mr-2" />
                   {t("cancel")}
                 </Button>
-                <Button type="submit" className="btn-ultra" disabled={saving || imageUploading}>
+                <Button type="submit" className="btn-ultra text-white" disabled={saving || imageUploading}>
                   {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
