@@ -27,7 +27,7 @@ function getAdminNavItems(t: (key: string) => string) {
   return [
     { title: t("overview"), href: "/admin", icon: LayoutDashboard },
     { title: t("companiesManagementNav"), href: "/admin/companies", icon: Building2 },
-    { title: t("plansManagement"), href: "/admin/plans", icon: PlusCircle },
+    { title: t("subscriptionPlans"), href: "/admin/plans", icon: PlusCircle },
     { title: t("usersManagement"), href: "/admin/users", icon: Users },
     { title: t("categoriesManagement"), href: "/admin/categories", icon: Tags },
     { title: t("couponsManagement"), href: "/admin/coupons", icon: Ticket },

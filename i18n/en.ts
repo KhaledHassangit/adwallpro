@@ -654,8 +654,8 @@ export const en = {
 
   // Existing translations...
 
-  // Plans Management
-  "subscriptionPlans": "باقات الاشتراك",
+  // Plans Management 
+  subscriptionPlans: "Subscription Plans ",
   "createAndManagePlans": "إنشاء وإدارة باقات الاشتراك",
   "createNewPlan": "إنشاء باقة جديدة",
   "planName": "اسم الباقة",

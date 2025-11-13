@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 // Updated types to match the schema requirements
@@ -68,6 +68,7 @@ type CategoriesResponse = {
   data: Category[];
 };
 
+// Constants for better maintainability
 const DURATION_OPTIONS = {
   ar: [
     { value: "1 شهر", label: "1 شهر" },
@@ -88,10 +89,10 @@ const DURATION_OPTIONS = {
 };
 
 const PLAN_TYPES = [
-  { value: "Basic", label: "Basic" },
-  { value: "Standard", label: "Standard" },
-  { value: "Premium", label: "Premium" },
-  { value: "Monthly", label: "Monthly" }
+  { value: "Basic", label: "Basic", icon: Package },
+  { value: "Standard", label: "Standard", icon: Zap },
+  { value: "Premium", label: "Premium", icon: Star },
+  { value: "Monthly", label: "Monthly", icon: Calendar }
 ];
 
 const DEFAULT_PLAN_COLORS = {
@@ -101,27 +102,261 @@ const DEFAULT_PLAN_COLORS = {
   "Monthly": "#10b981"
 };
 
+// Utility functions for better maintainability
 const getPlanIcon = (planType?: string) => {
-  switch (planType) {
-    case 'Premium': return <Star className="w-5 h-5" />;
-    case 'Standard': return <Zap className="w-5 h-5" />;
-    case 'Basic': return <Package className="w-5 h-5" />;
-    case 'Monthly': return <Calendar className="w-5 h-5" />;
-    default: return <Shield className="w-5 h-5" />;
-  }
+  const plan = PLAN_TYPES.find(p => p.value === planType);
+  return plan ? <plan.icon className="w-5 h-5" /> : <Shield className="w-5 h-5" />;
 };
 
-const getPlanGradient = (planType?: string) => {
-  switch (planType) {
-    case 'Premium': return 'from-purple-500 to-pink-500';
-    case 'Standard': return 'from-blue-500 to-cyan-500';
-    case 'Basic': return 'from-gray-500 to-gray-600';
-    case 'Monthly': return 'from-green-500 to-teal-500';
-    default: return 'from-gray-500 to-gray-600';
-  }
+const getContrastColor = (hexColor?: string) => {
+  if (!hexColor) return '#ffffff';
+  
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  
+  return luminance > 0.5 ? '#000000' : '#ffffff';
 };
 
-// Move EditCard outside main component to prevent recreation
+const getLighterColor = (hexColor?: string, percent = 20) => {
+  if (!hexColor) return '#f3f4f6';
+  
+  const r = parseInt(hexColor.slice(1, 3), 16);
+  const g = parseInt(hexColor.slice(3, 5), 16);
+  const b = parseInt(hexColor.slice(5, 7), 16);
+  
+  const newR = Math.min(255, Math.floor(r + (255 - r) * percent / 100));
+  const newG = Math.min(255, Math.floor(g + (255 - g) * percent / 100));
+  const newB = Math.min(255, Math.floor(b + (255 - b) * percent / 100));
+  
+  return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+};
+
+// Reusable components for better maintainability
+const ColorPicker = ({ value, onChange, onReset, defaultColor, locale }: {
+  value?: string;
+  onChange: (color: string) => void;
+  onReset: () => void;
+  defaultColor: string;
+  locale: string;
+}) => (
+  <div className="space-y-2">
+    <Label className="text-sm font-medium flex items-center gap-2">
+      <Palette className="w-4 h-4 text-primary" />
+      {locale === "ar" ? "لون الباقة" : "Plan Color"}
+    </Label>
+    <div className="flex items-center gap-2">
+      <Input
+        type="color"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="w-16 h-10 p-1 border rounded cursor-pointer"
+      />
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder="#64748b"
+        className="flex-1"
+      />
+      <Button
+        type="button"
+        variant="outline"
+        size="sm"
+        onClick={onReset}
+        title={locale === "ar" ? "استخدام اللون الافتراضي" : "Use default color"}
+      >
+        {locale === "ar" ? "افتراضي" : "Default"}
+      </Button>
+    </div>
+  </div>
+);
+
+const FeatureList = ({ features, onChange, onAdd, onRemove, locale }: {
+  features: string[];
+  onChange: (index: number, value: string) => void;
+  onAdd: () => void;
+  onRemove: (index: number) => void;
+  locale: string;
+}) => (
+  <div className="space-y-3">
+    <div className="flex items-center justify-between">
+      <Label className="text-sm font-medium flex items-center gap-2">
+        <Check className="w-4 h-4 text-success" />
+        {locale === "ar" ? "المزايا" : "Features"}
+      </Label>
+      <Button type="button" variant="outline" size="sm" onClick={onAdd}>
+        <Plus className="w-4 h-4 mr-1" /> {locale === "ar" ? "إضافة ميزة" : "Add Feature"}
+      </Button>
+    </div>
+    <div className="space-y-2">
+      {features.map((feature, index) => (
+        <div key={`feature-${index}`} className="flex gap-2">
+          <Input
+            value={feature}
+            onChange={(e) => onChange(index, e.target.value)}
+            placeholder={locale === "ar" ? "أدخل ميزة" : "Enter a feature"}
+            className="flex-1"
+          />
+          {features.length > 1 && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(index)}
+              className="shrink-0 hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+const PlanOptionEditor = ({ option, index, categories, categoriesLoading, onChange, onRemove, canRemove, locale }: {
+  option: PlanOption;
+  index: number;
+  categories: Category[];
+  categoriesLoading: boolean;
+  onChange: (index: number, field: keyof PlanOption, value: any) => void;
+  onRemove: (index: number) => void;
+  canRemove: boolean;
+  locale: string;
+}) => {
+  const getDurationOptions = useMemo(() => {
+    return DURATION_OPTIONS[locale as keyof typeof DURATION_OPTIONS] || DURATION_OPTIONS.en;
+  }, [locale]);
+
+  const getCategoryName = useCallback((category: Category) => {
+    return locale === "ar" ? category.nameAr : category.nameEn;
+  }, [locale]);
+
+  const handleToggleCategory = useCallback((categoryId: string) => {
+    const currentCategories = [...(option.categories || [])];
+    if (currentCategories.includes(categoryId)) {
+      onChange(index, 'categories', currentCategories.filter(c => c !== categoryId));
+    } else {
+      onChange(index, 'categories', [...currentCategories, categoryId]);
+    }
+  }, [option.categories, onChange, index]);
+
+  return (
+    <Card className="border-2 bg-muted/30 hover:bg-muted/50 transition-all duration-200">
+      <CardHeader className="pb-3">
+        <div className="flex justify-between items-center">
+          <h4 className="font-medium text-sm flex items-center gap-2">
+            <DollarSign className="w-4 h-4 text-primary" />
+            {locale === "ar" ? `خيار ${index + 1}` : `Option ${index + 1}`}
+          </h4>
+          {canRemove && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onRemove(index)}
+              className="hover:bg-red-50 hover:text-red-600 transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "المدة" : "Duration"}</Label>
+            <Select
+              value={option.duration}
+              onValueChange={(value) => onChange(index, 'duration', value)}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder={locale === "ar" ? "اختر المدة" : "Select duration"} />
+              </SelectTrigger>
+              <SelectContent>
+                {getDurationOptions.map((duration) => (
+                  <SelectItem key={duration.value} value={duration.value}>
+                    {duration.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "السعر بالدولار" : "Price (USD)"}</Label>
+            <Input
+              type="number"
+              value={option.priceUSD}
+              onChange={(e) => onChange(index, 'priceUSD', parseFloat(e.target.value) || 0)}
+              min="0"
+              step="0.01"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "نسبة الخصم (%)" : "Discount (%)"}</Label>
+            <Input
+              type="number"
+              value={option.discountPercent}
+              onChange={(e) => onChange(index, 'discountPercent', parseFloat(e.target.value) || 0)}
+              min="0"
+              max="100"
+              step="1"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "السعر النهائي (USD)" : "Final Price (USD)"}</Label>
+            <Input
+              type="number"
+              value={option.finalPriceUSD?.toFixed(2)}
+              readOnly
+              className="bg-muted"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "عدد الإعلانات" : "Ads Count"}</Label>
+            <Input
+              type="number"
+              value={option.adsCount}
+              onChange={(e) => onChange(index, 'adsCount', parseInt(e.target.value) || 0)}
+              min="0"
+              step="1"
+            />
+          </div>
+          <div className="space-y-2 md:col-span-2">
+            <Label className="text-xs font-medium text-muted-foreground">{locale === "ar" ? "الفئات المسموح بها" : "Allowed Categories"}</Label>
+            {categoriesLoading ? (
+              <div className="flex items-center justify-center py-4">
+                <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                <span className="text-sm text-muted-foreground">
+                  {locale === "ar" ? "جاري تحميل الفئات..." : "Loading categories..."}
+                </span>
+              </div>
+            ) : (
+              <div className="border rounded-md p-3 max-h-32 overflow-y-auto bg-background">
+                <div className="flex flex-wrap gap-2">
+                  {categories.map((category) => (
+                    <Badge
+                      key={category._id}
+                      variant={option.categories?.includes(category._id) ? "default" : "outline"}
+                      className="cursor-pointer text-xs transition-all hover:scale-105"
+                      onClick={() => handleToggleCategory(category._id)}
+                    >
+                      {getCategoryName(category)}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+// EditCard Component
 type EditCardProps = {
   form: Plan;
   locale: string;
@@ -134,13 +369,7 @@ type EditCardProps = {
 };
 
 const EditCard = memo(({ form, locale, categories, categoriesLoading, onFormChange, onSubmit, onCancel, isNew }: EditCardProps) => {
-  const getDurationOptions = useMemo(() => {
-    return DURATION_OPTIONS[locale as keyof typeof DURATION_OPTIONS] || DURATION_OPTIONS.en;
-  }, [locale]);
-
-  const getCategoryName = useCallback((category: Category) => {
-    return locale === "ar" ? category.nameAr : category.nameEn;
-  }, [locale]);
+  const textColor = getContrastColor(form.color);
 
   const handleOptionChange = useCallback((index: number, field: keyof PlanOption, value: any) => {
     const newOptions = [...(form.options || [])];
@@ -149,12 +378,10 @@ const EditCard = memo(({ form, locale, categories, categoriesLoading, onFormChan
     if (field === 'priceUSD' || field === 'discountPercent') {
       const price = field === 'priceUSD' ? value : newOptions[index].priceUSD;
       const discount = field === 'discountPercent' ? value : newOptions[index].discountPercent;
-      
-      // Ensure price and discount are valid numbers
+
       const validPrice = typeof price === 'number' && price >= 0 ? price : 0;
       const validDiscount = typeof discount === 'number' && discount >= 0 && discount <= 100 ? discount : 0;
-      
-      // Calculate finalPriceUSD with proper rounding
+
       newOptions[index].finalPriceUSD = parseFloat((validPrice * (1 - validDiscount / 100)).toFixed(2));
     }
 
@@ -203,303 +430,165 @@ const EditCard = memo(({ form, locale, categories, categoriesLoading, onFormChan
     }
   }, [form.features, onFormChange]);
 
-  const handleToggleCategory = useCallback((optionIndex: number, categoryId: string) => {
-    const newOptions = [...(form.options || [])];
-    const categories = [...(newOptions[optionIndex].categories || [])];
-
-    if (categories.includes(categoryId)) {
-      newOptions[optionIndex].categories = categories.filter(c => c !== categoryId);
-    } else {
-      newOptions[optionIndex].categories = [...categories, categoryId];
+  const handleColorReset = useCallback(() => {
+    const defaultColor = DEFAULT_PLAN_COLORS[form.planType as keyof typeof DEFAULT_PLAN_COLORS];
+    if (defaultColor) {
+      onFormChange({ color: defaultColor });
     }
-
-    onFormChange({ options: newOptions });
-  }, [form.options, onFormChange]);
+  }, [form.planType, onFormChange]);
 
   return (
-    <Card className="relative overflow-hidden border-2 border-dashed border-primary shadow-lg">
-      <CardHeader className={`bg-gradient-to-r ${getPlanGradient(form.planType)}`}>
+    <Card className="relative overflow-hidden border-2 border-dashed border-primary shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+      {/* Header with dynamic color */}
+      <div 
+        className="p-6 text-white"
+        style={{ 
+          backgroundColor: form.color,
+          color: textColor
+        }}
+      >
         <div className="flex justify-between items-start">
           <div className="flex items-center gap-3 flex-1">
-            <div className="p-2 rounded-lg bg-white/20 text-white backdrop-blur-sm">
+            <div className="p-2 rounded-lg bg-white/20 backdrop-blur-sm">
               {getPlanIcon(form.planType)}
             </div>
             <div className="flex-1 space-y-2">
               <Input
                 value={form.name}
                 onChange={(e) => onFormChange({ name: e.target.value })}
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 font-semibold"
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 font-semibold focus:bg-white/30 transition-colors"
                 placeholder={locale === "ar" ? "اسم الباقة" : "Plan Name"}
               />
               <Input
                 value={form.description}
                 onChange={(e) => onFormChange({ description: e.target.value })}
-                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm"
+                className="bg-white/20 border-white/30 text-white placeholder:text-white/70 text-sm focus:bg-white/30 transition-colors"
                 placeholder={locale === "ar" ? "وصف الباقة" : "Plan Description"}
               />
             </div>
           </div>
-          <Badge className="bg-white/20 text-white border-white/30 backdrop-blur-sm">
+          <Badge 
+            className="bg-white/20 text-white border-white/30 backdrop-blur-sm"
+            style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.2)',
+              color: textColor
+            }}
+          >
             {form.planType}
           </Badge>
         </div>
-      </CardHeader>
+      </div>
 
       <CardContent className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Tag className="w-4 h-4 text-primary" />
-              {locale === "ar" ? "الرمز" : "Code"}
-            </Label>
-            <Input
-              value={form.code}
-              onChange={(e) => onFormChange({ code: e.target.value })}
-              placeholder={locale === "ar" ? "مثال: BASIC" : "e.g: BASIC"}
-              className="uppercase"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Package className="w-4 h-4 text-primary" />
-              {locale === "ar" ? "نوع الباقة" : "Plan Type"}
-            </Label>
-            <Select value={form.planType} onValueChange={(value) => onFormChange({ planType: value as Plan['planType'] })}>
-              <SelectTrigger>
-                <SelectValue placeholder={locale === "ar" ? "اختر نوع الباقة" : "Select plan type"} />
-              </SelectTrigger>
-              <SelectContent>
-                {PLAN_TYPES.map((type) => (
-                  <SelectItem key={type.value} value={type.value}>
-                    {type.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Palette className="w-4 h-4 text-primary" />
-              {locale === "ar" ? "لون الباقة" : "Plan Color"}
-            </Label>
-            <div className="flex items-center gap-2">
+        {/* Basic Information Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-2">{locale === "ar" ? "المعلومات الأساسية" : "Basic Information"}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Tag className="w-4 h-4 text-primary" />
+                {locale === "ar" ? "الرمز" : "Code"}
+              </Label>
               <Input
-                type="color"
-                value={form.color}
-                onChange={(e) => onFormChange({ color: e.target.value })}
-                className="w-16 h-10 p-1 border rounded cursor-pointer"
+                value={form.code}
+                onChange={(e) => onFormChange({ code: e.target.value })}
+                placeholder={locale === "ar" ? "مثال: BASIC" : "e.g: BASIC"}
+                className="uppercase"
               />
-              <Input
-                value={form.color}
-                onChange={(e) => onFormChange({ color: e.target.value })}
-                placeholder="#64748b"
-                className="flex-1"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  const defaultColor = DEFAULT_PLAN_COLORS[form.planType as keyof typeof DEFAULT_PLAN_COLORS];
-                  if (defaultColor) {
-                    onFormChange({ color: defaultColor });
-                  }
-                }}
-                title={locale === "ar" ? "استخدام اللون الافتراضي" : "Use default color"}
-              >
-                {locale === "ar" ? "افتراضي" : "Default"}
-              </Button>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-medium flex items-center gap-2">
+                <Package className="w-4 h-4 text-primary" />
+                {locale === "ar" ? "نوع الباقة" : "Plan Type"}
+              </Label>
+              <Select value={form.planType} onValueChange={(value) => onFormChange({ planType: value as Plan['planType'] })}>
+                <SelectTrigger>
+                  <SelectValue placeholder={locale === "ar" ? "اختر نوع الباقة" : "Select plan type"} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLAN_TYPES.map((type) => (
+                    <SelectItem key={type.value} value={type.value}>
+                      <div className="flex items-center gap-2">
+                        <type.icon className="w-4 h-4" />
+                        {type.label}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
-          <div className="space-y-2">
-            <Label className="text-sm font-medium">{locale === "ar" ? "معاينة اللون" : "Color Preview"}</Label>
-            <div
-              className="h-10 rounded-md border-2 border-border transition-all"
-              style={{ backgroundColor: form.color }}
-            ></div>
-          </div>
+
+          <ColorPicker
+            value={form.color}
+            onChange={(color) => onFormChange({ color })}
+            onReset={handleColorReset}
+            defaultColor={DEFAULT_PLAN_COLORS[form.planType as keyof typeof DEFAULT_PLAN_COLORS]}
+            locale={locale}
+          />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Check className="w-4 h-4 text-success" />
-              {locale === "ar" ? "المزايا" : "Features"}
-            </Label>
-            <Button type="button" variant="outline" size="sm" onClick={handleAddFeature}>
-              <Plus className="w-4 h-4 mr-1" /> {locale === "ar" ? "إضافة ميزة" : "Add Feature"}
-            </Button>
-          </div>
-
-          <div className="space-y-2">
-            {form.features?.map((feature, index) => (
-              <div key={`feature-${index}`} className="flex gap-2">
-                <Input
-                  value={feature}
-                  onChange={(e) => handleFeatureChange(index, e.target.value)}
-                  placeholder={locale === "ar" ? "أدخل ميزة" : "Enter a feature"}
-                  className="flex-1"
-                />
-                {form.features && form.features.length > 1 && (
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleRemoveFeature(index)}
-                    className="shrink-0"
-                  >
-                    <X className="w-4 h-4" />
-                  </Button>
-                )}
-              </div>
-            ))}
-          </div>
+        {/* Features Section */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold border-b pb-2">{locale === "ar" ? "المزايا" : "Features"}</h3>
+          <FeatureList
+            features={form.features || []}
+            onChange={handleFeatureChange}
+            onAdd={handleAddFeature}
+            onRemove={handleRemoveFeature}
+            locale={locale}
+          />
         </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-info" />
-              {locale === "ar" ? "خيارات الباقة" : "Plan Options"}
-            </Label>
+        {/* Options Section */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between border-b pb-2">
+            <h3 className="text-lg font-semibold">{locale === "ar" ? "خيارات الباقة" : "Plan Options"}</h3>
             <Button type="button" variant="outline" size="sm" onClick={handleAddOption}>
               <Plus className="w-4 h-4 mr-1" /> {locale === "ar" ? "إضافة خيار" : "Add Option"}
             </Button>
           </div>
-
           <div className="space-y-4">
             {form.options?.map((option, index) => (
-              <Card key={`option-${index}`} className="border-2 bg-muted/30">
-                <CardHeader className="pb-3">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-medium text-sm flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-primary" />
-                      {locale === "ar" ? `خيار ${index + 1}` : `Option ${index + 1}`}
-                    </h4>
-                    {form.options && form.options.length > 1 && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveOption(index)}
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "المدة" : "Duration"}</Label>
-                      <Select
-                        value={option.duration}
-                        onValueChange={(value) => handleOptionChange(index, 'duration', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={locale === "ar" ? "اختر المدة" : "Select duration"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {getDurationOptions.map((duration) => (
-                            <SelectItem key={duration.value} value={duration.value}>
-                              {duration.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "السعر بالدولار" : "Price (USD)"}</Label>
-                      <Input
-                        type="number"
-                        value={option.priceUSD}
-                        onChange={(e) => handleOptionChange(index, 'priceUSD', parseFloat(e.target.value) || 0)}
-                        min="0"
-                        step="0.01"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "نسبة الخصم (%)" : "Discount (%)"}</Label>
-                      <Input
-                        type="number"
-                        value={option.discountPercent}
-                        onChange={(e) => handleOptionChange(index, 'discountPercent', parseFloat(e.target.value) || 0)}
-                        min="0"
-                        max="100"
-                        step="1"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "السعر النهائي (USD)" : "Final Price (USD)"}</Label>
-                      <Input
-                        type="number"
-                        value={option.finalPriceUSD?.toFixed(2)}
-                        readOnly
-                        className="bg-muted"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "عدد الإعلانات" : "Ads Count"}</Label>
-                      <Input
-                        type="number"
-                        value={option.adsCount}
-                        onChange={(e) => handleOptionChange(index, 'adsCount', parseInt(e.target.value) || 0)}
-                        min="0"
-                        step="1"
-                      />
-                    </div>
-                    <div className="space-y-1 md:col-span-2">
-                      <Label className="text-xs text-muted-foreground">{locale === "ar" ? "الفئات المسموح بها" : "Allowed Categories"}</Label>
-                      {categoriesLoading ? (
-                        <div className="text-sm text-muted-foreground py-2">
-                          {locale === "ar" ? "جاري تحميل الفئات..." : "Loading categories..."}
-                        </div>
-                      ) : (
-                        <div className="border rounded-md p-2 max-h-32 overflow-y-auto bg-background">
-                          <div className="flex flex-wrap gap-1.5">
-                            {categories.map((category) => (
-                              <Badge
-                                key={category._id}
-                                variant={option.categories?.includes(category._id) ? "default" : "outline"}
-                                className="cursor-pointer text-xs transition-all hover:scale-105"
-                                onClick={() => handleToggleCategory(index, category._id)}
-                                style={option.categories?.includes(category._id) ? { backgroundColor: category.color, color: 'white' } : {}}
-                              >
-                                {getCategoryName(category)}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              <PlanOptionEditor
+                key={`option-${index}`}
+                option={option}
+                index={index}
+                categories={categories}
+                categoriesLoading={categoriesLoading}
+                onChange={handleOptionChange}
+                onRemove={handleRemoveOption}
+                canRemove={form.options && form.options.length > 1}
+                locale={locale}
+              />
             ))}
           </div>
         </div>
 
-        <div className="flex items-center gap-3 p-3 bg-muted/50 rounded-lg">
-          <Switch
-            id="isActive"
-            checked={form.isActive}
-            onCheckedChange={(checked) => onFormChange({ isActive: checked })}
-          />
-          <Label htmlFor="isActive" className="text-sm font-medium cursor-pointer">
-            {form.isActive ? (locale === "ar" ? "نشط" : "Active") : (locale === "ar" ? "غير نشط" : "Inactive")}
-          </Label>
+        {/* Status Toggle */}
+        <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+          <div className="flex items-center gap-3">
+            <Switch
+              id="isActive"
+              checked={form.isActive}
+              onCheckedChange={(checked) => onFormChange({ isActive: checked })}
+            />
+            <Label htmlFor="isActive" className="text-sm font-medium cursor-pointer">
+              {form.isActive ? (locale === "ar" ? "نشط" : "Active") : (locale === "ar" ? "غير نشط" : "Inactive")}
+            </Label>
+          </div>
+          <Badge variant={form.isActive ? "default" : "secondary"}>
+            {form.isActive ? (locale === "ar" ? "متاح للمستخدمين" : "Available to users") : (locale === "ar" ? "غير متاح" : "Unavailable")}
+          </Badge>
         </div>
       </CardContent>
 
-      <CardFooter className="flex justify-between bg-muted/30 border-t">
-        <Button variant="outline" onClick={onCancel}>
+      <CardFooter className="flex justify-between bg-muted/30 border-t p-6">
+        <Button variant="outline" onClick={onCancel} className="hover:bg-gray-100 transition-colors">
           <ArrowLeft className="w-4 h-4 mr-2" />
           {locale === "ar" ? "إلغاء" : "Cancel"}
         </Button>
-        <Button onClick={onSubmit} className="bg-gradient-to-r from-primary to-accent">
+        <Button onClick={onSubmit} className="btn-ultra">
           <Save className="w-4 h-4 mr-2" />
           {isNew ? (locale === "ar" ? "إنشاء" : "Create") : (locale === "ar" ? "حفظ" : "Save")}
         </Button>
@@ -532,19 +621,21 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
     }) || [];
   }, [categories, getCategoryName]);
 
+  const textColor = getContrastColor(plan.color);
+
   return (
     <Card
-      className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl ${!plan.isActive ? 'opacity-60' : ''}`}
+      className={`relative overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${!plan.isActive ? 'opacity-60' : ''}`}
       style={{ borderTopColor: plan.color, borderTopWidth: '4px' }}
     >
       <CardHeader className="pb-4">
         <div className="flex justify-between items-start">
           <div className="flex items-start gap-3">
             <div
-              className={`p-2 rounded-lg bg-gradient-to-r ${getPlanGradient(plan.planType)}`}
+              className="p-2 rounded-lg text-white"
               style={{ backgroundColor: plan.color }}
             >
-              <div className="text-white">
+              <div style={{ color: textColor }}>
                 {getPlanIcon(plan.planType)}
               </div>
             </div>
@@ -563,7 +654,9 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
       </CardHeader>
 
       <CardContent className="space-y-4">
+        {/* Options Display */}
         <div className="space-y-3">
+          <h4 className="font-medium text-sm text-muted-foreground">{locale === "ar" ? "الخيارات المتاحة" : "Available Options"}</h4>
           {plan.options?.map((option, idx) => (
             <div key={idx} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg hover:bg-muted/70 transition-colors">
               <div className="flex-1">
@@ -610,11 +703,9 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
           ))}
         </div>
 
+        {/* Features Display */}
         <div className="space-y-2">
-          <h4 className="font-medium text-sm flex items-center gap-2">
-            <Check className="w-4 h-4 text-success" />
-            {locale === "ar" ? "المزايا" : "Features"}
-          </h4>
+          <h4 className="font-medium text-sm text-muted-foreground">{locale === "ar" ? "المزايا" : "Features"}</h4>
           <ul className="space-y-1">
             {plan.features?.slice(0, 3).map((feature, idx) => (
               <li key={idx} className="flex items-center text-sm text-muted-foreground">
@@ -657,6 +748,7 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
 
 DisplayCard.displayName = 'DisplayCard';
 
+// Main Component
 function PlansAdminPageContent() {
   const { t, locale } = useI18n();
   const [plans, setPlans] = useState<Plan[]>([]);
@@ -665,7 +757,7 @@ function PlansAdminPageContent() {
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; plan: Plan | null }>({ open: false, plan: null });
-  
+
   const defaultDuration = useMemo(() => locale === "ar" ? "1 شهر" : "1 month", [locale]);
 
   const [form, setForm] = useState<Plan>({
@@ -712,17 +804,14 @@ function PlansAdminPageContent() {
       throw new Error(locale === "ar" ? "مطلوب تسجيل الدخول" : "Authentication required");
     }
 
-    // Create headers object with proper content type for POST/PUT requests
     const headers: Record<string, string> = {
       ...authHeaders,
     };
 
-    // Only add Content-Type for requests that have a body
     if (options.body && (options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH')) {
       headers['Content-Type'] = 'application/json';
     }
 
-    // Merge any additional headers from options
     if (options.headers) {
       Object.assign(headers, options.headers);
     }
@@ -732,7 +821,6 @@ function PlansAdminPageContent() {
       headers,
     };
 
-    // Log the request details for debugging
     console.log('API Request:', {
       url,
       method: config.method || 'GET',
@@ -743,7 +831,6 @@ function PlansAdminPageContent() {
     try {
       const response = await fetch(url, config);
 
-      // Log response status
       console.log('API Response Status:', response.status);
 
       if (!response.ok) {
@@ -761,7 +848,6 @@ function PlansAdminPageContent() {
     }
   }, [getAuthHeaders, locale]);
 
-  // API functions with explicit auth headers
   const getPlans = useCallback(async () => {
     return apiRequest('/plans', {
       method: 'GET',
@@ -775,7 +861,6 @@ function PlansAdminPageContent() {
   }, [apiRequest]);
 
   const createPlan = useCallback(async (data: any) => {
-    // Send data directly, not wrapped in a "data" property
     return apiRequest('/plans', {
       method: 'POST',
       body: JSON.stringify(data),
@@ -783,7 +868,6 @@ function PlansAdminPageContent() {
   }, [apiRequest]);
 
   const updatePlan = useCallback(async (id: string, data: any) => {
-    // Send data directly, not wrapped in a "data" property
     return apiRequest(`/plans/${id}`, {
       method: 'PUT',
       body: JSON.stringify(data),
@@ -869,9 +953,9 @@ function PlansAdminPageContent() {
     setEditingId(plan._id || null);
   }, [defaultDuration]);
 
-  const handleSubmit = useCallback(async () => {
+  const 
+  handleSubmit = useCallback(async () => {
     try {
-      // Validate required fields
       if (!form.name.trim()) {
         toast.error(locale === "ar" ? "اسم الباقة مطلوب" : "Plan name is required");
         return;
@@ -885,7 +969,6 @@ function PlansAdminPageContent() {
         return;
       }
 
-      // Validate options
       if (!form.options || form.options.length === 0) {
         toast.error(locale === "ar" ? "يجب أن تحتوي الباقة على خيار واحد على الأقل" : "Plan must have at least one option");
         return;
@@ -907,29 +990,25 @@ function PlansAdminPageContent() {
         }
       }
 
-      // Filter out empty features
       const filteredFeatures = form.features?.filter(f => f.trim() !== "") || [];
 
-      // Ensure at least one feature
       if (filteredFeatures.length === 0) {
         toast.error(locale === "ar" ? "يجب أن تحتوي الباقة على ميزة واحدة على الأقل" : "Plan must have at least one feature");
         return;
       }
 
-      // Calculate finalPriceUSD if not provided
       const updatedOptions = form.options?.map(option => ({
         ...option,
         finalPriceUSD: option.finalPriceUSD ||
           parseFloat((option.priceUSD * (1 - (option.discountPercent || 0) / 100)).toFixed(2))
       }));
 
-      const updatedForm = { 
-        ...form, 
-        features: filteredFeatures, 
-        options: updatedOptions 
+      const updatedForm = {
+        ...form,
+        features: filteredFeatures,
+        options: updatedOptions
       };
 
-      // Log the data being sent for debugging
       console.log('Submitting plan data:', updatedForm);
 
       if (editingId === "new") {
@@ -944,7 +1023,6 @@ function PlansAdminPageContent() {
       fetchPlans();
     } catch (err: any) {
       console.error(err);
-      // Handle validation errors from the API
       if (err.message && typeof err.message === 'string') {
         try {
           const errorData = JSON.parse(err.message);
@@ -995,25 +1073,27 @@ function PlansAdminPageContent() {
   return (
     <main className={`flex-1 p-6 sm:p-8 overflow-y-auto ${isRTL ? "text-right" : "text-left"}`} dir={isRTL ? "rtl" : "ltr"}>
       <div className="max-w-7xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+            <h1 className="text-3xl font-bold gradient-text">
               {locale === "ar" ? "باقات الاشتراك" : "Subscription Plans"}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
+            <p className="text-muted-foreground mt-2">
               {locale === "ar" ? "إنشاء وإدارة باقات الاشتراك" : "Create and manage subscription plans"}
             </p>
           </div>
-          <Button onClick={startCreate} className="flex items-center gap-2 bg-gradient-to-r from-primary to-accent">
+          <Button onClick={startCreate} className="flex items-center gap-2 btn-ultra">
             <Plus className="w-4 h-4" />
             {locale === "ar" ? "إنشاء باقة جديدة" : "Create New Plan"}
           </Button>
         </div>
 
+        {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {loading ? (
             <div className="col-span-full flex items-center justify-center p-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
           ) : (
             <>
@@ -1058,6 +1138,7 @@ function PlansAdminPageContent() {
           )}
         </div>
 
+        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteModal.open} onOpenChange={(open) => setDeleteModal({ open, plan: deleteModal.plan })}>
           <DialogContent className="max-w-md">
             <DialogHeader>
