@@ -730,19 +730,13 @@ export const ar = {
     // Plan types
     "basic": "أساسي",
     "standard": "قياسي",
-    "premium": "مميز",
+    "premium": "مميز", "planCode": "رمز الباقة",
+    "adsIncluded": "الإعلانات المضمنة",
+    "subscriptionStatus": "حالة الاشتراك",
+    "timeLeft": "الوقت المتبقي",
+    "expiresAt": "تاريخ الانتهاء"
 
-    // Categories
-    "restaurants": "مطاعم",
-    "realEstate": "عقارات",
-    "cars": "سيارات",
-    "electronics": "إلكترونيات",
-    "fashion": "أزياء",
-    "health": "صحة",
-    "sports": "رياضة",
-    "education": "تعليم",
-    "travel": "سفر",
-    "technology": "تكنولوجيا"
+
 
 };
 

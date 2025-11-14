@@ -6,7 +6,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, User2 } from "lucide-react";
-import { useAuthStore, signOut, getCurrentUser, isAdmin } from "@/lib/auth";
+// ✅ Updated imports to use the new store structure
+import { useAuthStore, useUserStore, signOut, isAdmin } from "@/lib/auth";
 import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
@@ -39,6 +40,7 @@ function getUserNavItems(t: (key: string) => string) {
   return [
     { title: t("dashboardControl"), href: "/manage", icon: LayoutDashboard },
     { title: t("adsManagement"), href: "/manage/ads", icon: Eye },
+    { title: t("subscriptionPlans"), href: "/manage/subscriptions", icon: Ticket },
     { title: t("personalProfile"), href: "/manage/profile", icon: User2 },
   ];
 }
@@ -50,9 +52,12 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
-  const { user } = useAuthStore();
-  const currentUser = getCurrentUser();
-  const userIsAdmin = isAdmin(currentUser);
+  
+  // ✅ Get user data from the new useUserStore
+  const { user } = useUserStore();
+  
+  // ✅ Simplified isAdmin check using the user from the store
+  const userIsAdmin = isAdmin(user);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -195,11 +200,12 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <User className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex flex-col">
+                  {/* ✅ Updated to use the `user` from the store */}
                   <p className="text-sm font-medium text-foreground truncate">
-                    {currentUser?.name || t("user")}
+                    {user?.name || t("user")}
                   </p>
                   <p className="text-xs text-muted-foreground truncate">
-                    {currentUser?.email}
+                    {user?.email}
                   </p>
                 </div>
               </div>

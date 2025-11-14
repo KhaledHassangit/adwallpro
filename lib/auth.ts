@@ -2,6 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import Cookies from "js-cookie";
 
 // ====================
 // 🧩 User Interface
@@ -19,49 +20,87 @@ export interface User {
   updatedAt: string;
   wishlist: any[];
   __v: number;
+  subscription?: {
+    adsUsed: number;
+    isActive: boolean;
+  };
 }
 
 // ====================
-// 🧩 Auth Store (Zustand)
+// 🧩 Cookie Helpers
 // ====================
-interface AuthState {
+const TOKEN_COOKIE_NAME = "auth_token";
+
+export const setAuthCookie = (token: string) => {
+  Cookies.set(TOKEN_COOKIE_NAME, token, {
+    expires: 7, // 7 days
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    path: '/', // Ensure cookie is available across the site
+  });
+};
+
+export const getAuthCookie = (): string | undefined => {
+  return Cookies.get(TOKEN_COOKIE_NAME);
+};
+
+export const removeAuthCookie = () => {
+  Cookies.remove(TOKEN_COOKIE_NAME, { path: '/' });
+};
+
+// ====================
+// 🧩 User Store (Zustand) - Manages User Data
+// ====================
+interface UserState {
   user: User | null;
-  isLoading: boolean;
-  token: string | null;
   setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
-  setLoading: (loading: boolean) => void;
-  logout: () => void;
   updateUser: (userData: Partial<User>) => void;
 }
 
-export const useAuthStore = create<AuthState>()(
+export const useUserStore = create<UserState>()(
   persist(
     (set) => ({
       user: null,
-      token: null,
-      isLoading: false,
-      setUser: (user: User | null) => set({ user }),
-      setToken: (token: string | null) => set({ token }),
-      setLoading: (isLoading: boolean) => set({ isLoading }),
-      logout: () => set({ user: null, token: null }),
-      updateUser: (userData: Partial<User>) =>
+      setUser: (user) => set({ user }),
+      updateUser: (userData) =>
         set((state) => {
-          if (!state.user) return { user: null };
-          
-          // Create a new user object with updated data
-          const updatedUser = { ...state.user, ...userData };
-          
-          // Let Zustand's persist middleware handle localStorage
-          return { user: updatedUser };
+          if (!state.user) return state;
+          return { user: { ...state.user, ...userData } };
         }),
     }),
-    { name: "auth-storage" }
+    {
+      name: "user-storage", // name of the item in localStorage
+    }
   )
 );
 
 // ====================
-// 🧩 API BASE URLS
+// 🧩 Auth Store (Zustand) - Manages Auth State
+// ====================
+interface AuthState {
+  token: string | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  setToken: (token: string | null) => void;
+  setLoading: (loading: boolean) => void;
+  logout: () => void;
+}
+
+export const useAuthStore = create<AuthState>((set, get) => ({
+  token: null,
+  isLoading: false,
+  isAuthenticated: false,
+  setToken: (token) => set({ token, isAuthenticated: !!token }),
+  setLoading: (isLoading) => set({ isLoading }),
+  logout: () => {
+    useUserStore.getState().setUser(null);
+    removeAuthCookie();
+    set({ token: null, isAuthenticated: false });
+  },
+}));
+
+// ====================
+// 🧩 API BASE URL
 // ====================
 const API_BASE = "http://72.60.178.180:8000/api/v1";
 
@@ -87,17 +126,16 @@ export const signIn = async (
     throw new Error(data.message || "فشل في تسجيل الدخول");
   }
 
-  const user = data.user || data.data || data;
-  const token = data.token;
+  // Updated extraction logic for the new response structure
+  const user = data.data?.data || data.data || data.user || data;
+  const token = data.data?.token || data.token;
 
   if (!user || !token) throw new Error("استجابة غير صحيحة من الخادم");
 
-  // ✅ Update store & localStorage
-  const store = useAuthStore.getState();
-  store.setUser(user);
-  store.setToken(token);
-  localStorage.setItem("auth_token", token);
-  localStorage.setItem("user_data", JSON.stringify(user));
+  // ✅ Update stores & set cookie
+  useAuthStore.getState().setToken(token);
+  useUserStore.getState().setUser(user);
+  setAuthCookie(token);
 
   return { user, token };
 };
@@ -120,64 +158,41 @@ export const signUp = async (
   if (!response.ok) throw new Error(data.message || "فشل في إنشاء الحساب");
 
   const { user, token } = data;
-  const store = useAuthStore.getState();
-  store.setUser(user);
-  store.setToken(token);
-  localStorage.setItem("auth_token", token);
-  localStorage.setItem("user_data", JSON.stringify(user));
+  
+  // ✅ Update stores & set cookie
+  useAuthStore.getState().setToken(token);
+  useUserStore.getState().setUser(user);
+  setAuthCookie(token);
 
   return { user, token };
 };
 
 // 🔹 Sign Out
 export const signOut = async (): Promise<void> => {
-  const store = useAuthStore.getState();
-  store.logout();
-  localStorage.removeItem("auth_token");
-  localStorage.removeItem("user_data");
+  // The logout action in the store now handles clearing everything
+  useAuthStore.getState().logout();
 };
 
 // ====================
-// 🧩 Getters
+// 🧩 Getters & Helpers
 // ====================
 export const getCurrentUser = (): User | null => {
-  const storeUser = useAuthStore.getState().user;
-  if (storeUser) return storeUser;
-
-  if (typeof window !== "undefined") {
-    const data = localStorage.getItem("user_data");
-    if (data) {
-      try {
-        const user = JSON.parse(data);
-        useAuthStore.getState().setUser(user);
-        return user;
-      } catch (err) {
-        console.error("Error parsing user data:", err);
-      }
-    }
-  }
-  return null;
+  return useUserStore.getState().user;
 };
 
 export const getAuthToken = (): string | null => {
-  const token = useAuthStore.getState().token;
-  if (token) return token;
-
-  if (typeof window !== "undefined") {
-    const saved = localStorage.getItem("auth_token");
-    if (saved) {
-      useAuthStore.getState().setToken(saved);
-      return saved;
-    }
+  // Prioritize the store's token, then check the cookie as a fallback
+  const storeToken = useAuthStore.getState().token;
+  if (storeToken) return storeToken;
+  
+  const cookieToken = getAuthCookie();
+  if (cookieToken) {
+    useAuthStore.getState().setToken(cookieToken); // Sync store with cookie
+    return cookieToken;
   }
+
   return null;
 };
-
-// ====================
-// 🧩 Helpers
-// ====================
-export const isAuthenticated = (): boolean =>
-  !!getCurrentUser() && !!getAuthToken();
 
 export const isAdmin = (user?: User | null): boolean =>
   (user || getCurrentUser())?.role === "admin";
@@ -206,7 +221,7 @@ export const getAuthHeaders = (): Record<string, string> => {
 };
 
 // ====================
-// 🧩 Update Profile (Fixed to prevent sign-out)
+// 🧩 Update Profile
 // ====================
 export const updateUserProfile = async (
   userData: { name: string; email: string; phone?: string }
@@ -214,36 +229,23 @@ export const updateUserProfile = async (
   const token = getAuthToken();
   if (!token) throw new Error("Authentication required");
 
-  console.log("🔥 USING UPDATE API:", `${API_BASE}/users/updateMe`);
-  console.log("🔥 Sending data:", userData);
-
   const response = await fetch(`${API_BASE}/users/updateMe`, {
     method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
     body: JSON.stringify(userData),
   });
 
   const data = await response.json();
-  console.log("UpdateMe Response:", data);
-
   if (!response.ok) {
-    // Check if the error is related to token invalidation
     if (response.status === 401) {
-      console.error("Token was invalidated during profile update");
-      // Clear invalid token
       useAuthStore.getState().logout();
     }
     throw new Error(data.message || "Failed to update profile");
   }
 
-  // Make sure we have the complete user object
   const updatedUser = data.user || data;
-  
-  // ✅ Update store only (localStorage will be updated by persist middleware)
-  useAuthStore.getState().updateUser(updatedUser);
+  // ✅ Update only the user store
+  useUserStore.getState().updateUser(updatedUser);
 
   return updatedUser;
 };
@@ -257,10 +259,7 @@ export const refreshUserData = async (): Promise<User> => {
 
   const response = await fetch(`${API_BASE}/users/me`, {
     method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
+    headers: getAuthHeaders(),
   });
 
   const data = await response.json();
@@ -269,29 +268,21 @@ export const refreshUserData = async (): Promise<User> => {
   }
 
   const user = data.user || data;
-  useAuthStore.getState().setUser(user);
+  // ✅ Update only the user store
+  useUserStore.getState().setUser(user);
   return user;
 };
 
 // ====================
-// 🧩 Initialize Auth from LocalStorage
+// 🧩 Initialize Auth from Cookie/Storage
 // ====================
 export const initializeAuth = () => {
   if (typeof window !== "undefined") {
-    const token = localStorage.getItem("auth_token");
-    const userData = localStorage.getItem("user_data");
-
-    if (token && userData) {
-      try {
-        const user = JSON.parse(userData);
-        const store = useAuthStore.getState();
-        store.setToken(token);
-        store.setUser(user);
-      } catch (error) {
-        console.error("Error initializing auth:", error);
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("user_data");
-      }
+    // Zustand's persist middleware will automatically rehydrate useUserStore
+    // We just need to sync the token from the cookie to the auth store
+    const token = getAuthCookie();
+    if (token) {
+      useAuthStore.getState().setToken(token);
     }
   }
 };

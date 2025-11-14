@@ -8,14 +8,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
-import { signIn, useAuthStore } from "@/lib/auth";
+import { signIn, useAuthStore, useUserStore } from "@/lib/auth"; // Import both stores
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const { setUser, setToken } = useAuthStore();
+  
+  // Get state setters from the correct stores
+  const { setToken } = useAuthStore();
+  const { setUser } = useUserStore();
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,14 +34,15 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // استخدام دالة signIn من lib/auth.ts
+      // The signIn function now handles updating the stores internally
       const { user, token } = await signIn(formData.email, formData.password);
 
       console.log("Login successful - User:", user);
       console.log("User role:", user.role);
       console.log("User ID:", user._id);
 
-      // تحديث الـ store
+      // The stores are already updated by signIn(), but calling them here is also fine
+      // and makes the component's intent clear.
       setUser(user);
       setToken(token);
 
@@ -57,7 +62,7 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
     }
-  }; 
+  };
 
   return (
     <div className="min-h-screen flex items-center bg-pattern-grid justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5 p-4" dir={isRTL ? "rtl" : "ltr"}>

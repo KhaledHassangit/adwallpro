@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await fetch(
-        "https://adwallpro.com/api/v1/auth/forgotPassword",
+        "http://72.60.178.180:8000/api/v1/auth/forgotPassword",
         {
           method: "POST",
           headers: {
@@ -61,7 +61,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await fetch(
-        "https://adwallpro.com/api/v1/auth/verifyResetCode",
+        "http://72.60.178.180:8000/api/v1/auth/verifyResetCode",
         {
           method: "POST",
           headers: {

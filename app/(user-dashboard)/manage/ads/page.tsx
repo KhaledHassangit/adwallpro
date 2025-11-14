@@ -47,6 +47,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+// *** CHANGE 1: Updated the Company interface to match your data structure ***
 interface Company {
   _id: string;
   companyName: string;
@@ -57,8 +58,9 @@ interface Company {
     _id: string;
     nameAr: string;
     nameEn: string;
+    color?: string;
   };
-  isApproved: boolean;
+  status: "approved" | "pending" | "rejected"; // Changed from isApproved: boolean
   createdAt: string;
   image?: string;
   logo?: any;
@@ -69,12 +71,18 @@ interface Company {
   website?: string;
   whatsapp?: string;
   facebook?: string;
+  slug?: string;
+  ratingsQuantity?: number;
+  views?: number;
+  updatedAt?: string;
+  userId?: string;
 }
 
 interface Category {
   _id: string;
   nameAr: string;
   nameEn: string;
+  color?: string;
 }
 
 function UserAdsContent() {
@@ -124,7 +132,7 @@ function UserAdsContent() {
       });
       if (response.ok) {
         const data = await response.json();
-        setCategories(data.data || data || []);
+        setCategories(data.data?.data || data || []);
       }
     } catch (error) {
       console.error("Error fetching categories:", error);
@@ -147,7 +155,8 @@ function UserAdsContent() {
 
       if (!response.ok) throw new Error(t("failedToFetchAds"));
       const data = await response.json();
-      const companies = data?.data || data || [];
+      const companies = data?.data?.data || data || [];
+      console.log("Fetched user companies:", companies);
       setCompanies(companies);
     } catch (error) {
       console.error("Error fetching user companies:", error);
@@ -238,9 +247,14 @@ function UserAdsContent() {
   // Helper function to convert logo data to a usable image URL
   const getLogoImageUrl = (logo: any) => {
     if (!logo) return "";
-    
+
     // If logo is already a string URL, return it
     if (typeof logo === 'string') return logo;
+
+    // If logo is a base64 string
+    if (typeof logo === 'string' && logo.startsWith('/9j/')) {
+        return `data:image/jpeg;base64,${logo}`;
+    }
     
     // If logo has a data property with type and data
     if (logo.data && Array.isArray(logo.data)) {
@@ -446,20 +460,22 @@ function UserAdsContent() {
     return company.description || t("noDescription");
   };
 
+  // *** CHANGE 2: Updated the filtering logic to use `status` ***
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch =
       company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus =
       statusFilter === "all" ||
-      (statusFilter === "approved" && company.isApproved) ||
-      (statusFilter === "pending" && !company.isApproved);
+      (statusFilter === "approved" && company.status === "approved") ||
+      (statusFilter === "pending" && company.status !== "approved");
 
     return matchesSearch && matchesStatus;
   });
 
+  // *** CHANGE 3: Updated the status badge logic to use `status` ***
   const getStatusBadge = (company: Company) => {
-    if (company.isApproved) {
+    if (company.status === "approved") {
       return (
         <Badge variant="default" className="bg-green-500/90 text-white">
           <CheckCircle className="h-3 w-3 mr-1" />
@@ -489,7 +505,7 @@ function UserAdsContent() {
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/30 pb-4">
           <div className="transition-all duration-300">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+              <h1 className="text-ultra-xl gradient-text mb-2">
               {t("manageAds")}
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -529,12 +545,14 @@ function UserAdsContent() {
                   {
                     key: "approved",
                     label: t("approved"),
-                    count: companies.filter((c) => c.isApproved).length,
+                    // *** CHANGE 4: Updated the approved count to use `status` ***
+                    count: companies.filter((c) => c.status === "approved").length,
                   },
                   {
                     key: "pending",
                     label: t("pending"),
-                    count: companies.filter((c) => !c.isApproved).length,
+                    // *** CHANGE 5: Updated the pending count to use `status` ***
+                    count: companies.filter((c) => c.status !== "approved").length,
                   },
                 ].map((btn) => (
                   <Button
@@ -614,7 +632,7 @@ function UserAdsContent() {
                           <span>{t("categoryLabel")} {getCategoryName(company.categoryId)}</span>
                           <span>•</span>
                           <span>
-                            {t("views")} {company.__v || 0}
+                            {t("views")} {company.views || 0}
                           </span>
                           <span>•</span>
                           <span>

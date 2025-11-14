@@ -41,8 +41,8 @@ function ProfileContent() {
     confirm: false
   });
 
-  // Use the auth store directly
-  const { user, setUser } = useAuthStore();
+  // Use the auth store directly - removed setUser since it doesn't exist in AuthState
+  const { user } = useAuthStore();
 
   useEffect(() => {
     // If user is already in the store, use it
@@ -56,7 +56,7 @@ function ProfileContent() {
       // Otherwise, try to get from localStorage
       const currentUser = getCurrentUser();
       if (currentUser) {
-        setUser(currentUser);
+        // We can't directly update the store, so we'll just use the currentUser for the form
         setFormData({
           name: currentUser.name,
           phone: currentUser.phone || "",
@@ -64,7 +64,7 @@ function ProfileContent() {
       }
       setLoading(false);
     }
-  }, [user]); // Remove setUser from the dependency array
+  }, [user]); // Removed setUser from dependency array
 
   // Validate phone number for Egypt and Saudi Arabia
   const validatePhoneNumber = (phone: string): boolean => {
@@ -358,7 +358,7 @@ function ProfileContent() {
       >
         {/* Header */}
         <div>
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-[#6a5af9] to-[#00c6ff] bg-clip-text text-transparent">
+              <h1 className="text-ultra-xl gradient-text mb-2">
             {t("profile")}
           </h1>
           <p className="text-foreground mt-2 text-sm">{t("manageAccountData")}</p>
