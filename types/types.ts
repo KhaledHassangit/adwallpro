@@ -48,3 +48,5 @@ export type Coupon = {
   percent: number; // 0-100
   active: boolean;
 };
+
+

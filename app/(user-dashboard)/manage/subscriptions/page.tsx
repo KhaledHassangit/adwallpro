@@ -230,7 +230,7 @@ function UserSubscriptionsContent() {
                                     <CardContent className="space-y-4">
                                         <div className="flex items-center justify-between">
                                             <span className="text-sm text-muted-foreground">{t("planCode") || "Plan Code"}</span>
-                                            <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{s.plan?.code}</span>
+                                            <span className=" text-sm  px-2 py-1 ">{s.plan?.code}</span>
                                         </div>
 
                                         <div className="flex items-center justify-between">

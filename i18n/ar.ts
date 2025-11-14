@@ -15,6 +15,10 @@ export const ar = {
     signOut: "تسجيل الخروج",
     signUp: "إنشاء حساب",
     FAQ: "الأسئلة الشائعة",
+  "googleLoginFailed": "فشل تسجيل الدخول بحساب جوجل",
+  "googleAuthFailed": "فشلت مصادقة جوجل",
+  "orContinueWith": "أو تابع باستخدام",
+    "signinWithGoogle": "تسجيل الدخول باستخدام جوجل",
     // About Us Section
     aboutUsTitle: "من نحن",
     aboutUsSubtitle: "تعرف على قصتنا ورؤيتنا",

@@ -2,6 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import { Poppins, Almarai } from "next/font/google";
 import { Providers } from "../providers/ThemeProvider";
+import { GoogleOAuthProviderWrapper } from "../providers/GoogleOAuthProvider";
 import HeaderGuard from "@/components/layout/header-guard";
 import { Footer } from "@/components/layout/footer";
 import "./globals.css"
@@ -48,11 +49,13 @@ export default function RootLayout({
       className={`${poppins.variable} ${almarai.variable}`}
     >
       <body className="font-sans antialiased">
-        <Providers>
-          <HeaderGuard />
-          {children}
-          <Footer />
-        </Providers>
+        <GoogleOAuthProviderWrapper>
+          <Providers>
+            <HeaderGuard />
+            {children}
+            <Footer />
+          </Providers>
+        </GoogleOAuthProviderWrapper>
       </body>
     </html>
   );

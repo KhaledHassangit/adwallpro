@@ -8,19 +8,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
-import { signIn, useAuthStore, useUserStore } from "@/lib/auth"; // Import both stores
+import { signIn, useAuthStore, useUserStore } from "@/lib/auth";
+import { verifyGoogleToken } from "@/app/actions";
+import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 
 export default function LoginPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  
+
   // Get state setters from the correct stores
   const { setToken } = useAuthStore();
   const { setUser } = useUserStore();
 
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [formData, setFormData] = useState({
     email: "",
@@ -28,6 +31,43 @@ export default function LoginPage() {
   });
 
   const isRTL = locale === "ar";
+
+  const handleGoogleSuccess = async (credentialResponse: any) => {
+    setGoogleLoading(true);
+    try {
+      const { credential } = credentialResponse;
+
+      // Verify token on server side
+      const result = await verifyGoogleToken(credential);
+
+      if (!result.success) {
+        throw new Error(result.error || "Google authentication failed");
+      }
+
+      // Update auth stores with returned data
+      setUser(result.user);
+      setToken(result.token);
+
+      toast.success(t("loginSuccess"));
+
+      // Redirect based on role
+      const userRole = result.user?.role || "user";
+      if (userRole === "admin") {
+        router.push("/admin");
+      } else {
+        router.push("/manage");
+      }
+    } catch (error: any) {
+      console.error("Google login error:", error);
+      toast.error(error.message || "Google login failed");
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    toast.error("Google login failed");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -146,6 +186,34 @@ export default function LoginPage() {
             <Button type="submit" className="w-full btn-ultra" disabled={loading}>
               {loading ? t("loggingIn") : t("login")}
             </Button>
+
+            <div className="relative my-4">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative  flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">
+                  {t("orContinueWith")}
+
+                </span>
+              </div>
+            </div>
+
+            <div className="flex justify-center" dir={isRTL ? "rtl" : "ltr"}>
+              <GoogleLogin
+                onSuccess={handleGoogleSuccess}
+                onError={handleGoogleError}
+                text="signin_with"
+                width="400"
+                locale={locale}
+                useOneTap={false}
+                type="standard"
+                shape="rectangular"
+                theme="outline"
+                size="large"
+                logo_alignment="left"
+              />
+            </div>
 
             <div className="text-center">
               <span className="text-sm text-muted-foreground">

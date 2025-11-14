@@ -23,7 +23,10 @@ export const en = {
   aboutUsAdvertisers: "Choose the square that suits you, add your ad easily, and be visible to everyone in an organized and professional environment.",
   aboutUsUsers: "Browse the squares to find the offers and services you're looking for quickly and safely, with the platform guaranteed to be free of any harmful or inappropriate content.",
   aboutUsConclusion: "At AdWall, every square has value, every ad has an opportunity, and every opportunity can turn into success. We comply with local and international laws, and work with a spirit of transparency and respect to ensure a safe and reliable platform for everyone.",
-
+  "googleLoginFailed": "Google login failed",
+  "googleAuthFailed": "Google authentication failed",
+  "orContinueWith": "Or continue with",
+  "signinWithGoogle": "Sign in with Google",
   // Feature titles for About Us
   innovativeApproach: "Innovative Approach",
   clearVision: "Clear Vision",
