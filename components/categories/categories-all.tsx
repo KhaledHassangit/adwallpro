@@ -43,11 +43,17 @@ export function CategoriesAll() {
       if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
 
       const data = await response.json();
-      let categoriesData: Category[] = Array.isArray(data.data)
-        ? data.data
-        : Array.isArray(data)
-        ? data
-        : [];
+      
+      // Fix: Correctly extract categories from the nested API response
+      let categoriesData: Category[] = [];
+      if (data.data && data.data.data && Array.isArray(data.data.data)) {
+        categoriesData = data.data.data;
+      } else if (data.data && Array.isArray(data.data)) {
+        categoriesData = data.data;
+      } else if (Array.isArray(data)) {
+        categoriesData = data;
+      }
+      
       setCategories(categoriesData);
 
       const counts = await getMultipleCategoriesCount(
@@ -77,6 +83,15 @@ export function CategoriesAll() {
   // Add this function to handle clearing the search
   const handleClearSearch = () => {
     setSearchQuery("");
+  };
+
+  // Function to get the full image URL
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return "/placeholder.svg";
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith("http")) return imagePath;
+    // Otherwise, prepend the base URL
+    return `http://72.60.178.180:8000/${imagePath}`;
   };
 
   if (loading)
@@ -214,11 +229,15 @@ export function CategoriesAll() {
                       {/* Image */}
                       <div className="relative aspect-[16/10] rounded-xl overflow-hidden">
                         <Image
-                          src={cat.image || "/placeholder.svg"}
+                          src={getImageUrl(cat.image)}
                           alt={name || "تصنيف غير محدد"}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
                           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
 
@@ -279,10 +298,14 @@ export function CategoriesAll() {
                     <div className="flex items-center gap-6">
                       <div className="relative w-24 h-16 rounded-xl overflow-hidden flex-shrink-0">
                         <Image
-                          src={cat.image || "/placeholder.svg"}
+                          src={getImageUrl(cat.image)}
                           alt={name || "تصنيف غير محدد"}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
+                          onError={(e) => {
+                            const target = e.target as HTMLImageElement;
+                            target.src = "/placeholder.svg";
+                          }}
                         />
                       </div>
 

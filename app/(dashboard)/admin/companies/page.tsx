@@ -166,7 +166,7 @@ function useCompanies(
         const data: CompaniesResponse = await response.json();
         console.log("API Response:", data);
         
-        setCompanies(data.data || []);
+        setCompanies(data.data.data || []);
         
         // Calculate pagination based on results and fixed limit
         const limit = 10;

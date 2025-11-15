@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,7 +14,7 @@ import {
   Facebook,
   Search,
 } from "@/components/ui/icon";
-import { useAuthStore, isAuthenticated } from "@/lib/auth";
+import { useAuthStore, useUserStore } from "@/lib/auth";
 import Link from "next/link";
 import Image from "next/image";
 import { useI18n } from "@/providers/LanguageProvider";
@@ -22,7 +22,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/common/breadcrumb";
 
-// دالة لتنظيف رابط الصورة المكرر
 const cleanImageUrl = (imageUrl?: string): string => {
   if (!imageUrl) return "";
   return imageUrl.replace(
@@ -31,22 +30,102 @@ const cleanImageUrl = (imageUrl?: string): string => {
   );
 };
 
+// View tracking hook
+export const useViewTracker = () => {
+  const [trackedViews, setTrackedViews] = useState<Set<string>>(new Set());
+
+  const trackView = useCallback(async (companyId: string, type: 'click' | 'hover' = 'click') => {
+    // Create a unique key for this company and tracking type
+    const key = `company_${type}_${companyId}`;
+    
+    // Check if already tracked in this session
+    if (sessionStorage.getItem(key)) {
+      return false;
+    }
+
+    try {
+      // Use fetch with keepalive for more reliable tracking
+      const response = await fetch(`http://72.60.178.180:8000/api/v1/company/${companyId}/view`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type }),
+        keepalive: true // Helps ensure the request completes even if the page is unloading
+      });
+
+      if (response.ok) {
+        // Mark as tracked in this session
+        sessionStorage.setItem(key, 'true');
+        setTrackedViews(prev => new Set(prev).add(key));
+        console.log(`View tracked for company ${companyId} (${type})`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error tracking view:', error);
+      return false;
+    }
+  }, []);
+
+  return { trackView, trackedViews };
+};
+
 // مكون كارت الشركة - نفس تصميم كارتات الفئات
 function CompanyCard({ company }: { company: any }) {
   const { t } = useI18n();
+  const { trackView } = useViewTracker();
+  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+
+  // Handle card hover
+  const handleCardHover = () => {
+    // Clear any existing timer
+    if (hoverTimer) clearTimeout(hoverTimer);
+    
+    // Set a new timer to track view after 1 second of hovering
+    const timer = setTimeout(() => {
+      trackView(company._id, 'hover');
+    }, 1000);
+    
+    setHoverTimer(timer);
+  };
+
+  // Handle card leave
+  const handleCardLeave = () => {
+    // Clear the hover timer if user leaves before 1 second
+    if (hoverTimer) {
+      clearTimeout(hoverTimer);
+      setHoverTimer(null);
+    }
+  };
+
+  // Handle card click
+  const handleCardClick = () => {
+    trackView(company._id, 'click');
+  };
+
+  // Handle contact link click
+  const handleContactClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    trackView(company._id, 'click');
+    // Allow the default behavior (navigation) to continue
+  };
 
   return (
-    <Card className="ultra-card group overflow-hidden border-0">
+    <Card 
+      className="ultra-card group overflow-hidden border-0 cursor-pointer"
+      onMouseEnter={handleCardHover}
+      onMouseLeave={handleCardLeave}
+    >
       {/* شريط ملون في الأعلى */}
       <div className="h-[3px] w-full bg-gradient-to-r from-primary to-primary/80" />
 
       <CardContent className="p-0">
         <div className="relative aspect-[4/3] w-full overflow-hidden">
           {/* صورة الشركة أو placeholder */}
-          {company.image ? (
+          {company.logo ? (
             <div className="relative w-full h-full overflow-hidden">
               <Image
-                src={cleanImageUrl(company.image)}
+                src={cleanImageUrl(company.logo)}
                 alt={company.companyName || "صورة الشركة"}
                 fill
                 className="object-cover group-hover:scale-105 transition-transform duration-500"
@@ -65,7 +144,7 @@ function CompanyCard({ company }: { company: any }) {
           {/* Placeholder - يظهر إذا لم تكن هناك صورة أو فشل تحميلها */}
           <div
             className={`w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center ${
-              company.image ? "hidden" : "flex"
+              company.logo ? "hidden" : "flex"
             }`}
           >
             <div className="text-6xl opacity-20">🏢</div>
@@ -78,11 +157,12 @@ function CompanyCard({ company }: { company: any }) {
             <Link
               href={`/companies/${company._id}`}
               className="font-semibold truncate hover:text-primary transition-colors cursor-pointer"
+              onClick={handleCardClick}
             >
               {company.companyName || "شركة غير محددة"}
             </Link>
             <div className="flex items-center gap-2">
-              {company.isApproved && (
+              {company.status === "approved" && (
                 <div className="bg-green-500 text-white text-xs px-2 py-1 rounded-full font-medium">
                   ✓
                 </div>
@@ -112,6 +192,7 @@ function CompanyCard({ company }: { company: any }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full hover:bg-green-100 transition-colors cursor-pointer"
+                onClick={handleContactClick}
               >
                 <Phone className="h-3 w-3" />
                 <span>{t("whatsappLabel")}</span>
@@ -122,6 +203,7 @@ function CompanyCard({ company }: { company: any }) {
               <a
                 href={`mailto:${company.email}`}
                 className="flex items-center gap-1 text-xs text-blue-600 bg-blue-50 px-2 py-1 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
+                onClick={handleContactClick}
               >
                 <Mail className="h-3 w-3" />
                 <span>{t("emailLabel")}</span>
@@ -138,6 +220,7 @@ function CompanyCard({ company }: { company: any }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full hover:bg-purple-100 transition-colors cursor-pointer"
+                onClick={handleContactClick}
               >
                 <Globe className="h-3 w-3" />
                 <span>{t("websiteLabel")}</span>
@@ -154,6 +237,7 @@ function CompanyCard({ company }: { company: any }) {
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex items-center gap-1 text-xs text-blue-700 bg-blue-50 px-2 py-1 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
+                onClick={handleContactClick}
               >
                 <Facebook className="h-3 w-3" />
                 <span>{t("facebookLabel")}</span>
@@ -170,7 +254,8 @@ export default function CompaniesCategoryPage() {
   const { id } = useParams<{ id: string }>();
   const { locale, t } = useI18n();
   const router = useRouter();
-  const user = useAuthStore((s) => s.user);
+  const user = useUserStore((s) => s.user);
+  const { isAuthenticated } = useAuthStore();
   const [companies, setCompanies] = useState<any[]>([]);
   const [category, setCategory] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -185,7 +270,7 @@ export default function CompaniesCategoryPage() {
 
     try {
       const response = await fetch(
-        `https://adwallpro.com/api/v1/categories/${id}`
+        `http://72.60.178.180:8000/api/v1/categories/${id}`
       );
       if (response.ok) {
         const data = await response.json();
@@ -205,7 +290,7 @@ export default function CompaniesCategoryPage() {
       setError(null);
 
       const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/category/${id}`
+        `http://72.60.178.180:8000/api/v1/companies/category/${id}`
       );
 
       if (!response.ok) {
@@ -217,7 +302,10 @@ export default function CompaniesCategoryPage() {
       // التعامل مع هيكل الاستجابة المختلف
       let companiesData: any[] = [];
 
-      if (data.data && Array.isArray(data.data)) {
+      // Fix: Extract companies from the correct nested structure
+      if (data.data && data.data.data && Array.isArray(data.data.data)) {
+        companiesData = data.data.data;
+      } else if (data.data && Array.isArray(data.data)) {
         companiesData = data.data;
       } else if (Array.isArray(data)) {
         companiesData = data;
@@ -269,17 +357,6 @@ export default function CompaniesCategoryPage() {
       return matchSearch && matchCountry && matchCity;
     });
   }, [companies, searchQuery, countryFilter, cityFilter]);
-
-  // تعليق مؤقت - سنعرض الصفحة حتى لو لم تُوجد الفئة
-  // if (!category) {
-  //   return (
-  //     <div className="container-premium py-8 pt-24">
-  //       <div className="text-center py-16">
-  //         <p className="text-muted-foreground">الفئة غير موجودة</p>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   const catName = category
     ? locale === "ar"
@@ -352,7 +429,7 @@ export default function CompaniesCategoryPage() {
             {companies.length} {t("companiesAvailable")}
           </span>
           <span className="text-sm text-muted-foreground">
-            {companies.filter((company) => company.isApproved).length}{" "}
+            {companies.filter((company) => company.status === "approved").length}{" "}
             {t("approvedCompanies")}
           </span>
         </div>
@@ -454,7 +531,7 @@ export default function CompaniesCategoryPage() {
                   <Button
                     className="bg-primary hover:bg-primary/90"
                     onClick={() => {
-                      if (!isAuthenticated()) {
+                      if (!isAuthenticated) {
                         router.push("/login?redirect=/manage/ads/new");
                       } else {
                         router.push("/manage/ads/new");
@@ -487,7 +564,7 @@ export default function CompaniesCategoryPage() {
                   <Button
                     className="flex items-center"
                     onClick={() => {
-                      if (!isAuthenticated()) {
+                      if (!isAuthenticated) {
                         router.push("/login?redirect=/manage/ads/new");
                       } else {
                         router.push("/manage/ads/new");
