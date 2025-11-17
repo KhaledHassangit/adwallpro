@@ -39,7 +39,7 @@ function getAdminNavItems(t: (key: string) => string) {
 
 function getUserNavItems(t: (key: string) => string) {
   return [
-    { title: t("dashboardControl"), href: "/manage", icon: LayoutDashboard },
+    { title: t("overview"), href: "/manage", icon: LayoutDashboard },
     { title: t("adsManagement"), href: "/manage/ads", icon: Eye },
     { title: t("subscriptionPlans"), href: "/manage/subscriptions", icon: Ticket },
     { title: t("personalProfile"), href: "/manage/profile", icon: User2 },

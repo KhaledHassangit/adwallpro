@@ -20,8 +20,7 @@ import {
   ArrowRight,
 } from "@/components/ui/icon";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
-import { API_BASE_URL, AnalyticsRecord } from "@/lib/api";
+import { getCurrentUser, getAuthCookie } from "@/lib/auth";
 
 interface Company {
   _id: string;
@@ -39,6 +38,19 @@ interface Company {
   __v?: number;
 }
 
+interface UserAnalytics {
+  totalAds: number;
+  pendingAds: number;
+  approvedAds: number;
+  rejectedAds: number;
+  totalViews: number;
+  activeAdsList: any[];
+  chartData: {
+    labels: string[];
+    data: number[];
+  };
+}
+
 function UserDashboardContent() {
   const { t, lang } = useI18n();
   const [stats, setStats] = useState({
@@ -49,75 +61,31 @@ function UserDashboardContent() {
     monthlyGrowth: 0,
   });
   const [recentCompanies, setRecentCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [userAnalytics, setUserAnalytics] = useState<AnalyticsRecord[]>([]);
+  const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null);
   const currentUser = getCurrentUser();
 
   useEffect(() => {
-    fetchDashboardData();
     fetchUserAnalytics();
   }, []);
 
-  const fetchDashboardData = async () => {
-    if (!currentUser) return;
-    try {
-      setLoading(true);
-      const response = await fetch(
-        `https://adwallpro.com/api/v1/companies/user/${currentUser._id}`,
-        {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-        }
-      );
 
-      if (!response.ok) throw new Error("Failed to fetch data");
-      const data = await response.json();
-      const parsedCompanies = data?.data || data || [];
-      const companies: Company[] = Array.isArray(parsedCompanies)
-        ? parsedCompanies
-        : [];
-
-      setRecentCompanies(companies.slice(0, 3));
-      setStats({
-        totalCompanies: companies.length,
-        approvedCompanies: companies.filter((c: Company) => c.isApproved).length,
-        pendingCompanies: companies.filter((c: Company) => !c.isApproved).length,
-        totalViews: companies.reduce(
-          (sum: number, company: Company) => sum + (company.__v || 0),
-          0
-        ),
-        monthlyGrowth: 15,
-      });
-    } catch (error) {
-      console.error("Error fetching dashboard data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchUserAnalytics = async () => {
-    if (!currentUser?._id) return;
-
     try {
       setAnalyticsLoading(true);
-      const params = new URLSearchParams({
-        user: currentUser._id,
-        sort: "-timestamp",
-        limit: "5",
-      });
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("auth_token")
-          : null;
+      const token = getAuthCookie();
+      
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
 
       const response = await fetch(
-        `${API_BASE_URL}/analytics?${params.toString()}`,
+        `http://72.60.178.180:8000/api/v1/users/my-analytics`,
         {
           headers: {
             "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -127,15 +95,18 @@ function UserDashboardContent() {
       }
 
       const payload = await response.json();
-      const analyticsData = Array.isArray(payload?.data?.data)
-        ? payload.data.data
-        : Array.isArray(payload?.data)
-          ? payload.data
-          : Array.isArray(payload)
-            ? payload
-            : [];
-
-      setUserAnalytics(analyticsData);
+      setUserAnalytics(payload.data.data);
+      
+      // Update stats with analytics data
+      if (payload.data.data) {
+        setStats(prev => ({
+          ...prev,
+          totalCompanies: payload.data.data.totalAds,
+          approvedCompanies: payload.data.data.approvedAds,
+          pendingCompanies: payload.data.data.pendingAds,
+          totalViews: payload.data.data.totalViews,
+        }));
+      }
     } catch (error) {
       console.error("Error fetching analytics:", error);
     } finally {
@@ -143,7 +114,7 @@ function UserDashboardContent() {
     }
   };
 
-  if (loading) {
+  if (analyticsLoading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -470,52 +441,7 @@ function UserDashboardContent() {
             </div>
           </div>
 
-          {/* User Analytics */}
-          <div className="lg:col-span-1 flex flex-col gap-6">
-            <div className="ultra-card h-full">
-              <div className="p-6">
-                <CardTitle className="flex items-center gap-2 mb-6">
-                  <Activity className="h-5 w-5 text-primary" />
-                  {t("recentActivity") || "Recent Activity"}
-                </CardTitle>
-                <div className="space-y-4 max-h-[360px] overflow-y-auto">
-                  {analyticsLoading ? (
-                    <div className="text-center text-muted-foreground py-6">
-                      {t("loading") || "Loading analytics..."}
-                    </div>
-                  ) : userAnalytics.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-6">
-                      {t("noActivity") || "No recent actions recorded"}
-                    </div>
-                  ) : (
-                    userAnalytics.map((record) => (
-                      <div
-                        key={record._id}
-                        className="p-4 rounded-xl border border-border/40 bg-card/60"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-sm font-medium">{record.action}</p>
-                          <span className="text-xs text-muted-foreground">
-                            {new Date(record.timestamp).toLocaleString(
-                              lang === "ar" ? "ar-SA" : "en-US"
-                            )}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                          {record.path && (
-                            <span className="truncate">{record.path}</span>
-                          )}
-                          {record.status && (
-                            <span>{t("status") || "Status"}: {record.status}</span>
-                          )}
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
+       
         </div>
       </div>
     </main>
