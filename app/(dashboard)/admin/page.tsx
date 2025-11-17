@@ -3,125 +3,35 @@
 import React, { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { UserStatsCards } from "@/components/admin/user-stats-cards";
 import { useI18n } from "@/providers/LanguageProvider";
-import {
-  Building2,
-  Users,
-  Tags,
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Ticket,
-  Activity,
-} from "@/components/ui/icon";
-import Link from "next/link";
 import { API_BASE_URL, AnalyticsRecord } from "@/lib/api";
-
-interface StatsData {
-  totalCompanies: number;
-  pendingCompanies: number;
-  approvedCompanies: number;
-  rejectedCompanies: number;
-  totalUsers: number;
-  totalCategories: number;
-  totalCoupons: number;
-  recentActivity: any[];
-}
+import { getAuthCookie } from "@/lib/auth";
 
 function AdminDashboardContent() {
   const { t } = useI18n();
-  const [stats, setStats] = useState<StatsData | null>(null);
-  const [loading, setLoading] = useState(true);
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
   const [analyticsRecords, setAnalyticsRecords] = useState<AnalyticsRecord[]>([]);
 
   useEffect(() => {
-    fetchStats();
     fetchAnalytics();
   }, []);
-
-  const fetchStats = async () => {
-    try {
-      setLoading(true);
-      // جلب البيانات من الـ API
-      const [companiesRes, usersRes, categoriesRes, couponsRes] = await Promise.all([
-        fetch("http://72.60.178.180:8000/api/v1/companies"),
-        fetch("http://72.60.178.180:8000/api/v1/users", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-        }),
-        fetch("http://72.60.178.180:8000/api/v1/categories"),
-        fetch("http://72.60.178.180:8000/api/v1/coupons", {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
-        }),
-      ]);
-
-      const [companies, users, categories, coupons] = await Promise.all([
-        companiesRes.json(),
-        usersRes.json(),
-        categoriesRes.json(),
-        couponsRes.json(),
-      ]); 
-      
-      const companiesData = companies.data || companies;
-      const usersData = users.data || users;
-      const categoriesData = categories.data || categories;
-      const couponsData = coupons.data || coupons;
-      
-      console.log("companiesRes", companiesData);
-      console.log("usersRes", usersData);
-      console.log("categoriesRes", categoriesData);
-      console.log("couponsRes", couponsData);
-
-      setStats({
-        totalCompanies: Array.isArray(companiesData) ? companiesData.length : 0,
-        pendingCompanies: Array.isArray(companiesData)
-          ? companiesData.filter((c: any) => !c.isApproved).length
-          : 0,
-        approvedCompanies: Array.isArray(companiesData)
-          ? companiesData.filter((c: any) => c.isApproved).length
-          : 0,
-        rejectedCompanies: 0, // يمكن إضافته لاحقاً
-        totalUsers: Array.isArray(usersData) ? usersData.length : 0,
-        totalCategories: Array.isArray(categoriesData)
-          ? categoriesData.length
-          : 0,
-        totalCoupons: Array.isArray(couponsData) ? couponsData.length : 0,
-        recentActivity: [], // يمكن إضافته لاحقاً
-      });
-    } catch (error) {
-      console.error("Error fetching stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const fetchAnalytics = async () => {
     try {
       setAnalyticsLoading(true);
       setAnalyticsError(null);
-      const params = new URLSearchParams({
-        sort: "-timestamp",
-        limit: "8",
-      });
+      
+      // Get auth token from cookies
+      const token = getAuthCookie();
 
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("auth_token")
-          : null;
-
+      // API call without search parameters
       const response = await fetch(
-        `${API_BASE_URL}/analytics?${params.toString()}`,
+        `${API_BASE_URL}/analytics`,
         {
           headers: {
-            "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
           },
         }
@@ -151,14 +61,6 @@ function AdminDashboardContent() {
       setAnalyticsLoading(false);
     }
   };
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-[70vh]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex-1 overflow-y-auto">
