@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, Shield, UserCheck, Activity } from "lucide-react";
 import { toast } from "sonner";
 import { useI18n } from "@/providers/LanguageProvider";
+import { API_BASE_URL, AnalyticsRecord } from "@/lib/api";
 
 interface UserStats {
   totalUsers: number;
@@ -16,10 +17,21 @@ interface UserStats {
   activePercentage: string;
 }
 
+interface AnalyticsSummary {
+  totalEvents: number;
+  last24Hours: number;
+  activeUsers: number;
+}
+
 export function UserStatsCards() {
   const { t } = useI18n();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [analyticsSummary, setAnalyticsSummary] = useState<AnalyticsSummary>({
+    totalEvents: 0,
+    last24Hours: 0,
+    activeUsers: 0,
+  });
 
   // جلب إحصائيات المستخدمين من API
   const fetchUserStats = async () => {
@@ -63,7 +75,75 @@ export function UserStatsCards() {
 
   useEffect(() => {
     fetchUserStats();
+    fetchAnalyticsSummary();
   }, []);
+
+  const fetchAnalyticsSummary = async () => {
+    try {
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("auth_token")
+          : null;
+
+      const params = new URLSearchParams({
+        role: "user",
+        sort: "-timestamp",
+        limit: "200",
+      });
+
+      const response = await fetch(
+        `${API_BASE_URL}/analytics?${params.toString()}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch analytics summary");
+      }
+
+      const payload = await response.json();
+      const analyticsData: AnalyticsRecord[] = Array.isArray(
+        payload?.data?.data
+      )
+        ? payload.data.data
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : [];
+
+      const now = Date.now();
+      const last24h = now - 24 * 60 * 60 * 1000;
+      const last7d = now - 7 * 24 * 60 * 60 * 1000;
+
+      const last24hEvents = analyticsData.filter((record) => {
+        const ts = new Date(record.timestamp).getTime();
+        return ts >= last24h;
+      }).length;
+
+      const activeUsersSet = new Set(
+        analyticsData
+          .filter((record) => {
+            const ts = new Date(record.timestamp).getTime();
+            return ts >= last7d;
+          })
+          .map((record) => record.user)
+          .filter(Boolean)
+      );
+
+      setAnalyticsSummary({
+        totalEvents: analyticsData.length,
+        last24Hours: last24hEvents,
+        activeUsers: activeUsersSet.size,
+      });
+    } catch (error) {
+      console.error("Error fetching analytics summary:", error);
+    }
+  };
 
   if (loading) {
     return (
@@ -83,7 +163,18 @@ export function UserStatsCards() {
     );
   }
 
-  const statCards = [
+  type StatCardConfig = {
+    title: string;
+    value: string | number;
+    subtitle: string;
+    icon: typeof Users;
+    color: string;
+    bgColor: string;
+    percentage: string;
+    extra?: string;
+  };
+
+  const statCards: StatCardConfig[] = [
     {
       title: t("totalUsers"),
       value: userStats?.totalUsers.toLocaleString() || "0",
@@ -113,12 +204,15 @@ export function UserStatsCards() {
     },
     {
       title: t("activeThisWeek"),
-      value: userStats?.activeThisWeek || 0,
+      value: analyticsSummary.activeUsers || userStats?.activeThisWeek || 0,
       subtitle: t("activeUserLast7Days"),
       icon: Activity,
       color: "text-orange-600",
       bgColor: "bg-orange-50 dark:bg-orange-950/50",
       percentage: `${userStats?.activePercentage || 0}%`,
+      extra: `${analyticsSummary.last24Hours} ${
+        t("eventsLast24h") || "events in the last 24h"
+      }`,
     },
   ];
 
@@ -152,6 +246,11 @@ export function UserStatsCards() {
                 </div>
                 <div className="text-xs text-muted-foreground">{t("ofTotal")}</div>
               </div>
+              {stat.extra && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  {stat.extra}
+                </p>
+              )}
             </CardContent>
           </Card>
         );

@@ -738,8 +738,13 @@ export const ar = {
     "adsIncluded": "الإعلانات المضمنة",
     "subscriptionStatus": "حالة الاشتراك",
     "timeLeft": "الوقت المتبقي",
-    "expiresAt": "تاريخ الانتهاء"
-
+    "expiresAt": "تاريخ الانتهاء",
+    "notifications": "الإشعارات",
+    "noNotifications": "لا توجد إشعارات",
+    "loadingNotifications": "جاري تحميل الإشعارات...",
+    "markAllAsRead": "تحديد الكل كمقروء",
+    "markAsRead": "تحديد كمقروء",
+  
 
 
 };

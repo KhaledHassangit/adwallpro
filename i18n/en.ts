@@ -702,7 +702,12 @@ export const en = {
   "adsIncluded": "Ads Included",
   "subscriptionStatus": "Subscription Status",
   "timeLeft": "Time Left",
-  "expiresAt": "Expires At"
+  "expiresAt": "Expires At",
 
+  "notifications": "Notifications",
+  "noNotifications": "No notifications",
+  "loadingNotifications": "Loading notifications...",
+  "markAllAsRead": "Mark all as read",
+  "markAsRead": "Mark as read",
 
 }

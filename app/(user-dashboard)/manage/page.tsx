@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/icon";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
+import { API_BASE_URL, AnalyticsRecord } from "@/lib/api";
 
 interface Company {
   _id: string;
@@ -49,10 +50,13 @@ function UserDashboardContent() {
   });
   const [recentCompanies, setRecentCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [userAnalytics, setUserAnalytics] = useState<AnalyticsRecord[]>([]);
   const currentUser = getCurrentUser();
 
   useEffect(() => {
     fetchDashboardData();
+    fetchUserAnalytics();
   }, []);
 
   const fetchDashboardData = async () => {
@@ -70,15 +74,18 @@ function UserDashboardContent() {
 
       if (!response.ok) throw new Error("Failed to fetch data");
       const data = await response.json();
-      const companies = data?.data || data || [];
+      const parsedCompanies = data?.data || data || [];
+      const companies: Company[] = Array.isArray(parsedCompanies)
+        ? parsedCompanies
+        : [];
 
       setRecentCompanies(companies.slice(0, 3));
       setStats({
         totalCompanies: companies.length,
-        approvedCompanies: companies.filter((c) => c.isApproved).length,
-        pendingCompanies: companies.filter((c) => !c.isApproved).length,
+        approvedCompanies: companies.filter((c: Company) => c.isApproved).length,
+        pendingCompanies: companies.filter((c: Company) => !c.isApproved).length,
         totalViews: companies.reduce(
-          (sum, company) => sum + (company.__v || 0),
+          (sum: number, company: Company) => sum + (company.__v || 0),
           0
         ),
         monthlyGrowth: 15,
@@ -90,6 +97,52 @@ function UserDashboardContent() {
     }
   };
 
+  const fetchUserAnalytics = async () => {
+    if (!currentUser?._id) return;
+
+    try {
+      setAnalyticsLoading(true);
+      const params = new URLSearchParams({
+        user: currentUser._id,
+        sort: "-timestamp",
+        limit: "5",
+      });
+      const token =
+        typeof window !== "undefined"
+          ? localStorage.getItem("auth_token")
+          : null;
+
+      const response = await fetch(
+        `${API_BASE_URL}/analytics?${params.toString()}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch analytics");
+      }
+
+      const payload = await response.json();
+      const analyticsData = Array.isArray(payload?.data?.data)
+        ? payload.data.data
+        : Array.isArray(payload?.data)
+          ? payload.data
+          : Array.isArray(payload)
+            ? payload
+            : [];
+
+      setUserAnalytics(analyticsData);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-[70vh]">
@@ -98,7 +151,9 @@ function UserDashboardContent() {
     );
   }
 
-  const getCategoryName = (categoryId) => {
+  const getCategoryName = (
+    categoryId: Company["categoryId"] | undefined
+  ) => {
     if (!categoryId) return t("unknown");
     return lang === "ar" ? categoryId.nameAr : categoryId.nameEn;
   };
@@ -308,113 +363,159 @@ function UserDashboardContent() {
           </div>
 
           {/* Recent Ads */}
-<div className="lg:col-span-2 h-full">
-  <div className="ultra-card h-full flex flex-col">
-    <div className="p-6 flex flex-col flex-1">
-      <div className="flex items-center justify-between mb-6">
-        <CardTitle className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
-          {t("recentAds")}
-        </CardTitle>
-        <Button asChild size="sm" className="btn-ultra">
-          <Link href="/manage/ads">
-            {t("viewAllAds")}
-            <ArrowRight className="h-4 w-4 mr-2" />
-          </Link>
-        </Button>
-      </div>
+          <div className="lg:col-span-2 h-full">
+            <div className="ultra-card h-full flex flex-col">
+              <div className="p-6 flex flex-col flex-1">
+                <div className="flex items-center justify-between mb-6">
+                  <CardTitle className="flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-primary" />
+                    {t("recentAds")}
+                  </CardTitle>
+                  <Button asChild size="sm" className="btn-ultra">
+                    <Link href="/manage/ads">
+                      {t("viewAllAds")}
+                      <ArrowRight className="h-4 w-4 mr-2" />
+                    </Link>
+                  </Button>
+                </div>
 
-      <div className="flex-1 overflow-y-auto">
-        {recentCompanies.length === 0 ? (
-          <div className="text-center py-12">
-            <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-              <Building2 className="h-10 w-10 text-primary" />
-            </div>
-            <h3 className="text-xl font-semibold mb-2 gradient-text">
-              {t("noAds")}
-            </h3>
-            <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-              {t("startWithFirstAd")}
-            </p>
-            <Button asChild className="btn-ultra">
-              <Link href="/manage/ads/new">
-                <PlusCircle className="h-4 w-4 mr-2" />
-                {t("addFirstAd")}
-              </Link>
-            </Button>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {recentCompanies.slice(0, 3).map((company, index) => (
-              <div
-                key={company._id}
-                className={`p-4 border rounded-xl hover:shadow-lg transition-all duration-300 scroll-fade-in flex items-stretch ${
-                  index % 2 === 0 ? "bg-card" : "bg-secondary/20"
-                }`}
-                style={{
-                  animationDelay: `${index * 100}ms`,
-                  minHeight: "140px", 
-                }}
-              >
-                <div className="flex items-center gap-4 w-full">
-                  <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                    {company.image ? (
-                      <img
-                        src={company.image}
-                        alt={company.companyName}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Building2 className="h-7 w-7 text-primary" />
-                    )}
-                  </div>
-
-                  <div className="flex-1 min-w-0 flex flex-col justify-between">
-                    <div className="flex items-center justify-between mb-1">
-                      <h4 className="font-semibold text-lg truncate">
-                        {company.companyName}
-                      </h4>
-                      {company.isApproved ? (
-                        <Badge className="bg-green-500 flex items-center text-white">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          {t("approvedBadge")}
-                        </Badge>
-                      ) : (
-                        <Badge
-                          variant="secondary"
-                          className="flex items-center bg-yellow-500 text-white"
-                        >
-                          <Clock className="h-3 w-3 mr-1" />
-                          {t("pendingBadge")}
-                        </Badge>
-                      )}
-                    </div>
-
-                    <p className="text-muted-foreground mb-2 text-sm break-words line-clamp-3">
-                      {company.description}
-                    </p>
-
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline" className="text-xs">
-                        {t("categoryLabel")} {getCategoryName(company.categoryId)}
-                      </Badge>
-                      <div className="flex items-center text-xs text-muted-foreground">
-                        <Eye className="h-3 w-3 mr-1" />
-                        {company.__v || 0} {t("views")}
+                <div className="flex-1 overflow-y-auto">
+                  {recentCompanies.length === 0 ? (
+                    <div className="text-center py-12">
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
+                        <Building2 className="h-10 w-10 text-primary" />
                       </div>
+                      <h3 className="text-xl font-semibold mb-2 gradient-text">
+                        {t("noAds")}
+                      </h3>
+                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                        {t("startWithFirstAd")}
+                      </p>
+                      <Button asChild className="btn-ultra">
+                        <Link href="/manage/ads/new">
+                          <PlusCircle className="h-4 w-4 mr-2" />
+                          {t("addFirstAd")}
+                        </Link>
+                      </Button>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {recentCompanies.slice(0, 3).map((company, index) => (
+                        <div
+                          key={company._id}
+                          className={`p-4 border rounded-xl hover:shadow-lg transition-all duration-300 scroll-fade-in flex items-stretch ${
+                            index % 2 === 0 ? "bg-card" : "bg-secondary/20"
+                          }`}
+                          style={{
+                            animationDelay: `${index * 100}ms`,
+                            minHeight: "140px",
+                          }}
+                        >
+                          <div className="flex items-center gap-4 w-full">
+                            <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                              {company.image ? (
+                                <img
+                                  src={company.image}
+                                  alt={company.companyName}
+                                  className="w-full h-full object-cover"
+                                />
+                              ) : (
+                                <Building2 className="h-7 w-7 text-primary" />
+                              )}
+                            </div>
+
+                            <div className="flex-1 min-w-0 flex flex-col justify-between">
+                              <div className="flex items-center justify-between mb-1">
+                                <h4 className="font-semibold text-lg truncate">
+                                  {company.companyName}
+                                </h4>
+                                {company.isApproved ? (
+                                  <Badge className="bg-green-500 flex items-center text-white">
+                                    <CheckCircle className="h-3 w-3 mr-1" />
+                                    {t("approvedBadge")}
+                                  </Badge>
+                                ) : (
+                                  <Badge
+                                    variant="secondary"
+                                    className="flex items-center bg-yellow-500 text-white"
+                                  >
+                                    <Clock className="h-3 w-3 mr-1" />
+                                    {t("pendingBadge")}
+                                  </Badge>
+                                )}
+                              </div>
+
+                              <p className="text-muted-foreground mb-2 text-sm break-words line-clamp-3">
+                                {company.description}
+                              </p>
+
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <Badge variant="outline" className="text-xs">
+                                  {t("categoryLabel")}{" "}
+                                  {getCategoryName(company.categoryId)}
+                                </Badge>
+                                <div className="flex items-center text-xs text-muted-foreground">
+                                  <Eye className="h-3 w-3 mr-1" />
+                                  {company.__v || 0} {t("views")}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
+            </div>
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-</div>
 
-
+          {/* User Analytics */}
+          <div className="lg:col-span-1 flex flex-col gap-6">
+            <div className="ultra-card h-full">
+              <div className="p-6">
+                <CardTitle className="flex items-center gap-2 mb-6">
+                  <Activity className="h-5 w-5 text-primary" />
+                  {t("recentActivity") || "Recent Activity"}
+                </CardTitle>
+                <div className="space-y-4 max-h-[360px] overflow-y-auto">
+                  {analyticsLoading ? (
+                    <div className="text-center text-muted-foreground py-6">
+                      {t("loading") || "Loading analytics..."}
+                    </div>
+                  ) : userAnalytics.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-6">
+                      {t("noActivity") || "No recent actions recorded"}
+                    </div>
+                  ) : (
+                    userAnalytics.map((record) => (
+                      <div
+                        key={record._id}
+                        className="p-4 rounded-xl border border-border/40 bg-card/60"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-sm font-medium">{record.action}</p>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(record.timestamp).toLocaleString(
+                              lang === "ar" ? "ar-SA" : "en-US"
+                            )}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                          {record.path && (
+                            <span className="truncate">{record.path}</span>
+                          )}
+                          {record.status && (
+                            <span>{t("status") || "Status"}: {record.status}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </main>

@@ -5,12 +5,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, User2 } from "lucide-react";
-// ✅ Updated imports to use the new store structure
+import { LogOut, Menu, User2, Bell } from "lucide-react";
 import { useAuthStore, useUserStore, signOut, isAdmin } from "@/lib/auth";
 import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
+import { NotificationPanel } from "@/components/common/notification-panel";
 import Logo from "../Logo";
 import {
   LayoutDashboard,
@@ -23,6 +23,7 @@ import {
   PlusCircle,
   User,
 } from "@/components/ui/icon";
+import { useNotificationStore } from "@/lib/notificationStore";
 
 function getAdminNavItems(t: (key: string) => string) {
   return [
@@ -53,11 +54,16 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   
-  // ✅ Get user data from the new useUserStore
+  // Get user data from the useUserStore
   const { user } = useUserStore();
   
-  // ✅ Simplified isAdmin check using the user from the store
+  // Simplified isAdmin check using the user from the store
   const userIsAdmin = isAdmin(user);
+
+  // Notification state
+  const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
+  const { fetchNotifications, unreadCount } = useNotificationStore();
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -77,6 +83,10 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   };
 
+  const handleNotificationClick = () => {
+    setIsNotificationPanelOpen((prev) => !prev);
+  };
+
   useEffect(() => {
     if (!isSidebarOpen || isLargeScreen) return;
     const handleClickOutside = (event: MouseEvent) => {
@@ -88,7 +98,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen, isLargeScreen]);
 
-  // ✅ يتحكم في الحالة حسب حجم الشاشة
+  // Controls state based on screen size
   useEffect(() => {
     const handleResize = () => {
       const large = window.innerWidth >= 1024;
@@ -99,6 +109,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // Fetch notifications on component mount
+  useEffect(() => {
+    if (!user?._id) {
+      setIsNotificationPanelOpen(false);
+      return;
+    }
+
+    fetchNotifications();
+    
+    // Set up polling for new notifications (every 30 seconds)
+    const intervalId = setInterval(fetchNotifications, 30000);
+    
+    return () => clearInterval(intervalId);
+  }, [fetchNotifications, user?._id]);
 
   return (
     <div className="flex min-h-screen relative" dir={isRTL ? "rtl" : "ltr"}>
@@ -200,7 +225,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                   <User className="h-5 w-5 text-white" />
                 </div>
                 <div className="flex flex-col">
-                  {/* ✅ Updated to use the `user` from the store */}
                   <p className="text-sm font-medium text-foreground truncate">
                     {user?.name || t("user")}
                   </p>
@@ -216,6 +240,28 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
               "flex items-center gap-3",
               isRTL && "order-1"
             )}>
+              {/* Notification Icon */}
+              <div className="relative">
+                <button
+                  ref={notificationButtonRef}
+                  onClick={handleNotificationClick}
+                  className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <Bell className="h-5 w-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                
+                {/* Notification Panel */}
+                <NotificationPanel
+                  isOpen={isNotificationPanelOpen}
+                  onClose={() => setIsNotificationPanelOpen(false)}
+                />
+              </div>
+              
               <LanguageSwitcher />
               <div className="h-6 w-px bg-border/50" />
               <ThemeToggle />

@@ -2,7 +2,27 @@
 
 import { getAuthHeaders } from "./auth";
 
-const API_BASE_URL = "http://72.60.178.180:8000/api/v1";
+export const API_BASE_URL = "http://72.60.178.180:8000/api/v1";
+
+export interface AnalyticsRecord {
+  _id: string;
+  user?: string;
+  action: string;
+  role?: "user" | "admin" | "manager" | string;
+  path?: string;
+  method?: string;
+  status?: number;
+  ip?: string;
+  timestamp: string;
+}
+
+const extractApiData = <T>(payload: any): T => {
+  if (!payload) return payload;
+  if (payload.data !== undefined) {
+    return extractApiData<T>(payload.data);
+  }
+  return payload as T;
+};
 
 class ApiClient {
   private async request<T>(
@@ -145,15 +165,18 @@ class ApiClient {
   }
 
   // Analytics endpoints
-  async getAnalytics() {
-    return this.request<{
-      totalAds: number;
-      pendingAds: number;
-      approvedAds: number;
-      rejectedAds: number;
-      totalUsers: number;
-      recentActivity: any[];
-    }>("/analytics");
+  async getAnalytics(params?: Record<string, string | number | undefined>) {
+    const searchParams = new URLSearchParams();
+    if (params) {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.append(key, String(value));
+        }
+      });
+    }
+    const query = searchParams.toString();
+    const response = await this.request(`/analytics${query ? `?${query}` : ""}`);
+    return extractApiData<AnalyticsRecord[]>(response);
   }
 
   // File upload endpoints
