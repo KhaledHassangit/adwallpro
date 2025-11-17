@@ -26,6 +26,7 @@ import {
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EditCategoryDialog } from "@/components/admin/edit-category-dialog";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface Category {
   _id: string;
@@ -55,10 +56,8 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
     try {
       setLoading(true);
       const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          "Content-Type": "application/json",
-        },
+                 headers: getAuthHeaders(),
+
       });
 
       if (!response.ok) {
@@ -67,7 +66,7 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
       }
 
       const data = await response.json();
-      setCategories(data.data || []);
+      setCategories(data?.data?.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
       toast.error(error instanceof Error ? error.message : t("adminFailedToFetchCategories"));

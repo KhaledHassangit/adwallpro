@@ -39,14 +39,19 @@ type Plan = {
   updatedAt?: string; // Added by timestamps
 };
 
+// Updated to match the actual API response structure
 type PlansResponse = {
-  results: number;
-  paginationResult: {
-    currentPage: number;
-    limit: number;
-    numberOfPages: number;
+  status: string;
+  message: string;
+  data: {
+    results: number;
+    paginationResult: {
+      currentPage: number;
+      limit: number;
+      numberOfPages: number;
+    };
+    data: Plan[];
   };
-  data: Plan[];
 };
 
 type Category = {
@@ -58,14 +63,19 @@ type Category = {
   image?: any;
 };
 
+// FIX: Updated CategoriesResponse to match the likely nested API structure
 type CategoriesResponse = {
-  results: number;
-  paginationResult: {
-    currentPage: number;
-    limit: number;
-    numberOfPages: number;
+  status: string;
+  message: string;
+  data: {
+    results: number;
+    paginationResult: {
+      currentPage: number;
+      limit: number;
+      numberOfPages: number;
+    };
+    data: Category[];
   };
-  data: Category[];
 };
 
 // Constants for better maintainability
@@ -615,6 +625,10 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
   }, [locale]);
 
   const getSelectedCategoryNames = useCallback((option: PlanOption) => {
+    // Ensure categories is an array before calling .find()
+    if (!Array.isArray(categories)) {
+      return [];
+    }
     return option.categories?.map(categoryId => {
       const category = categories.find(c => c._id === categoryId);
       return category ? getCategoryName(category) : categoryId;
@@ -884,7 +898,7 @@ function PlansAdminPageContent() {
     try {
       setLoading(true);
       const res = await getPlans() as PlansResponse;
-      const data = res?.data || [];
+      const data = res?.data?.data || [];
       setPlans(data);
     } catch (err) {
       console.error(err);
@@ -898,11 +912,19 @@ function PlansAdminPageContent() {
     try {
       setCategoriesLoading(true);
       const res = await getCategories() as CategoriesResponse;
-      const data = res?.data || [];
-      setCategories(data);
+      // FIX: Access the categories array from the correct path in the API response
+      const data = res?.data?.data || [];
+      // Ensure it's an array, fallback to empty array if not
+      if (!Array.isArray(data)) {
+        console.warn("API response for categories is not an array, falling back to empty array.", res);
+        setCategories([]);
+      } else {
+        setCategories(data);
+      }
     } catch (err) {
       console.error(err);
       toast.error(t("failedToLoadCategories") || "Failed to load categories");
+      setCategories([]); // Ensure categories is always an array on error
     } finally {
       setCategoriesLoading(false);
     }
@@ -953,8 +975,7 @@ function PlansAdminPageContent() {
     setEditingId(plan._id || null);
   }, [defaultDuration]);
 
-  const 
-  handleSubmit = useCallback(async () => {
+  const handleSubmit = useCallback(async () => {
     try {
       if (!form.name.trim()) {
         toast.error(locale === "ar" ? "اسم الباقة مطلوب" : "Plan name is required");

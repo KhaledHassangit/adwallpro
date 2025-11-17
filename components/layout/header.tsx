@@ -38,6 +38,10 @@ export function UltraHeader() {
     { href: "/faq", label: t("FAQ"), icon: HelpCircle },
     { href: "/privacy-policy", label: t("privacyPolicy"), icon: Shield },
   ];
+
+  // Function to close mobile menu
+  const closeMobileMenu = () => setMobileOpen(false);
+
   return (
     <header
       className={cn(
@@ -151,12 +155,12 @@ export function UltraHeader() {
                   <Link
                     key={n.href}
                     href={n.href}
-                    onClick={() => setMobileOpen(false)}
+                    onClick={closeMobileMenu}
                     className={cn(
                       "flex items-center gap-2.5 rounded-xl px-4 py-2 text-base font-semibold transition-all duration-200",
                       isActive
                         ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 shadow-sm"
-                        : "text-foreground/70 hover:bg-primary-50 hover:text-primary-600 dark:hover:bg-primary-950/50"
+                        : "text-foreground/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-primary-900/50 dark:hover:text-primary-300"
                     )}
                   >
                     <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
@@ -170,7 +174,6 @@ export function UltraHeader() {
             </nav>
 
             <div className="border-t pt-4">
-              {/* Removed LanguageSwitcher and ThemeToggle from here */}
               <SignInDialog />
             </div>
           </div>

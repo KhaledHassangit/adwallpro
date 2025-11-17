@@ -15,6 +15,7 @@ import { Edit, Trash2 } from "@/components/ui/icon";
 import { useI18n } from "@/providers/LanguageProvider";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { format } from "date-fns";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface Coupon {
   id: string;
@@ -64,11 +65,8 @@ export function AdminCouponsTable({
         // Make API call to fetch coupons
         const response = await fetch("http://72.60.178.180:8000/api/v1/coupons", {
           method: "GET",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${authToken}`,
-            "Accept": "application/json",
-          },
+                    headers: getAuthHeaders(),
+          
         });
 
         if (!response.ok) {
@@ -87,7 +85,7 @@ export function AdminCouponsTable({
         console.log("API response:", responseData);
 
         // Access data array from response
-        const couponData = responseData.data || [];
+        const couponData = responseData.data.data || [];
         console.log("Coupon data:", couponData);
 
         // Transform API data to match our interface

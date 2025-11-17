@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useI18n } from "@/providers/LanguageProvider";
-import { api } from "@/lib/api";
+import { getAuthHeaders } from "@/lib/auth";
 import { Trash2 } from "@/components/ui/icon";
 import {
   AlertDialog,
@@ -35,6 +35,17 @@ interface User {
   role: string;
   phone?: string;
   createdAt: string;
+  subscription?: {
+    adsUsed: number;
+    isActive: boolean;
+    plan?: string;
+    option?: string;
+    startDate?: string;
+    endDate?: string;
+  };
+  profileImg?: string;
+  active: boolean;
+  lastLogin?: string;
 }
 
 export function AdminUsersTable() {
@@ -52,26 +63,25 @@ export function AdminUsersTable() {
       const response = await fetch(
         `http://72.60.178.180:8000/api/v1/users?page=${page}&limit=10`,
         {
-          headers: {
-            "Content-Type": "application/json",
-            ...(typeof window !== "undefined" &&
-              localStorage.getItem("auth_token")
-              ? {
-                Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-              }
-              : {}),
-          },
+          headers: getAuthHeaders(),
         }
       );
 
-      if (!response.ok) throw new Error(t("adminFailedToFetchUsers"));
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
+        throw new Error(t("adminFailedToFetchUsers"));
+      }
 
       const data = await response.json();
 
-      // التحقق من وجود البيانات وتعيينها بشكل آمن
-      if (data && data.data && Array.isArray(data.data.users)) {
-        setUsers(data.data.users);
-        setTotalPages(Math.ceil((data.results || data.data.users.length) / 10));
+      // Updated to handle the correct API response structure
+      if (data && data.data && data.data.data && Array.isArray(data.data.data.users)) {
+        setUsers(data.data.data.users);
+        setTotalPages(Math.ceil((data.data.results || data.data.data.users.length) / 10));
       } else {
         console.warn("Unexpected API response structure:", data);
         setUsers([]);
@@ -80,7 +90,6 @@ export function AdminUsersTable() {
     } catch (error) {
       console.error("Error fetching users:", error);
       toast.error(t("adminFailedToFetchUsers"));
-      // تعيين مصفوفة فارغة في حالة الخطأ لتجنب undefined
       setUsers([]);
       setTotalPages(1);
     } finally {
@@ -92,22 +101,22 @@ export function AdminUsersTable() {
     if (!userToDelete) return;
 
     try {
-      const token =
-        typeof window !== "undefined"
-          ? localStorage.getItem("auth_token")
-          : null;
-
       const response = await fetch(
         `http://72.60.178.180:8000/api/v1/users/${userToDelete._id}`,
         {
           method: "DELETE",
-          headers: {
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+          headers: getAuthHeaders(),
         }
       );
 
-      if (!response.ok) throw new Error(t("adminFailedToDeleteUser"));
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
+        throw new Error(t("adminFailedToDeleteUser"));
+      }
 
       toast.success(t("adminUserDeletedSuccess"));
       fetchUsers();
@@ -143,6 +152,7 @@ export function AdminUsersTable() {
                 <TableHead className="text-center">{t("adminUserEmail")}</TableHead>
                 <TableHead className="text-center">{t("adminUserRole")}</TableHead>
                 <TableHead className="text-center">{t("adminUserPhone")}</TableHead>
+                <TableHead className="text-center">{t("adminUserSubscription")}</TableHead>
                 <TableHead className="text-center">{t("adminUserRegistrationDate")}</TableHead>
                 <TableHead className="text-center">{t("adminActions")}</TableHead>
               </TableRow>
@@ -165,6 +175,20 @@ export function AdminUsersTable() {
                     </TableCell>
                     <TableCell className="text-center">{user.phone || "-"}</TableCell>
                     <TableCell className="text-center">
+                      {user.subscription ? (
+                        <Badge
+                          variant={user.subscription.isActive ? "default" : "outline"}
+                          className="mx-auto w-fit"
+                        >
+                          {user.subscription.isActive ? t("adminSubscriptionActive") : t("adminSubscriptionInactive")}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="mx-auto w-fit">
+                          {t("adminNoSubscription")}
+                        </Badge>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-center">
                       {new Date(user.createdAt).toLocaleDateString(
                         lang === "ar" ? "ar-SA" : "en-US"
                       )}
@@ -184,7 +208,7 @@ export function AdminUsersTable() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="text-center text-muted-foreground py-8"
                   >
                     {t("adminNoUsersFound")}

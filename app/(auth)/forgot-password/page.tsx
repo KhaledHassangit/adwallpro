@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
       console.error("Reset password error:", error);
       toast.error(error.message || t("resetPasswordError"));
     } finally {
-      setLoading(false);
+    setLoading(false);
     }
   };
 
