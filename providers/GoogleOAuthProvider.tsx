@@ -1,22 +1,20 @@
 "use client";
 
-import { GoogleOAuthProvider as GoogleProvider } from "@react-oauth/google";
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { ReactNode } from 'react';
 
-interface GoogleOAuthProviderProps {
-  children: React.ReactNode;
-}
-
-export function GoogleOAuthProviderWrapper({ children }: GoogleOAuthProviderProps) {
-  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
-
-  if (!clientId) {
-    console.warn("Google Client ID not found in environment variables");
-    return <>{children}</>;
-  }
-
+export default function RootLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return (
-    <GoogleProvider clientId={clientId}>
-      {children}
-    </GoogleProvider>
+    <html lang="en">
+      <body>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || ''}>
+          {children}
+        </GoogleOAuthProvider>
+      </body>
+    </html>
   );
 }

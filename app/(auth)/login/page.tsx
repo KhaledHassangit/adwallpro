@@ -13,6 +13,8 @@ import { verifyGoogleToken } from "@/app/actions";
 import { GoogleLogin } from "@react-oauth/google";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+// Force dynamic rendering for this page
+export const dynamic = 'force-dynamic';
 
 export default function LoginPage() {
   const { t, locale } = useI18n();
@@ -31,6 +33,7 @@ export default function LoginPage() {
   });
 
   const isRTL = locale === "ar";
+  const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setGoogleLoading(true);
@@ -194,26 +197,31 @@ export default function LoginPage() {
               <div className="relative  flex justify-center text-xs uppercase">
                 <span className="bg-background px-2 text-muted-foreground">
                   {t("orContinueWith")}
-
                 </span>
               </div>
             </div>
 
-            <div className="flex justify-center" dir={isRTL ? "rtl" : "ltr"}>
-              <GoogleLogin
-                onSuccess={handleGoogleSuccess}
-                onError={handleGoogleError}
-                text="signin_with"
-                width="400"
-                locale={locale}
-                useOneTap={false}
-                type="standard"
-                shape="rectangular"
-                theme="outline"
-                size="large"
-                logo_alignment="left"
-              />
-            </div>
+            {googleClientId ? (
+              <div className="flex justify-center" dir={isRTL ? "rtl" : "ltr"}>
+                <GoogleLogin
+                  onSuccess={handleGoogleSuccess}
+                  onError={handleGoogleError}
+                  text="signin_with"
+                  width="400"
+                  locale={locale}
+                  useOneTap={false}
+                  type="standard"
+                  shape="rectangular"
+                  theme="outline"
+                  size="large"
+                  logo_alignment="left"
+                />
+              </div>
+            ) : (
+              <div className="text-center text-sm text-muted-foreground">
+                Google login is not available at the moment. Please use email login.
+              </div>
+            )}
 
             <div className="text-center">
               <span className="text-sm text-muted-foreground">

@@ -1,13 +1,12 @@
-// app/login-success/page.tsx
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore, useUserStore } from "@/lib/auth";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
-
-export default function LoginSuccess() {
+export const dynamic = 'force-dynamic';
+function LoginSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setToken } = useAuthStore();
@@ -80,5 +79,20 @@ export default function LoginSuccess() {
         <h2 className="text-xl font-semibold">Logging in, please wait...</h2>
       </div>
     </div>
+  );
+}
+
+export default function LoginSuccess() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-violet-500" />
+          <h2 className="text-xl font-semibold">Loading...</h2>
+        </div>
+      </div>
+    }>
+      <LoginSuccessContent />
+    </Suspense>
   );
 }
