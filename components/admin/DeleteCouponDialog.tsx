@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { useI18n } from "@/providers/LanguageProvider";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface Coupon {
   id: string;
@@ -42,23 +43,23 @@ export function DeleteCouponDialog({
 
     setLoading(true);
     try {
-      // Get the auth token from localStorage
-      const authToken = localStorage.getItem("auth_token");
-      
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please log in again.");
-      }
+      // Using getAuthHeaders to get the token from cookies
+      const headers = getAuthHeaders();
 
       // Make the API call to delete the coupon
       const response = await fetch(`http://72.60.178.180:8000/api/v1/coupons/${coupon.id}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`,
-        },
+        headers,
       });
 
       if (!response.ok) {
+        // Handle unauthorized access
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
+        
         // Try to get error details
         let errorMessage = "Failed to delete coupon";
         try {
@@ -88,7 +89,7 @@ export function DeleteCouponDialog({
       if (errorMessage.includes("fetch")) {
         errorMessage = "Network error. Please check your connection and try again.";
       } else if (errorMessage.includes("Failed to fetch")) {
-        errorMessage = "Could not connect to the server. Please try again later.";
+        errorMessage = "Could not connect to server. Please try again later.";
       }
       
       toast.error(errorMessage);

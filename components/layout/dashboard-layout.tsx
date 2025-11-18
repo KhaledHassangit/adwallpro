@@ -1,3 +1,4 @@
+// components/layout/dashboard-layout.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -6,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { LogOut, Menu, User2, Bell } from "lucide-react";
-import { useAuthStore, useUserStore, signOut, isAdmin } from "@/lib/auth";
+import {  useUserStore, signOut } from "@/lib/auth"; 
 import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/icon";
 import { useNotificationStore } from "@/lib/notificationStore";
 
+// Define navigation items separately
 function getAdminNavItems(t: (key: string) => string) {
   return [
     { title: t("overview"), href: "/admin", icon: LayoutDashboard },
@@ -46,19 +48,22 @@ function getUserNavItems(t: (key: string) => string) {
   ];
 }
 
+// *** CHANGE: Add userType to the props ***
 interface DashboardLayoutProps {
   children: React.ReactNode;
+  userType?: "admin" | "user"; // New prop to explicitly set the user type
 }
 
-export function DashboardLayout({ children }: DashboardLayoutProps) {
+export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   
-  // Get user data from the useUserStore
+  // Get user data from the store
   const { user } = useUserStore();
   
-  // Simplified isAdmin check using the user from the store
-  const userIsAdmin = isAdmin(user);
+  // *** CHANGE: Determine navigation based on the new prop ***
+  // This is now a simple, server-safe check. No more client-side guessing.
+  const navItems = userType === "admin" ? getAdminNavItems(t) : getUserNavItems(t);
 
   // Notification state
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
@@ -71,8 +76,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
   // Check if current language is RTL
   const isRTL = locale === "ar";
-
-  const navItems = userIsAdmin ? getAdminNavItems(t) : getUserNavItems(t);
 
   const handleSignOut = async () => {
     try {

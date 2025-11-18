@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { ProtectedRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData } from "@/lib/auth";
+import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData, getAuthCookie } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -71,7 +71,7 @@ function ProfileContent() {
     if (!phone) return true; // Phone is optional
 
     // Remove all non-digit characters
-    const cleanPhone = phone.replace(/\D/g, '');
+    const cleanPhone = phone.replace(/\D/g, '')
 
     // Egypt: starts with 20 and has 12 digits total (20xxxxxxxxxx)
     // Saudi Arabia: starts with 966 and has 12 digits total (966xxxxxxxxxx)
@@ -219,8 +219,8 @@ function ProfileContent() {
     try {
       setChangingPassword(true);
 
-      // Get the auth token from localStorage
-      const token = localStorage.getItem('auth_token');
+      // Get the auth token from cookies instead of localStorage
+      const token = getAuthCookie(); // Changed from localStorage
 
       // Call the change password endpoint
       const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {

@@ -1,3 +1,5 @@
+// app/(user)/layout.tsx
+import type React from "react";
 import { DashboardLayout } from "@/components/layout/dashboard-layout";
 
 export default function UserDashboardLayout({
@@ -5,5 +7,9 @@ export default function UserDashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <DashboardLayout>{children}</DashboardLayout>;
+  return (
+    <DashboardLayout userType="user">
+      {children}
+    </DashboardLayout>
+  );
 }

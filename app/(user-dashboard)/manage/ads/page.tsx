@@ -25,7 +25,7 @@ import {
   ImageOff,
 } from "lucide-react";
 import Link from "next/link";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getAuthCookie } from "@/lib/auth";
 import { toast } from "sonner";
 
 import {
@@ -127,7 +127,7 @@ function UserAdsContent() {
     try {
       const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
         },
       });
       if (response.ok) {
@@ -148,7 +148,7 @@ function UserAdsContent() {
         `http://72.60.178.180:8000/api/v1/companies/user/${currentUser._id}`,
         {
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
           },
         }
       );
@@ -212,7 +212,7 @@ function UserAdsContent() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
           },
         }
       );
@@ -340,7 +340,7 @@ function UserAdsContent() {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
           },
           body: JSON.stringify(formData),
         }

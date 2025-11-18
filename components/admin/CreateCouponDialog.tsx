@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/LanguageProvider";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface CreateCouponDialogProps {
     open: boolean;
@@ -94,14 +95,10 @@ export function CreateCouponDialog({
 
         setLoading(true);
         try {
-            // Get the auth token from localStorage
-            const authToken = localStorage.getItem("auth_token");
+            // Using getAuthHeaders to get the token from cookies
+            const headers = getAuthHeaders();
 
-            if (!authToken) {
-                throw new Error("Authentication token not found. Please log in again.");
-            }
-
-            // Prepare the request body according to the API specification
+            // Prepare request body according to API specification
             const requestBody = {
                 couponCode: formData.code,
                 startDate: format(formData.startDate, "yyyy-MM-dd"),
@@ -116,14 +113,18 @@ export function CreateCouponDialog({
             // Make the API call to create the coupon
             const response = await fetch("http://72.60.178.180:8000/api/v1/coupons", {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${authToken}`,
-                },
+                headers,
                 body: JSON.stringify(requestBody),
             });
 
             if (!response.ok) {
+                // Handle unauthorized access
+                if (response.status === 401) {
+                    toast.error(t("adminSessionExpired"));
+                    window.location.href = "/login";
+                    return;
+                }
+                
                 const errorData = await response.json();
                 throw new Error(errorData.message || "Failed to create coupon");
             }

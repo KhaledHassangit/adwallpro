@@ -441,6 +441,42 @@ export const en = {
   userIdNotFound: "User ID not found",
   termsAndConditions: 'By clicking "Submit Request" you agree to the terms of use and privacy policy',
   pendingApproval: "Pending Approval",
+  adminDashboardTitle: "Admin Dashboard",
+  adminDashboardWelcome: "Welcome to your admin dashboard",
+  refresh: "Refresh",
+  
+  // Stats
+  totalUsers: "Total Users",
+  registeredUser: "Registered Users",
+  admins: "Admins",
+  adminAccounts: "Admin Accounts",
+  regularUsers: "Regular Users",
+  adUsers: "Regular Users",
+  activeThisWeek: "Active (24h)",
+  activeUserLast7Days: "Active Users (Last 24h)",
+  eventsLast24h: "events in the last 24h",
+  
+  // Companies
+  activeCompanies: "Active Companies",
+  pendingCompanies: "Pending Companies",
+  companies: "Companies",
+  
+  // Categories
+  totalCategories: "Total Categories",
+  
+  // Charts
+  subscriptionsPerPlan: "Subscriptions per Plan",
+  noChartData: "No subscription data available",
+  barChart: "Bar Chart",
+  pieChart: "Pie Chart",
+  
+  // Activity
+  adminRecentActivity: "Recent Activity",
+  totalEvents: "Total Events",
+  noActivity: "No activity found",
+  
+  // Common
+  ofTotal: "of total",
 
   // Image Upload Component
   imagePreviewAlt: "Image Preview",
@@ -452,9 +488,6 @@ export const en = {
   editAdDescription: "Make changes to your advertisement details below.",
 
   // Admin Dashboard
-  adminDashboardTitle: "Admin Dashboard",
-  adminDashboardWelcome: "Welcome to the admin dashboard",
-  adminRecentActivity: "Recent Activity",
   adminNewCompanyApproved: "New company approved",
   adminNewUserRegistered: "New user registered",
   adminNewCategoryRequest: "New category request",
@@ -591,19 +624,9 @@ export const en = {
   errorFetchingUserStats: "Failed to fetch user statistics",
 
   // Card titles
-  totalUsers: "Total Users",
-  admins: "Admins",
-  regularUsers: "Regular Users",
-  activeThisWeek: "Active This Week",
 
   // Card subtitles
-  registeredUser: "Registered user in the system",
-  adminAccounts: "Administrative accounts",
-  adUsers: "Users for ads",
-  activeUserLast7Days: "Active user in the last 7 days",
 
-  // Other labels
-  ofTotal: "Of total",
   usageLimitRequired: "Usage limit is required",
   invalidUsageLimit: "Please enter a valid usage limit",
 

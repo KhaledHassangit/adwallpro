@@ -479,8 +479,31 @@ export const ar = {
     userIdNotFound: "معرف المستخدم غير موجود",
     termsAndConditions: 'بالنقر على "إرسال الطلب" فإنك توافق على شروط الاستخدام وسياسة الخصوصية',
     pendingApproval: "في انتظار الموافقة",
-
-    // Image Upload Component
+  activeCompanies: "الشركات النشطة",
+  pendingCompanies: "الشركات المعلقة",
+  subscriptionsPerPlan: "الاشتراكات حسب الخطة",
+  noChartData: "لا توجد بيانات اشتراك متاحة",
+  barChart: "مخطط شريطي",
+  pieChart: "مخطط دائري",
+  adminRecentActivity: "النشاط الأخير",
+  totalEvents: "إجمالي الأحداث",
+  noActivity: "لم يتم العثور على نشاط",
+  ofTotal: "من الإجمالي",
+  adminDashboardTitle: "لوحة تحكم المسؤول",
+  adminDashboardWelcome: "مرحباً بك في لوحة تحكم المسؤول",
+  refresh: "تحديث",
+  
+  // Stats
+  totalUsers: "إجمالي المستخدمين",
+  registeredUser: "المستخدمون المسجلون",
+  admins: "المسؤولون",
+  adminAccounts: "حسابات المسؤولين",
+  regularUsers: "المستخدمون العاديون",
+  adUsers: "المستخدمون العاديون",
+  activeThisWeek: "نشط (24 ساعة)",
+  activeUserLast7Days: "المستخدمون النشطون (آخر 24 ساعة)",
+  eventsLast24h: "حدث في آخر 24 ساعة",
+ // Image Upload Component
     imagePreviewAlt: "معاينة الصورة",
     removeImage: "إزالة الصورة",
     dragImageOrClick: "اسحب الصورة هنا أو انقر للاختيار",
@@ -488,9 +511,6 @@ export const ar = {
     fileSizeTooLarge: "حجم الملف كبير جداً. الحد الأقصى 5MB",
 
     // Admin Dashboard
-    adminDashboardTitle: "لوحة تحكم المشرف",
-    adminDashboardWelcome: "مرحباً بك في لوحة تحكم المشرف",
-    adminRecentActivity: "النشاط الأخير",
     adminNewCompanyApproved: "تمت الموافقة على شركة جديدة",
     adminNewUserRegistered: "تسجيل مستخدم جديد",
     adminNewCategoryRequest: "طلب فئة جديد",
@@ -632,19 +652,9 @@ export const ar = {
     errorFetchingUserStats: "فشل في جلب إحصائيات المستخدمين",
 
     // Card titles
-    totalUsers: "إجمالي المستخدمين",
-    admins: "المدراء",
-    regularUsers: "المستخدمون العاديون",
-    activeThisWeek: "نشط هذا الأسبوع",
 
     // Card subtitles
-    registeredUser: "مستخدم مسجل في النظام",
-    adminAccounts: "حسابات إدارية",
-    adUsers: "مستخدمين للإعلانات",
-    activeUserLast7Days: "مستخدم نشط في آخر 7 أيام",
-
     // Other labels
-    ofTotal: "من الإجمالي",
     usageLimitRequired: "حد الاستخدام مطلوب",
     invalidUsageLimit: "يرجى إدخال حد استخدام صالح",
     adminCategoryCreatedAt: "تاريخ الإنشاء",

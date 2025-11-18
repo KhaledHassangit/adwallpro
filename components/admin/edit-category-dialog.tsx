@@ -14,6 +14,8 @@ import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { toast } from "sonner";
 import { useI18n } from "@/providers/LanguageProvider";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { getAuthCookie } from "@/lib/auth"; // Import the auth function
 
 interface Category {
   _id: string;
@@ -84,6 +86,12 @@ export function EditCategoryDialog({
     setLoading(true);
 
     try {
+      const token = getAuthCookie(); // Use getAuthCookie instead of localStorage
+
+      if (!token) {
+        throw new Error(t("adminNotAuthenticated") || "Authentication token not found");
+      }
+
       const formDataToSend = new FormData();
       formDataToSend.append("nameAr", formData.nameAr);
       formDataToSend.append("nameEn", formData.nameEn);
@@ -113,7 +121,7 @@ export function EditCategoryDialog({
         {
           method: "PUT",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+            Authorization: `Bearer ${token}`, // Use the token from getAuthCookie
           },
           body: formDataToSend,
         }
@@ -144,132 +152,144 @@ export function EditCategoryDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t("adminEditCategory")}</DialogTitle>
         </DialogHeader>
-        <div className="max-h-[70vh] overflow-y-auto pr-2">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="nameAr">{t("adminNameAr")} *</Label>
-              <Input
-                id="nameAr"
-                value={formData.nameAr}
-                onChange={(e) =>
-                  setFormData({ ...formData, nameAr: e.target.value })
-                }
-                placeholder={lang === "ar" ? "مثال: مطاعم" : "Example: Restaurants"}
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="descriptionAr">{t("adminDescriptionAr")} *</Label>
-              <Textarea
-                id="descriptionAr"
-                value={formData.descriptionAr}
-                onChange={(e) =>
-                  setFormData({ ...formData, descriptionAr: e.target.value })
-                }
-                placeholder={lang === "ar" ? "وصف الفئة باللغة العربية" : "Category description in Arabic"}
-                required
-                rows={3}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="nameEn">{t("adminNameEn")} *</Label>
-              <Input
-                id="nameEn"
-                value={formData.nameEn}
-                onChange={(e) =>
-                  setFormData({ ...formData, nameEn: e.target.value })
-                }
-                placeholder="Example: Restaurants"
-                required
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="descriptionEn">{t("adminDescriptionEn")} *</Label>
-              <Textarea
-                id="descriptionEn"
-                value={formData.descriptionEn}
-                onChange={(e) =>
-                  setFormData({ ...formData, descriptionEn: e.target.value })
-                }
-                placeholder="Category description in English"
-                required
-                rows={3}
-                disabled={loading}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="color">{t("adminColor")}</Label>
-              <div className="flex items-center gap-2">
+        
+        <div className="flex flex-col max-h-[70vh]">
+          <ScrollArea className="flex-1 px-1">
+            <form onSubmit={handleSubmit} className="space-y-4 px-4 pb-4">
+              <div>
+                <Label htmlFor="nameAr">{t("adminNameAr")} *</Label>
                 <Input
-                  id="color"
-                  type="color"
-                  value={formData.color}
+                  id="nameAr"
+                  value={formData.nameAr}
                   onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
+                    setFormData({ ...formData, nameAr: e.target.value })
                   }
-                  className="w-16 h-10 p-1 rounded"
+                  placeholder={lang === "ar" ? "مثال: مطاعم" : "Example: Restaurants"}
+                  required
                   disabled={loading}
-                />
-                <Input
-                  value={formData.color}
-                  onChange={(e) =>
-                    setFormData({ ...formData, color: e.target.value })
-                  }
-                  placeholder="#FF6B6B"
-                  className="flex-1"
-                  disabled={loading}
+                  className="rounded-md"
                 />
               </div>
-            </div>
 
-            <div>
-              <Label>{t("adminCategoryImage")}</Label>
-              <div className="mt-2">
-                <ImageUpload
-                  onImageChange={(image) => {
-                    console.log("Image changed:", image ? "New image selected" : "Image removed");
-                    setFormData({ ...formData, image });
-                  }}
-                  defaultImage={category?.image}
+              <div>
+                <Label htmlFor="descriptionAr">{t("adminDescriptionAr")} *</Label>
+                <Textarea
+                  id="descriptionAr"
+                  value={formData.descriptionAr}
+                  onChange={(e) =>
+                    setFormData({ ...formData, descriptionAr: e.target.value })
+                  }
+                  placeholder={lang === "ar" ? "وصف الفئة باللغة العربية" : "Category description in Arabic"}
+                  required
+                  rows={3}
                   disabled={loading}
+                  className="rounded-md resize-none"
                 />
               </div>
-              {formData.image && (
-                <p className="text-sm text-muted-foreground mt-2">
-                  {formData.image instanceof File
-                    ? t("adminNewImageSelected")
-                    : typeof formData.image === 'string' && formData.image.startsWith("data:")
-                    ? t("adminNewImageSelected")
-                    : t("adminCurrentImage")}
-                </p>
-              )}
-            </div>
-          </form>
-        </div>
-        <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-            
-          >
-            {t("adminCancel")}
-          </Button>
-          <Button type="submit" className="btn-ultra" disabled={loading} onClick={handleSubmit}>
-            {loading ? t("adminUpdating") : t("adminUpdate")}
-          </Button>
+
+              <div>
+                <Label htmlFor="nameEn">{t("adminNameEn")} *</Label>
+                <Input
+                  id="nameEn"
+                  value={formData.nameEn}
+                  onChange={(e) =>
+                    setFormData({ ...formData, nameEn: e.target.value })
+                  }
+                  placeholder="Example: Restaurants"
+                  required
+                  disabled={loading}
+                  className="rounded-md"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="descriptionEn">{t("adminDescriptionEn")} *</Label>
+                <Textarea
+                  id="descriptionEn"
+                  value={formData.descriptionEn}
+                  onChange={(e) =>
+                    setFormData({ ...formData, descriptionEn: e.target.value })
+                  }
+                  placeholder="Category description in English"
+                  required
+                  rows={3}
+                  disabled={loading}
+                  className="rounded-md resize-none"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="color">{t("adminColor")}</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="color"
+                    type="color"
+                    value={formData.color}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
+                    }
+                    className="w-16 h-10 p-1 rounded-md"
+                    disabled={loading}
+                  />
+                  <Input
+                    value={formData.color}
+                    onChange={(e) =>
+                      setFormData({ ...formData, color: e.target.value })
+                    }
+                    placeholder="#FF6B6B"
+                    className="flex-1 rounded-md"
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>{t("adminCategoryImage")}</Label>
+                <div className="mt-2">
+                  <ImageUpload
+                    onImageChange={(image) => {
+                      console.log("Image changed:", image ? "New image selected" : "Image removed");
+                      setFormData({ ...formData, image });
+                    }}
+                    defaultImage={category?.image}
+                    disabled={loading}
+                  />
+                </div>
+                {formData.image && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {formData.image instanceof File
+                      ? t("adminNewImageSelected")
+                      : typeof formData.image === 'string' && formData.image.startsWith("data:")
+                      ? t("adminNewImageSelected")
+                      : t("adminCurrentImage")}
+                  </p>
+                )}
+              </div>
+            </form>
+          </ScrollArea>
+          
+          <div className="flex justify-end gap-2 pt-4 border-t px-4 pb-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={loading}
+            >
+              {t("adminCancel")}
+            </Button>
+            <Button 
+              type="submit" 
+              className="btn-ultra" 
+              disabled={loading} 
+              onClick={handleSubmit}
+            >
+              {loading ? t("adminUpdating") : t("adminUpdate")}
+            </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

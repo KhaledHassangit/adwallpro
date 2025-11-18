@@ -26,6 +26,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface Company {
   _id: string;
@@ -65,15 +66,6 @@ interface CompaniesResponse {
   results: number;
   data: Company[];
 }
-
-// Helper function to get auth headers
-const getAuthHeaders = () => {
-  const token = localStorage.getItem("auth_token");
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
 
 // Custom hook for fetching companies
 function useCompanies(
@@ -160,6 +152,16 @@ function useCompanies(
         });
         
         if (!response.ok) {
+          // Handle unauthorized access
+          if (response.status === 401) {
+            toast({
+              title: t("adminSessionExpired"),
+              description: t("adminPleaseLoginAgain"),
+              variant: "destructive",
+            });
+            window.location.href = "/login";
+            return;
+          }
           throw new Error(`Error: ${response.status}`);
         }
         
@@ -423,6 +425,16 @@ function AdminCompaniesTable({
       );
 
       if (!response.ok) {
+        // Handle unauthorized access
+        if (response.status === 401) {
+          toast({
+            title: t("adminSessionExpired"),
+            description: t("adminPleaseLoginAgain"),
+            variant: "destructive",
+          });
+          window.location.href = "/login";
+          return;
+        }
         throw new Error(`Error: ${response.status}`);
       }
 
@@ -452,6 +464,16 @@ function AdminCompaniesTable({
       );
 
       if (!response.ok) {
+        // Handle unauthorized access
+        if (response.status === 401) {
+          toast({
+            title: t("adminSessionExpired"),
+            description: t("adminPleaseLoginAgain"),
+            variant: "destructive",
+          });
+          window.location.href = "/login";
+          return;
+        }
         throw new Error(`Error: ${response.status}`);
       }
 

@@ -16,6 +16,7 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { format } from "date-fns";
 import { getAuthHeaders } from "@/lib/auth";
+import { toast } from "sonner";
 
 interface Coupon {
   id: string;
@@ -53,20 +54,15 @@ export function AdminCouponsTable({
         setLoading(true);
         setError(null);
         
-        // Get auth token from localStorage
-        const authToken = localStorage.getItem("auth_token");
+        // Using getAuthHeaders to get the token from cookies
+        const headers = getAuthHeaders();
         
-        if (!authToken) {
-          throw new Error("Authentication token not found. Please log in again.");
-        }
-
         console.log("Fetching coupons from API...");
         
         // Make API call to fetch coupons
         const response = await fetch("http://72.60.178.180:8000/api/v1/coupons", {
           method: "GET",
-                    headers: getAuthHeaders(),
-          
+          headers,
         });
 
         if (!response.ok) {
@@ -78,6 +74,14 @@ export function AdminCouponsTable({
           } catch (e) {
             console.log("Could not parse error response");
           }
+          
+          // Handle unauthorized access
+          if (response.status === 401) {
+            toast.error(t("adminSessionExpired"));
+            window.location.href = "/login";
+            return;
+          }
+          
           throw new Error(errorMessage);
         }
 

@@ -1,4 +1,3 @@
-// EditCouponDialog.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -31,6 +30,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/LanguageProvider";
 import { toast } from "sonner";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface Coupon {
   id: string;
@@ -125,14 +125,10 @@ export function EditCouponDialog({
 
     setLoading(true);
     try {
-      // Get the auth token from localStorage
-      const authToken = localStorage.getItem("auth_token");
-      
-      if (!authToken) {
-        throw new Error("Authentication token not found. Please log in again.");
-      }
+      // Using getAuthHeaders to get the token from cookies
+      const headers = getAuthHeaders();
 
-      // Prepare the request body according to the API specification
+      // Prepare request body according to API specification
       const requestBody = {
         couponCode: formData.code,
         startDate: format(formData.startDate, "yyyy-MM-dd"),
@@ -148,14 +144,18 @@ export function EditCouponDialog({
       // Make the API call to update the coupon
       const response = await fetch(`http://72.60.178.180:8000/api/v1/coupons/${coupon?.id}`, {
         method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${authToken}`,
-        },
+        headers,
         body: JSON.stringify(requestBody),
       });
 
       if (!response.ok) {
+        // Handle unauthorized access
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
+        
         // Try to get error details
         let errorMessage = "Failed to update coupon";
         try {
@@ -186,7 +186,7 @@ export function EditCouponDialog({
       if (errorMessage.includes("fetch")) {
         errorMessage = "Network error. Please check your connection and try again.";
       } else if (errorMessage.includes("Failed to fetch")) {
-        errorMessage = "Could not connect to the server. Please try again later.";
+        errorMessage = "Could not connect to server. Please try again later.";
       }
       
       toast.error(errorMessage);

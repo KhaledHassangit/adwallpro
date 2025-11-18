@@ -56,11 +56,15 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
     try {
       setLoading(true);
       const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
-                 headers: getAuthHeaders(),
-
+        headers: getAuthHeaders(),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || t("adminFailedToFetchCategories"));
       }
@@ -83,13 +87,16 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
         `http://72.60.178.180:8000/api/v1/categories/${categoryToDelete._id}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          },
+          headers: getAuthHeaders(),
         }
       );
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
         const errorData = await response.json();
         throw new Error(errorData.message || t("adminFailedToDeleteCategory"));
       }

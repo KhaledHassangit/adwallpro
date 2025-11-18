@@ -18,7 +18,7 @@ import { Breadcrumb } from "@/components/common/breadcrumb";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { toast } from "sonner";
 import { Plus, Tags } from "@/components/ui/icon";
-import { getCurrentUser } from "@/lib/auth";
+import { getCurrentUser, getAuthCookie, useUserStore } from "@/lib/auth"; // Import useUserStore
 import { useI18n } from "@/providers/LanguageProvider";
 
 interface Category {
@@ -50,20 +50,35 @@ function AddAdPageContent() {
     categoryId: "", // Added missing categoryId
   });
 
-  const user = getCurrentUser();
+  // *** CHANGE: Get user from store instead of getCurrentUser ***
+  const { user } = useUserStore(); // Use the store directly
 
   // جلب الفئات من الباك إند
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
+      const token = getAuthCookie();
+      
+      if (!token) {
+        console.error("No auth token found");
+        toast.error("Authentication required");
+        return;
+      }
+
+      console.log("Fetching categories with token:", token);
+      
       const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
           "Content-Type": "application/json",
         },
       });
 
-      if (!response.ok) throw new Error(t("failedToFetchCategories"));
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Failed to fetch categories:", errorText);
+        throw new Error(t("failedToFetchCategories") || "Failed to fetch categories");
+      }
 
       const data = await response.json();
       console.log("Categories API response:", data);
@@ -71,7 +86,11 @@ function AddAdPageContent() {
       // التعامل مع هيكل الاستجابة المختلف
       let categoriesData: Category[] = [];
 
-      if (data.data && Array.isArray(data.data)) {
+      // The actual categories array is at data.data.data
+      if (data.data && data.data.data && Array.isArray(data.data.data)) {
+        categoriesData = data.data.data;
+        console.log("Using data.data.data:", categoriesData);
+      } else if (data.data && Array.isArray(data.data)) {
         categoriesData = data.data;
         console.log("Using data.data:", categoriesData);
       } else if (Array.isArray(data)) {
@@ -79,14 +98,14 @@ function AddAdPageContent() {
         console.log("Using direct data:", categoriesData);
       } else {
         console.error("Unexpected response structure:", data);
-        throw new Error(t("unexpectedServerResponse"));
+        throw new Error(t("unexpectedServerResponse") || "Unexpected server response");
       }
 
       setCategories(categoriesData);
       console.log("Categories loaded successfully:", categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      toast.error(t("failedToFetchCategories"));
+      toast.error(t("failedToFetchCategories") || "Failed to fetch categories");
     } finally {
       setCategoriesLoading(false);
     }
@@ -109,24 +128,29 @@ function AddAdPageContent() {
     setLoading(true);
 
     try {
-      // جلب user_data من localStorage
-      const userDataString = localStorage.getItem("user_data");
-      if (!userDataString) {
-        throw new Error(t("userDataNotFound"));
-      }
-
-      const userData = JSON.parse(userDataString);
-      const userId = userData._id;
-      console.log("User data from localStorage:", userData);
+      // *** CHANGE: Get user ID from store instead of localStorage ***
+      const userId = user?._id; // Use user from store
+      
+      console.log("User from store:", user);
       console.log("User ID:", userId);
 
       if (!userId) {
-        throw new Error(t("userIdNotFound"));
+        console.error("User ID is undefined");
+        toast.error("User not authenticated. Please log in again.");
+        // Redirect to login page
+        window.location.href = "/login";
+        return;
       }
 
       // Check if categoryId is selected
       if (!formData.categoryId) {
-        throw new Error(t("categoryRequired"));
+        throw new Error(t("categoryRequired") || "Category is required");
+      }
+
+      // Get auth token
+      const token = getAuthCookie();
+      if (!token) {
+        throw new Error("Authentication required");
       }
 
       // إنشاء FormData لإرسال البيانات
@@ -143,7 +167,7 @@ function AddAdPageContent() {
       formDataToSend.append("facebook", formData.facebook);
       formDataToSend.append("website", formData.website);
       formDataToSend.append("adType", formData.adType);
-      formDataToSend.append("categoryId", formData.categoryId); // Now this will work
+      formDataToSend.append("categoryId", formData.categoryId);
       
       // Only add video if adType is "vip" and video URL is provided
       if (formData.adType === "vip" && formData.video) {
@@ -163,10 +187,12 @@ function AddAdPageContent() {
         console.log(key, value);
       }
 
+      console.log("Sending request with token:", token);
+
       const response = await fetch("http://72.60.178.180:8000/api/v1/companies", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: formDataToSend,
       });
@@ -174,16 +200,25 @@ function AddAdPageContent() {
       console.log("Response status:", response.status);
       console.log("Response ok:", response.ok);
 
+      // Try to get more detailed error information
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log("Error response:", errorData);
-        throw new Error(errorData.message || t("failedToAddAd"));
+        let errorMessage = t("failedToAddAd") || "Failed to add ad";
+        try {
+          const errorData = await response.json();
+          console.log("Error response:", errorData);
+          errorMessage = errorData.message || errorMessage;
+        } catch (e) {
+          console.log("Could not parse error response as JSON");
+          const errorText = await response.text();
+          console.log("Error response as text:", errorText);
+        }
+        throw new Error(errorMessage);
       }
 
       const successData = await response.json();
       console.log("Success response:", successData);
 
-      toast.success(t("adAddedSuccessfully"));
+      toast.success(t("adAddedSuccessfully") || "Ad added successfully");
 
       // إعادة تعيين النموذج
       setFormData({
@@ -200,7 +235,7 @@ function AddAdPageContent() {
         adType: "normal",
         video: "",
         logo: null,
-        categoryId: "", // Reset categoryId
+        categoryId: "",
       });
 
       // إعادة توجيه إلى صفحة الإعلانات
@@ -208,7 +243,7 @@ function AddAdPageContent() {
     } catch (error) {
       console.error("Error creating company:", error);
       const errorMessage =
-        error instanceof Error ? error.message : t("failedToAddAd");
+        error instanceof Error ? error.message : t("failedToAddAd") || "Failed to add ad";
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -217,20 +252,20 @@ function AddAdPageContent() {
 
   return (
     <div className="min-h-screen">
-      <div className="container mx-auto px-4 py-8 ">
+      <div className="container mx-auto px-4 py-8">
         <Breadcrumb
           items={[
-            { label: t("myAds"), href: "/manage/ads" },
-            { label: t("addNewAd") },
+            { label: t("myAds") || "My Ads", href: "/manage/ads" },
+            { label: t("addNewAd") || "Add New Ad" },
           ]}
         />
 
         <div className="mt-8 mb-12 text-center">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black gradient-text mb-6">
-            {t("addNewAd")}
+            {t("addNewAd") || "Add New Ad"}
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-            {t("addCompanyAndChoosePlan")}
+            {t("addCompanyAndChoosePlan") || "Add your company and choose a plan"}
           </p>
         </div>
 
@@ -241,7 +276,7 @@ function AddAdPageContent() {
             {/* Company Info */}
             <div className="ultra-card p-6 md:p-8 lg:p-10">
               <h3 className="text-xl md:text-2xl lg:text-3xl font-bold gradient-text mb-8 text-center">
-                {t("companyInfoTitle")}
+                {t("companyInfoTitle") || "Company Information"}
               </h3>
 
               <div className="space-y-8">
@@ -251,7 +286,7 @@ function AddAdPageContent() {
                       htmlFor="companyName"
                       className="text-base font-semibold"
                     >
-                      {t("companyNameLabel")}
+                      {t("companyNameLabel") || "Company Name"}
                     </Label>
                     <Input
                       id="companyName"
@@ -262,7 +297,7 @@ function AddAdPageContent() {
                           companyName: e.target.value,
                         })
                       }
-                      placeholder={t("companyNamePlaceholder")}
+                      placeholder={t("companyNamePlaceholder") || "Enter company name"}
                       required
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
@@ -272,7 +307,7 @@ function AddAdPageContent() {
                       htmlFor="companyNameEn"
                       className="text-base font-semibold"
                     >
-                      {t("companyNameEnLabel")}
+                      {t("companyNameEnLabel") || "Company Name (English)"}
                     </Label>
                     <Input
                       id="companyNameEn"
@@ -283,7 +318,7 @@ function AddAdPageContent() {
                           companyNameEn: e.target.value,
                         })
                       }
-                      placeholder={t("companyNameEnPlaceholder")}
+                      placeholder={t("companyNameEnPlaceholder") || "Enter company name in English"}
                       required
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
@@ -296,7 +331,7 @@ function AddAdPageContent() {
                       htmlFor="description"
                       className="text-base font-semibold"
                     >
-                      {t("companyDescriptionLabel")}
+                      {t("companyDescriptionLabel") || "Company Description"}
                     </Label>
                     <Textarea
                       id="description"
@@ -304,7 +339,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, description: e.target.value })
                       }
-                      placeholder={t("companyDescriptionPlaceholder")}
+                      placeholder={t("companyDescriptionPlaceholder") || "Enter company description"}
                       rows={4}
                       required
                       className="rounded-xl text-base border-2 focus:border-primary/50 transition-all duration-200 resize-none"
@@ -315,7 +350,7 @@ function AddAdPageContent() {
                       htmlFor="descriptionEn"
                       className="text-base font-semibold"
                     >
-                      {t("companyDescriptionEnLabel")}
+                      {t("companyDescriptionEnLabel") || "Company Description (English)"}
                     </Label>
                     <Textarea
                       id="descriptionEn"
@@ -323,7 +358,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, descriptionEn: e.target.value })
                       }
-                      placeholder={t("companyDescriptionEnPlaceholder")}
+                      placeholder={t("companyDescriptionEnPlaceholder") || "Enter company description in English"}
                       rows={4}
                       required
                       className="rounded-xl text-base border-2 focus:border-primary/50 transition-all duration-200 resize-none"
@@ -334,7 +369,7 @@ function AddAdPageContent() {
                 <div className="grid gap-6 md:grid-cols-2">
                   <div className="space-y-3">
                     <Label htmlFor="email" className="text-base font-semibold">
-                      {t("emailLabelForm")}
+                      {t("emailLabelForm") || "Email"}
                     </Label>
                     <Input
                       id="email"
@@ -343,14 +378,14 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, email: e.target.value })
                       }
-                      placeholder={t("emailPlaceholder")}
+                      placeholder={t("emailPlaceholder") || "Enter email"}
                       required
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
                   <div className="space-y-3">
                     <Label className="text-base font-semibold">
-                      {t("adTypeLabel")}
+                      {t("adTypeLabel") || "Ad Type"}
                     </Label>
                     <Select
                       value={formData.adType}
@@ -360,11 +395,11 @@ function AddAdPageContent() {
                       required
                     >
                       <SelectTrigger className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200">
-                        <SelectValue placeholder={t("selectAdType")} />
+                        <SelectValue placeholder={t("selectAdType") || "Select ad type"} />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-border shadow-md z-50">
-                        <SelectItem value="normal">{t("normalAd")}</SelectItem>
-                        <SelectItem value="vip">{t("vipAd")}</SelectItem>
+                        <SelectItem value="normal">{t("normalAd") || "Normal Ad"}</SelectItem>
+                        <SelectItem value="vip">{t("vipAd") || "VIP Ad"}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -374,7 +409,7 @@ function AddAdPageContent() {
                 {formData.adType === "vip" && (
                   <div className="space-y-3">
                     <Label htmlFor="video" className="text-base font-semibold">
-                      {t("videoUrlLabel")}
+                      {t("videoUrlLabel") || "Video URL"}
                     </Label>
                     <Input
                       id="video"
@@ -382,7 +417,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, video: e.target.value })
                       }
-                      placeholder={t("videoUrlPlaceholder")}
+                      placeholder={t("videoUrlPlaceholder") || "Enter video URL"}
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
@@ -391,13 +426,13 @@ function AddAdPageContent() {
                 {/* Category Selection */}
                 <div className="space-y-3">
                   <Label className="text-base font-semibold">
-                    {t("selectCompanyCategory")}
+                    {t("selectCompanyCategory") || "Select Company Category"}
                   </Label>
                   {categoriesLoading ? (
                     <div className="flex items-center gap-3 p-4 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
                       <LoadingSpinner />
                       <span className="text-base text-muted-foreground">
-                        {t("loadingCategories")}
+                        {t("loadingCategories") || "Loading categories..."}
                       </span>
                     </div>
                   ) : categories.length === 0 ? (
@@ -405,7 +440,7 @@ function AddAdPageContent() {
                       <div className="text-center">
                         <Tags className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
                         <span className="text-base text-yellow-700 font-medium">
-                          {t("noCategoriesAvailable")}
+                          {t("noCategoriesAvailable") || "No categories available"}
                         </span>
                       </div>
                       <Button
@@ -414,7 +449,7 @@ function AddAdPageContent() {
                         onClick={fetchCategories}
                         className="text-yellow-700 border-yellow-300 hover:bg-yellow-100 rounded-xl"
                       >
-                        {t("reload")}
+                        {t("reload") || "Reload"}
                       </Button>
                     </div>
                   ) : (
@@ -426,7 +461,7 @@ function AddAdPageContent() {
                       required
                     >
                       <SelectTrigger className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200">
-                        <SelectValue placeholder={t("selectCategory")} />
+                        <SelectValue placeholder={t("selectCategory") || "Select category"} />
                       </SelectTrigger>
                       <SelectContent className="bg-background border border-border shadow-md z-50">
                         {categories.map((category) => (
@@ -447,7 +482,7 @@ function AddAdPageContent() {
                   )}
                   {!formData.categoryId && (
                     <p className="text-sm text-destructive mt-1">
-                      {t("categoryRequired")}
+                      {t("categoryRequired") || "Category is required"}
                     </p>
                   )}
                 </div>
@@ -458,7 +493,7 @@ function AddAdPageContent() {
                       htmlFor="country"
                       className="text-base font-semibold"
                     >
-                      {t("countryLabel")}
+                      {t("countryLabel") || "Country"}
                     </Label>
                     <Input
                       id="country"
@@ -466,14 +501,14 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, country: e.target.value })
                       }
-                      placeholder={t("countryPlaceholder")}
+                      placeholder={t("countryPlaceholder") || "Enter country"}
                       required
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
                   <div className="space-y-3">
                     <Label htmlFor="city" className="text-base font-semibold">
-                      {t("cityLabel")}
+                      {t("cityLabel") || "City"}
                     </Label>
                     <Input
                       id="city"
@@ -481,7 +516,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, city: e.target.value })
                       }
-                      placeholder={t("cityPlaceholder")}
+                      placeholder={t("cityPlaceholder") || "Enter city"}
                       required
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
@@ -494,7 +529,7 @@ function AddAdPageContent() {
                       htmlFor="whatsapp"
                       className="text-base font-semibold"
                     >
-                      {t("whatsappLabel")}
+                      {t("whatsappLabel") || "WhatsApp"}
                     </Label>
                     <Input
                       id="whatsapp"
@@ -502,7 +537,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, whatsapp: e.target.value })
                       }
-                      placeholder={t("whatsappPlaceholder")}
+                      placeholder={t("whatsappPlaceholder") || "Enter WhatsApp number"}
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
@@ -511,7 +546,7 @@ function AddAdPageContent() {
                       htmlFor="website"
                       className="text-base font-semibold"
                     >
-                      {t("websiteLabelForm")}
+                      {t("websiteLabelForm") || "Website"}
                     </Label>
                     <Input
                       id="website"
@@ -519,7 +554,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, website: e.target.value })
                       }
-                      placeholder={t("websitePlaceholder")}
+                      placeholder={t("websitePlaceholder") || "Enter website URL"}
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
@@ -528,7 +563,7 @@ function AddAdPageContent() {
                       htmlFor="facebook"
                       className="text-base font-semibold"
                     >
-                      {t("facebookLabelForm")}
+                      {t("facebookLabelForm") || "Facebook"}
                     </Label>
                     <Input
                       id="facebook"
@@ -536,7 +571,7 @@ function AddAdPageContent() {
                       onChange={(e) =>
                         setFormData({ ...formData, facebook: e.target.value })
                       }
-                      placeholder={t("facebookPlaceholder")}
+                      placeholder={t("facebookPlaceholder") || "Enter Facebook URL"}
                       className="rounded-xl h-12 text-base border-2 focus:border-primary/50 transition-all duration-200"
                     />
                   </div>
@@ -547,7 +582,7 @@ function AddAdPageContent() {
             {/* Image Upload */}
             <div className="ultra-card p-6 md:p-8 lg:p-10">
               <h3 className="text-xl md:text-2xl lg:text-3xl font-bold gradient-text mb-8 text-center">
-                {t("imageLabel")}
+                {t("imageLabel") || "Image"}
               </h3>
               <div className="max-w-md mx-auto">
                 <ImageUpload
@@ -577,18 +612,18 @@ function AddAdPageContent() {
                   {loading ? (
                     <div className="flex items-center gap-3">
                       <LoadingSpinner size="sm" />
-                      <span>{t("submittingAd")}</span>
+                      <span>{t("submittingAd") || "Submitting..."}</span>
                     </div>
                   ) : (
                     <div className="flex items-center gap-3">
                       <Plus className="h-5 w-5 md:h-6 md:w-6" />
-                      <span>{t("submitAdButton")}</span>
+                      <span>{t("submitAdButton") || "Submit Ad"}</span>
                     </div>
                   )}
                 </Button>
 
                 <p className="text-sm md:text-base text-muted-foreground mt-6 max-w-2xl mx-auto leading-relaxed">
-                  {t("termsAndConditions")}
+                  {t("termsAndConditions") || "By submitting this form, you agree to our terms and conditions"}
                 </p>
               </div>
             </div>

@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData } from "@/lib/auth";
+import { useAuthStore, useUserStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData, getAuthCookie } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
@@ -21,7 +21,7 @@ interface ApiError {
   errors: ValidationError[];
 }
 
-// This file is mostly a copy of the user profile page but wrapped with AdminRoute
+// This file is mostly a copy of user profile page but wrapped with AdminRoute
 function AdminProfileContent() {
   const { t, lang } = useI18n();
   const router = useRouter();
@@ -42,7 +42,9 @@ function AdminProfileContent() {
     confirm: false
   });
 
-  const { user, setUser } = useAuthStore();
+  // Get both auth and user store functions
+  const { token } = useAuthStore();
+  const { user, setUser } = useUserStore();
 
   useEffect(() => {
     if (user) {
@@ -62,7 +64,7 @@ function AdminProfileContent() {
       }
       setLoading(false);
     }
-  }, [user]);
+  }, [user, setUser]);
 
   const validatePhoneNumber = (phone: string): boolean => {
     if (!phone) return true;
@@ -128,7 +130,7 @@ function AdminProfileContent() {
         });
 
         setFieldErrors(errors);
-        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
       } else {
         toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
       }
@@ -163,7 +165,15 @@ function AdminProfileContent() {
 
     try {
       setChangingPassword(true);
-      const token = localStorage.getItem('auth_token');
+      // Use getAuthCookie instead of localStorage
+      const token = getAuthCookie();
+      
+      if (!token) {
+        toast.error(lang === "ar" ? "الجلسة منتهية الصلاحية" : "Session expired");
+        router.push("/login");
+        return;
+      }
+      
       const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {
         method: 'PUT',
         headers: {
@@ -191,6 +201,12 @@ function AdminProfileContent() {
       }
 
       if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(lang === "ar" ? "الجلسة منتهية الصلاحية" : "Session expired");
+          router.push("/login");
+          return;
+        }
+        
         if (data.errors && Array.isArray(data.errors)) {
           const errors: Record<string, string> = {};
           data.errors.forEach((err: ValidationError) => {
@@ -202,7 +218,7 @@ function AdminProfileContent() {
           });
 
           setPasswordFieldErrors(errors);
-          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
         } else {
           throw new Error(data.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
         }

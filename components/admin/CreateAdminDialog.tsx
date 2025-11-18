@@ -1,4 +1,3 @@
-// create-admin-dialog.tsx
 "use client";
 
 import { useState } from "react";
@@ -13,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useI18n } from "@/providers/LanguageProvider";
+import { getAuthHeaders } from "@/lib/auth";
 
 interface CreateAdminDialogProps {
   open: boolean;
@@ -47,10 +47,7 @@ export function CreateAdminDialog({
     try {
       const response = await fetch("http://72.60.178.180:8000/api/v1/users/admins", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem("auth_token")}`,
-          "Content-Type": "application/json",
-        },
+        headers: getAuthHeaders(),
         body: JSON.stringify({
           name: formData.name,
           email: formData.email,
@@ -60,7 +57,15 @@ export function CreateAdminDialog({
         }),
       });
 
-      if (!response.ok) throw new Error(t("failedToCreateAdmin"));
+      if (!response.ok) {
+        if (response.status === 401) {
+          toast.error(t("adminSessionExpired"));
+          window.location.href = "/login";
+          return;
+        }
+        const errorData = await response.json();
+        throw new Error(errorData.message || t("failedToCreateAdmin"));
+      }
 
       toast.success(t("adminCreatedSuccessfully"));
       onOpenChange(false);
@@ -73,7 +78,7 @@ export function CreateAdminDialog({
       });
     } catch (error) {
       console.error("Error creating admin:", error);
-      toast.error(t("failedToCreateAdmin"));
+      toast.error(error instanceof Error ? error.message : t("failedToCreateAdmin"));
     } finally {
       setLoading(false);
     }
