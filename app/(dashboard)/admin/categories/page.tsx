@@ -54,7 +54,7 @@ import {
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
   type Category,
-} from "@/api/admin/categoriesApi";
+} from "@/features/categoriesApi";
 
 // ==================== Main Content Component ====================
 function AdminCategoriesContent() {

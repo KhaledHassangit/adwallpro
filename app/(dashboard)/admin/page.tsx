@@ -8,7 +8,7 @@ import { Users, Shield, UserCheck, Activity, Building, Tag, TrendingUp, RefreshC
 import { useI18n } from "@/providers/LanguageProvider";
 // Removed getAuthCookie import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
-import { useGetAnalyticsQuery } from "@/api/admin/analyticsApi";
+import { useGetAnalyticsQuery } from "@/features/analyticsApi";
 
 // The AnalyticsData interface is now in analyticsApi.ts, so we don't need it here.
 

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/icon";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { useGetUserAnalyticsQuery } from "@/api/user/userApi";
+import { useGetUserAnalyticsQuery } from "@/features/analyticsApi";
 
 interface Company {
   _id: string;

@@ -47,7 +47,7 @@ import {
   useUpdateCouponMutation,
   useDeleteCouponMutation,
   type Coupon,
-} from "@/api/admin/couponsApi";
+} from "@/features/couponsApi";
 
 // Type definitions
 type DiscountType = "percentage" | "fixed";

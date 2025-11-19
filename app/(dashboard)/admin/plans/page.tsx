@@ -15,16 +15,12 @@ import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Ca
 import { toast } from "sonner";
 import { 
   useGetPlansQuery, 
-  useGetCategoriesQuery, 
   useCreatePlanMutation, 
   useUpdatePlanMutation, 
   useDeletePlanMutation,
-  Plan,
-  PlanOption,
-  Category,
-  ValidationError,
-  ApiError
-} from "@/api/admin/plansApi";
+} from "@/features/plansApi";
+import { Category, Plan, PlanOption } from "@/types/types";
+import { useGetCategoriesQuery } from "@/features/categoriesApi";
 
 // Constants for better maintainability
 const DURATION_OPTIONS = {

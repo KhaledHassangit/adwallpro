@@ -1,28 +1,8 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../baseURL';
+import { axiosBaseQuery } from '../lib/baseURL';
+import { Coupon, CouponsResponse } from '@/types/types';
 
 // Define the shape of the data for type safety
-export interface Coupon {
-    _id: string;
-    couponCode: string;
-    discountType: "percentage" | "fixed";
-    discountValue: number;
-    isActive: boolean;
-    createdDate: string;
-    expiryDate: string;
-    startDate?: string;
-    maxUses?: number;
-    usedCount?: number;
-}
-
-// Define the shape of the API response
-export interface CouponsResponse {
-    status: string;
-    results: number;
-    data: {
-        data: Coupon[];
-    };
-}
 
 export const couponsApi = createApi({
     reducerPath: 'couponsApi',

@@ -1,37 +1,9 @@
 // lib/api/profileApi.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../baseURL';
+import { axiosBaseQuery } from '../lib/baseURL';
+import { PasswordChangeRequest, UpdateProfileRequest, UserProfile } from '@/types/types';
 
 // Define the shape of the data for type safety
-export interface UserProfile {
-  _id: string;
-  name: string;
-  email: string;
-  phone?: string;
-  // Add other user profile fields as needed
-}
-
-export interface PasswordChangeRequest {
-  currentPassword: string;
-  password: string;
-  passwordConfirm: string;
-}
-
-export interface UpdateProfileRequest {
-  name: string;
-  phone?: string;
-}
-
-export interface ValidationError {
-  value: string;
-  msg: string;
-  param: string;
-  location: string;
-}
-
-export interface ApiError {
-  errors: ValidationError[];
-}
 
 export const profileApi = createApi({
   reducerPath: 'profileApi',

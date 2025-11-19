@@ -5,10 +5,10 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/LanguageProvider";
-import { useState, useEffect } from "react";
 import { ArrowRight, Eye, Loader2 } from "@/components/ui/icon";
 import { toast } from "sonner";
 import type { Category } from "@/types/types";
+import { useGetCategoriesQuery } from "@/features/categoriesApi";
 
 // Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
@@ -17,36 +17,14 @@ import "swiper/css";
 
 export function CategoriesSlider() {
   const { locale, t } = useI18n();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [companiesCount, setCompaniesCount] = useState<Record<string, number>>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  // Use RTK Query hook to fetch categories
+  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery();
+  
+  // Extract categories from the response
+  const categories = categoriesResponse?.data?.data || [];
 
-      const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      const categoriesData: Category[] = Array.isArray(data.data) ? data.data : Array.isArray(data) ? data : [];
-      setCategories(categoriesData);
-
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "فشل في جلب التصنيفات");
-      toast.error("فشل في جلب التصنيفات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  if (loading)
+  if (isLoading)
     return (
       <section className="py-16 md:py-20">
         <div className="container-premium flex justify-center items-center py-12">
@@ -59,8 +37,9 @@ export function CategoriesSlider() {
     return (
       <section className="py-16 md:py-20">
         <div className="container-premium text-center py-12">
-          <p className="text-red-600 mb-4">{error}</p>
-          <Button onClick={fetchCategories}>إعادة المحاولة</Button>
+          <p className="text-red-600 mb-4">
+            {error instanceof Error ? error.message : "فشل في جلب التصنيفات"}
+          </p>
         </div>
       </section>
     );

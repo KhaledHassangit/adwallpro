@@ -1,58 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../baseURL';
-
-// Define the shape of the data for type safety
-export interface Company {
-  _id: string;
-  userId: {
-    _id: string;
-    name: string;
-    email: string;
-  };
-  companyName: string;
-  companyNameEn: string;
-  description: string;
-  descriptionEn: string;
-  logo: string;
-  country: string;
-  city: string;
-  email: string;
-  whatsapp: string;
-  facebook: string;
-  website: string;
-  status: string;
-  adType: string;
-  ratingsQuantity: number;
-  categoryId: {
-    nameAr: string;
-    nameEn: string;
-    color: string;
-  };
-  views: number;
-  createdAt: string;
-  updatedAt: string;
-  slug: string;
-  __v: number;
-}
-
-export interface CompaniesResponse {
-  status: string;
-  results: number;
-  data: {
-      data: Company[];
-  };
-}
-
-// Define the parameters for the fetch query
-export interface GetCompaniesParams {
-  page: number;
-  limit: number;
-  status?: string;
-  search?: string;
-  country?: string;
-  city?: string;
-  categoryId?: string;
-}
+import { axiosBaseQuery } from '../lib/baseURL';
+import { CompaniesResponse, GetCompaniesParams } from '@/types/types';
 
 export const companiesApi = createApi({
   reducerPath: 'companiesApi',
@@ -82,6 +30,16 @@ export const companiesApi = createApi({
       providesTags: ['Company'], // Provides the 'Company' tag
     }),
 
+    // Get a single category
+    getCategory: builder.query<any, string>({
+      query: (id) => ({
+        url: `/categories/${id}`,
+        method: 'GET',
+        withToken: false,
+      }),
+      providesTags: ['Category'],
+    }),
+
     // Approve a company
     approveCompany: builder.mutation<void, string>({
       query: (companyId) => ({
@@ -107,6 +65,7 @@ export const companiesApi = createApi({
 // Export the auto-generated hooks for use in components
 export const {
   useGetCompaniesQuery,
+  useGetCategoryQuery,
   useApproveCompanyMutation,
   useDeleteCompanyMutation,
 } = companiesApi;

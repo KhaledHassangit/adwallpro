@@ -49,7 +49,7 @@ import {
   useCreateAdminMutation,
   useDeleteUserMutation,
   type User,
-} from "@/api/admin/usersApi";
+} from "@/features/usersApi";
 
 // ==================== Main Content Component ====================
 function AdminUsersContent() {

@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 // Import the new RTK Query hooks and types
-import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation, type Company } from "@/api/admin/companiesApi";
+import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation, type Company } from "@/features/companiesApi";
 
 // PaginationControls Component (no changes needed)
 function PaginationControls({

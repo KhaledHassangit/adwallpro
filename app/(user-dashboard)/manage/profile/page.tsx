@@ -10,7 +10,7 @@ import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from
 import { useAuthStore, useUserStore, getCurrentUser, refreshUserData } from "@/lib/auth"; 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/api/admin/profileApi";
+import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/features/profileApi";
 
 function ProfileContent() {
   const { t, lang } = useI18n();

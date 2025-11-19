@@ -1,16 +1,14 @@
-// lib/store.ts
-
 import { configureStore } from '@reduxjs/toolkit';
 import { setupListeners } from '@reduxjs/toolkit/query';
-// Import all your API slices
-import { analyticsApi } from '@/api/admin/analyticsApi';
-import { companiesApi } from '@/api/admin/companiesApi';
-import { usersApi } from '@/api/admin/usersApi';
-import { categoriesApi } from '@/api/admin/categoriesApi';
-import { couponsApi } from '@/api/admin/couponsApi';
-import { profileApi } from '@/api/admin/profileApi';
-import { plansApi } from '@/api/admin/plansApi'; // <-- Import the new plansApi
-import { userApiDashboard } from '@/api/user/userApi';
+
+
+import { analyticsApi } from '@/features/analyticsApi';
+import { companiesApi } from '@/features/companiesApi';
+import { usersApi } from '@/features/usersApi';
+import { categoriesApi } from '@/features/categoriesApi';
+import { couponsApi } from '@/features/couponsApi';
+import { profileApi } from '@/features/profileApi';
+import { plansApi } from '@/features/plansApi'; 
 
 export const store = configureStore({
   reducer: {
@@ -20,8 +18,7 @@ export const store = configureStore({
     [categoriesApi.reducerPath]: categoriesApi.reducer,
     [couponsApi.reducerPath]: couponsApi.reducer,
     [profileApi.reducerPath]: profileApi.reducer,
-    [plansApi.reducerPath]: plansApi.reducer, // <-- Add the new reducer
-    [userApiDashboard.reducerPath]: userApiDashboard.reducer, // <-- Add the new reducer
+    [plansApi.reducerPath]: plansApi.reducer, 
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware()
@@ -32,7 +29,6 @@ export const store = configureStore({
       .concat(couponsApi.middleware)
       .concat(profileApi.middleware)
       .concat(plansApi.middleware)
-      .concat(userApiDashboard.middleware)
 });
 
 setupListeners(store.dispatch);

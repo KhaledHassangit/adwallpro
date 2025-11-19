@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
-import { useGetUserSubscriptionsQuery } from  "@/api/user/userApi";
 import {
     Calendar,
     CheckCircle,
@@ -23,6 +22,7 @@ import {
     Star,
     TrendingUp
 } from "lucide-react";
+import { useGetUserSubscriptionsQuery } from "@/features/plansApi";
 
 function UserSubscriptionsContent() {
     const { t, lang } = useI18n();

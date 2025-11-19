@@ -1,52 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../baseURL';
+import { axiosBaseQuery } from '../lib/baseURL';
+import { GetUsersParams, PaginatedUsersResponse, UserStats } from '@/types/types';
 
-// Define the shape of the data for type safety
-export interface User {
-  _id: string;
-  name: string;
-  email: string;
-  role: string;
-  phone?: string;
-  createdAt: string;
-  subscription?: {
-    adsUsed: number;
-    isActive: boolean;
-    plan?: string;
-    option?: string;
-    startDate?: string;
-    endDate?: string;
-  };
-  profileImg?: string;
-  active: boolean;
-  lastLogin?: string;
-}
-
-export interface UserStats {
-  totalUsers: number;
-  adminsCount: number;
-  regularUsersCount: number;
-  activeThisWeek: number;
-  adminPercentage: string;
-  regularUserPercentage: string;
-  activePercentage: string;
-}
-
-export interface PaginatedUsersResponse {
-  status: string;
-  results: number;
-  data: {
-    data: {
-      users: User[];
-    };
-  };
-}
-
-// Define the parameters for the fetch query
-export interface GetUsersParams {
-  page: number;
-  limit: number;
-}
 
 export const usersApi = createApi({
   reducerPath: 'usersApi',

@@ -2,9 +2,6 @@
 
 import { getAuthHeaders } from "./auth";
 
-
-
-
 const extractApiData = <T>(payload: any): T => {
   if (!payload) return payload;
   if (payload.data !== undefined) {

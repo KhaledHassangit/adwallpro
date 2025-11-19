@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -21,6 +21,7 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/common/breadcrumb";
+import { useGetCompaniesQuery, useGetCategoryQuery } from "@/features/companiesApi";
 
 const cleanImageUrl = (imageUrl?: string): string => {
   if (!imageUrl) return "";
@@ -256,107 +257,28 @@ export default function CompaniesCategoryPage() {
   const router = useRouter();
   const user = useUserStore((s) => s.user);
   const { isAuthenticated } = useAuthStore();
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [category, setCategory] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [countryFilter, setCountryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
-  // جلب معلومات الفئة من الـ API
-  const fetchCategory = async () => {
-    if (!id) return;
-
-    try {
-      const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/categories/${id}`
-      );
-      if (response.ok) {
-        const data = await response.json();
-        setCategory(data.data || data);
-      }
-    } catch (error) {
-      console.error("فشل في جلب معلومات الفئة:", error);
-    }
+  // Use RTK Query hooks to fetch category and companies
+  const { data: category, isLoading: categoryLoading, error: categoryError } = useGetCategoryQuery(id || "");
+  
+  // Create params for companies query
+  const companiesParams = {
+    categoryId: id || "",
+    search: searchQuery,
+    country: countryFilter,
+    city: cityFilter,
   };
-
-  // جلب الشركات من الـ API
-  const fetchCompanies = async () => {
-    if (!id) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/companies/category/${id}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      // التعامل مع هيكل الاستجابة المختلف
-      let companiesData: any[] = [];
-
-      // Fix: Extract companies from the correct nested structure
-      if (data.data && data.data.data && Array.isArray(data.data.data)) {
-        companiesData = data.data.data;
-      } else if (data.data && Array.isArray(data.data)) {
-        companiesData = data.data;
-      } else if (Array.isArray(data)) {
-        companiesData = data;
-      } else if (data.companies && Array.isArray(data.companies)) {
-        companiesData = data.companies;
-      } else {
-        companiesData = [];
-      }
-
-      setCompanies(companiesData);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "فشل في جلب الشركات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (id) {
-      fetchCategory();
-      fetchCompanies();
-    }
-  }, [id]);
-
-  const filteredCompanies = useMemo(() => {
-    return companies.filter((company) => {
-      // فلتر البحث في اسم الشركة والوصف
-      const matchSearch = searchQuery.trim()
-        ? (company.companyName || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          (company.description || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase())
-        : true;
-
-      // فلتر الدولة
-      const matchCountry = countryFilter.trim()
-        ? (company.country || "")
-            .toLowerCase()
-            .includes(countryFilter.toLowerCase())
-        : true;
-
-      // فلتر المدينة
-      const matchCity = cityFilter.trim()
-        ? (company.city || "").toLowerCase().includes(cityFilter.toLowerCase())
-        : true;
-
-      return matchSearch && matchCountry && matchCity;
-    });
-  }, [companies, searchQuery, countryFilter, cityFilter]);
+  
+  const { data: companiesResponse, isLoading: companiesLoading, error: companiesError } = useGetCompaniesQuery(companiesParams);
+  
+  // Extract companies from the response
+  const companies = companiesResponse?.data?.data || [];
+  
+  const isLoading = categoryLoading || companiesLoading;
+  const error = categoryError || companiesError;
 
   const catName = category
     ? locale === "ar"
@@ -365,7 +287,7 @@ export default function CompaniesCategoryPage() {
     : "فئة غير محددة";
 
   // عرض حالة التحميل
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="container-premium py-8 pt-24">
         <div className="flex items-center justify-center py-16">
@@ -387,16 +309,15 @@ export default function CompaniesCategoryPage() {
             <div className="h-12 w-12 text-red-600 mx-auto mb-2">⚠️</div>
           </div>
           <h2 className="text-xl font-semibold">{t("loadingError")}</h2>
-          <p className="text-muted-foreground">{error}</p>
-          <button
-            onClick={() => {
-              fetchCategory();
-              fetchCompanies();
-            }}
+          <p className="text-muted-foreground">
+            {error instanceof Error ? error.message : "فشل في جلب البيانات"}
+          </p>
+          <Button
+            onClick={() => window.location.reload()}
             className="px-6 py-2 bg-primary text-white rounded-xl hover:bg-primary/90 transition-colors"
           >
             {t("retryLoading")}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -487,7 +408,7 @@ export default function CompaniesCategoryPage() {
       </Card>
 
       <div className="w-full">
-        {filteredCompanies.length === 0 ? (
+        {companies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             {/* أيقونة فارغة */}
             <div className="relative mb-8">
@@ -580,7 +501,7 @@ export default function CompaniesCategoryPage() {
           </div>
         ) : (
           <div className="ultra-grid">
-            {filteredCompanies.map((company) => (
+            {companies.map((company) => (
               <CompanyCard key={company._id} company={company} />
             ))}
           </div>

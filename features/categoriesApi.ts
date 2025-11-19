@@ -1,29 +1,7 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '../baseURL';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { axiosBaseQuery } from '../lib/baseURL';
+import { Category, CategoryStats, UpdateCategoryParams } from '@/types/types';
 
-// Define the shape of the data for type safety
-export interface Category {
-  _id: string;
-  nameAr: string;
-  nameEn: string;
-  descriptionAr: string;
-  descriptionEn: string;
-  color: string;
-  image?: string;
-  createdAt: string;
-}
-
-export interface CategoryStats {
-  totalCategories: number;
-  mostUsedCategory: string;
-  systemStatus: string;
-}
-
-// Define parameters for the update mutation
-export interface UpdateCategoryParams {
-  id: string;
-  formData: FormData;
-}
 
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
@@ -44,9 +22,9 @@ export const categoriesApi = createApi({
       query: () => ({
         url: '/categories',
         method: 'GET',
-        withToken: true,
+        withToken: false,
       }),
-      providesTags: ['Category'], // Provides the 'Category' tag
+      providesTags: ['Category'],
     }),
 
     // Create a new Category
@@ -55,10 +33,10 @@ export const categoriesApi = createApi({
         url: '/categories',
         method: 'POST',
         data: formData,
-        isFormData: true, // Important: Tell axiosBaseQuery this is FormData
+        isFormData: true, 
         withToken: true,
       }),
-      invalidatesTags: ['Category'], // Invalidate the 'Category' tag to refetch the list
+      invalidatesTags: ['Category'], 
     }),
 
     // Update a Category
@@ -73,6 +51,14 @@ export const categoriesApi = createApi({
       invalidatesTags: ['Category'], // Invalidate the 'Category' tag to refetch the list
     }),
 
+        getCategory: builder.query<Category, string>({
+          query: (id) => ({
+            url: `/categories/${id}`,
+            method: 'GET',
+          }),
+          providesTags: ['Category'],
+        }),
+        
     // Delete a Category
     deleteCategory: builder.mutation<void, string>({
       query: (id) => ({

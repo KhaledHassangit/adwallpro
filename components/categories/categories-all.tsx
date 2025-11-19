@@ -1,8 +1,7 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useI18n } from "@/providers/LanguageProvider";
-import { getMultipleCategoriesCount } from "@/lib/companies-api";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,63 +12,25 @@ import {
   Grid3X3,
   List,
   ArrowRight,
-  Loader2,
 } from "@/components/ui/icon";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import type { Category } from "@/types/types";
 import { LoadingSpinner } from "../common/loading-spinner";
+import { useGetCategoriesQuery } from "@/features/categoriesApi";
 
 export function CategoriesAll() {
   const { locale, t } = useI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [companies, setCompanies] = useState<any[]>([]);
-  const [companiesCount, setCompaniesCount] = useState<Record<string, number>>(
-    {}
-  );
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
-      if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-
-      const data = await response.json();
-      
-      // Fix: Correctly extract categories from the nested API response
-      let categoriesData: Category[] = [];
-      if (data.data && data.data.data && Array.isArray(data.data.data)) {
-        categoriesData = data.data.data;
-      } else if (data.data && Array.isArray(data.data)) {
-        categoriesData = data.data;
-      } else if (Array.isArray(data)) {
-        categoriesData = data;
-      }
-      
-      setCategories(categoriesData);
-
-      const counts = await getMultipleCategoriesCount(
-        categoriesData.map((c) => c.slug)
-      );
-      setCompaniesCount(counts);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "فشل في جلب التصنيفات");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
+  // Use RTK Query hook to fetch categories
+  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery();
+  
+  // Extract categories from the response
+  const categories = categoriesResponse?.data?.data || [];
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return categories;
@@ -94,7 +55,7 @@ export function CategoriesAll() {
     return `http://72.60.178.180:8000/${imagePath}`;
   };
 
-  if (loading)
+  if (isLoading)
     return (
       <div className="flex items-center justify-center py-12">
         <LoadingSpinner/>
@@ -108,7 +69,9 @@ export function CategoriesAll() {
           <div className="rounded-full bg-red-50 p-4 mb-4 mx-auto w-fit">
             <Search className="h-8 w-8 text-red-600" />
           </div>
-          <p className="text-muted-foreground mb-6 max-w-md">{error}</p>
+          <p className="text-muted-foreground mb-6 max-w-md">
+            {error instanceof Error ? error.message : "فشل في جلب التصنيفات"}
+          </p>
         </div>
       </div>
     );
@@ -172,7 +135,6 @@ export function CategoriesAll() {
             </Button>
             {categories.slice(0, 8).map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
-              const count = companiesCount[cat.slug] || 0;
               return (
                 <Link key={cat.slug} href={`/companies/category/${cat._id}`}>
                   <Button
@@ -180,7 +142,7 @@ export function CategoriesAll() {
                     size="sm"
                     className="rounded-full hover:bg-primary-50 hover:border-primary-200"
                   >
-                    {name || t("undefinedCategory")} ({count})
+                    {name || t("undefinedCategory")}
                   </Button>
                 </Link>
               );
@@ -204,10 +166,6 @@ export function CategoriesAll() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {filteredCategories.map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
-              const adsCount = companiesCount[cat.slug] || 0;
-              const vipCount = companies.filter(
-                (company) => company.category === cat.slug && company.isVip
-              ).length;
 
               return (
                 <Link
@@ -240,15 +198,6 @@ export function CategoriesAll() {
                           }}
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
-                        {/* VIP Badge */}
-                        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between">
-                          {vipCount > 0 && (
-                            <Badge className="bg-amber-500 text-white border-0 text-xs">
-                              {vipCount} VIP
-                            </Badge>
-                          )}
-                        </div>
                       </div>
 
                       {/* Info */}
@@ -283,10 +232,6 @@ export function CategoriesAll() {
           <div className="space-y-4">
             {filteredCategories.map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
-              const adsCount = companiesCount[cat.slug] || 0;
-              const vipCount = companies.filter(
-                (company) => company.category === cat.slug && company.isVip
-              ).length;
 
               return (
                 <Link
@@ -318,20 +263,6 @@ export function CategoriesAll() {
                           <h3 className="font-bold text-lg group-hover:text-primary-600 transition-colors">
                             {name || t("undefinedCategory")}
                           </h3>
-                        </div>
-
-                        <div className="flex items-center gap-4">
-                          <Badge
-                            variant="secondary"
-                            className="rounded-full text-xs"
-                          >
-                            {adsCount} {t("company")}
-                          </Badge>
-                          {vipCount > 0 && (
-                            <Badge className="bg-amber-100 text-amber-700 border-0 rounded-full text-xs">
-                              {vipCount} VIP
-                            </Badge>
-                          )}
                         </div>
                       </div>
 
