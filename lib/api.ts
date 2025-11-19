@@ -2,19 +2,8 @@
 
 import { getAuthHeaders } from "./auth";
 
-export const API_BASE_URL = "http://72.60.178.180:8000/api/v1";
 
-export interface AnalyticsRecord {
-  _id: string;
-  user?: string;
-  action: string;
-  role?: "user" | "admin" | "manager" | string;
-  path?: string;
-  method?: string;
-  status?: number;
-  ip?: string;
-  timestamp: string;
-}
+
 
 const extractApiData = <T>(payload: any): T => {
   if (!payload) return payload;

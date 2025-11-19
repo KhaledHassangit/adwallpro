@@ -20,7 +20,8 @@ import {
   ArrowRight,
 } from "@/components/ui/icon";
 import Link from "next/link";
-import { getCurrentUser, getAuthCookie } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
+import { useGetUserAnalyticsQuery } from "@/api/user/userApi";
 
 interface Company {
   _id: string;
@@ -38,19 +39,6 @@ interface Company {
   __v?: number;
 }
 
-interface UserAnalytics {
-  totalAds: number;
-  pendingAds: number;
-  approvedAds: number;
-  rejectedAds: number;
-  totalViews: number;
-  activeAdsList: any[];
-  chartData: {
-    labels: string[];
-    data: number[];
-  };
-}
-
 function UserDashboardContent() {
   const { t, lang } = useI18n();
   const [stats, setStats] = useState({
@@ -61,58 +49,28 @@ function UserDashboardContent() {
     monthlyGrowth: 0,
   });
   const [recentCompanies, setRecentCompanies] = useState<Company[]>([]);
-  const [analyticsLoading, setAnalyticsLoading] = useState(false);
-  const [userAnalytics, setUserAnalytics] = useState<UserAnalytics | null>(null);
   const currentUser = getCurrentUser();
 
+  // Use the RTK Query hook for user analytics
+  const { data: analyticsData, isLoading: analyticsLoading, error: analyticsError } = useGetUserAnalyticsQuery();
+
   useEffect(() => {
-    fetchUserAnalytics();
-  }, []);
-
-
-
-  const fetchUserAnalytics = async () => {
-    try {
-      setAnalyticsLoading(true);
-      const token = getAuthCookie();
-      
-      if (!token) {
-        throw new Error("No authentication token found");
-      }
-
-      const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/users/my-analytics`,
-        {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch analytics");
-      }
-
-      const payload = await response.json();
-      setUserAnalytics(payload.data.data);
-      
+    if (analyticsData) {
       // Update stats with analytics data
-      if (payload.data.data) {
-        setStats(prev => ({
-          ...prev,
-          totalCompanies: payload.data.data.totalAds,
-          approvedCompanies: payload.data.data.approvedAds,
-          pendingCompanies: payload.data.data.pendingAds,
-          totalViews: payload.data.data.totalViews,
-        }));
+      setStats({
+        totalCompanies: analyticsData.totalAds,
+        approvedCompanies: analyticsData.approvedAds,
+        pendingCompanies: analyticsData.pendingAds,
+        totalViews: analyticsData.totalViews,
+        monthlyGrowth: 0, // This might need to be calculated or added to the API response
+      });
+      
+      // Update recent companies with active ads list
+      if (analyticsData.activeAdsList) {
+        setRecentCompanies(analyticsData.activeAdsList);
       }
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-    } finally {
-      setAnalyticsLoading(false);
     }
-  };
+  }, [analyticsData]);
 
   if (analyticsLoading) {
     return (
@@ -440,8 +398,6 @@ function UserDashboardContent() {
               </div>
             </div>
           </div>
-
-       
         </div>
       </div>
     </main>

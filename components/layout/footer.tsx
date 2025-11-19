@@ -18,12 +18,17 @@ export function Footer() {
     {
       name: "Facebook",
       imageSrc: "/images/facebook.svg",
-      href: "https://www.facebook.com/share/17YHk9GDt1/",
+      href: "https://www.facebook.com/profile.php?id=61583582955103",
     },
     {
       name: "Instagram",
       imageSrc: "/images/instagram.svg",
       href: "https://www.instagram.com/adwallpro",
+    },
+    {
+      name: "Twitter",
+      imageSrc: "/images/twitter.svg",
+      href: "https://x.com/adwallpro",
     },
     {
       name: "TikTok",

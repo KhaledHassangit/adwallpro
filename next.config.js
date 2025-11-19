@@ -20,14 +20,7 @@ const nextConfig = {
   env: {
     NEXT_PUBLIC_GOOGLE_CLIENT_ID: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
   },
-  // Add these critical settings for Netlify deployment
-  output: 'export',
-  trailingSlash: true,
-  distDir: 'out',
-  // Disable static generation for problematic routes
-  experimental: {
-    missingSuspenseWithCSRBailout: false,
-  },
+
 };
 
 module.exports = nextConfig;

@@ -6,34 +6,16 @@ import { Label } from "@/components/ui/label";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { useAuthStore, useUserStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData, getAuthCookie } from "@/lib/auth";
+import { useAuthStore, useUserStore, getCurrentUser, refreshUserData } from "@/lib/auth";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-interface ValidationError {
-  value: string;
-  msg: string;
-  param: string;
-  location: string;
-}
-
-interface ApiError {
-  errors: ValidationError[];
-}
+import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/api/admin/profileApi";
 
 // This file is mostly a copy of user profile page but wrapped with AdminRoute
 function AdminProfileContent() {
   const { t, lang } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
-  const [formData, setFormData] = useState({ name: "", phone: "" });
-  const [passwordData, setPasswordData] = useState({
-    currentPassword: "",
-    password: "",
-    passwordConfirm: ""
-  });
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string>>({});
   const [showPasswords, setShowPasswords] = useState({
@@ -41,10 +23,22 @@ function AdminProfileContent() {
     new: false,
     confirm: false
   });
+  
+  // Form data
+  const [formData, setFormData] = useState({ name: "", phone: "" });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    password: "",
+    passwordConfirm: ""
+  });
 
   // Get both auth and user store functions
   const { token } = useAuthStore();
   const { user, setUser } = useUserStore();
+  
+  // Use the mutations from our profileApi
+  const [updateProfile, { isLoading: saving }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: changingPassword }] = useChangePasswordMutation();
 
   useEffect(() => {
     if (user) {
@@ -94,11 +88,10 @@ function AdminProfileContent() {
     }
 
     try {
-      setSaving(true);
-      const updatedUser = await updateUserProfile({
+      const updatedUser = await updateProfile({
         name: formData.name,
         phone: formData.phone,
-      });
+      }).unwrap();
 
       await refreshUserData();
 
@@ -134,8 +127,6 @@ function AdminProfileContent() {
       } else {
         toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
       }
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -164,73 +155,42 @@ function AdminProfileContent() {
     }
 
     try {
-      setChangingPassword(true);
-      // Use getAuthCookie instead of localStorage
-      const token = getAuthCookie();
+      await changePassword({
+        currentPassword: passwordData.currentPassword,
+        password: passwordData.password,
+        passwordConfirm: passwordData.passwordConfirm
+      }).unwrap();
       
-      if (!token) {
+      toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
+      setPasswordData({ currentPassword: "", password: "", passwordConfirm: "" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      
+      // Handle 401 Unauthorized
+      if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
         toast.error(lang === "ar" ? "الجلسة منتهية الصلاحية" : "Session expired");
         router.push("/login");
         return;
       }
       
-      const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          password: passwordData.password,
-          passwordConfirm: passwordData.passwordConfirm
-        })
-      });
-
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(lang === "ar" ? "فشل الاتصال بالخادم" : "Server connection failed");
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error("Error parsing JSON response:", parseError);
-        throw new Error(lang === "ar" ? "استجابة غير صالحة من الخادم" : "Invalid response from server");
-      }
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          toast.error(lang === "ar" ? "الجلسة منتهية الصلاحية" : "Session expired");
-          router.push("/login");
-          return;
-        }
+      // Handle validation errors
+      if (error && typeof error === 'object' && 'errors' in error) {
+        const apiError = error as ApiError;
+        const errors: Record<string, string> = {};
         
-        if (data.errors && Array.isArray(data.errors)) {
-          const errors: Record<string, string> = {};
-          data.errors.forEach((err: ValidationError) => {
-            let message = err.msg;
-            if (err.msg === "Your current password is wrong") {
-              message = lang === "ar" ? "كلمة المرور الحالية غير صحيحة" : "Current password is incorrect";
-            }
-            errors[err.param] = message;
-          });
-
-          setPasswordFieldErrors(errors);
-          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
-        } else {
-          throw new Error(data.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
-        }
+        apiError.errors.forEach((err) => {
+          let message = err.msg;
+          if (err.msg === "Your current password is wrong") {
+            message = lang === "ar" ? "كلمة المرور الحالية غير صحيحة" : "Current password is incorrect";
+          }
+          errors[err.param] = message;
+        });
+        
+        setPasswordFieldErrors(errors);
+        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
       } else {
-        toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
-        setPasswordData({ currentPassword: "", password: "", passwordConfirm: "" });
+        toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
       }
-    } catch (error) {
-      console.error("Error changing password:", error);
-      toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
-    } finally {
-      setChangingPassword(false);
     }
   };
 

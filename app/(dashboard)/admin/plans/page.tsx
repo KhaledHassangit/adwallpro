@@ -13,70 +13,18 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-
-// Updated types to match the schema requirements
-type PlanOption = {
-  duration: string; // Required in schema
-  priceUSD: number; // Required in schema
-  discountPercent?: number; // Optional in schema with default 0
-  finalPriceUSD: number; // Required in schema
-  adsCount: number; // Required in schema
-  categories?: string[]; // Optional in schema
-  _id?: string; // Not in schema, but added by MongoDB
-};
-
-type Plan = {
-  _id?: string; // Not in schema, but added by MongoDB
-  name: string; // Required in schema
-  code: string; // Required in schema
-  color?: string; // Optional in schema
-  description?: string; // Optional in schema
-  planType: 'Basic' | 'Standard' | 'Premium' | 'Monthly'; // Required in schema with enum
-  options: PlanOption[]; // Required in schema
-  features: string[]; // Required in schema
-  isActive: boolean; // Required in schema with default true
-  createdAt?: string; // Added by timestamps
-  updatedAt?: string; // Added by timestamps
-};
-
-// Updated to match the actual API response structure
-type PlansResponse = {
-  status: string;
-  message: string;
-  data: {
-    results: number;
-    paginationResult: {
-      currentPage: number;
-      limit: number;
-      numberOfPages: number;
-    };
-    data: Plan[];
-  };
-};
-
-type Category = {
-  _id: string;
-  nameAr: string;
-  nameEn: string;
-  color: string;
-  slug: string;
-  image?: any;
-};
-
-// FIX: Updated CategoriesResponse to match the likely nested API structure
-type CategoriesResponse = {
-  status: string;
-  message: string;
-  data: {
-    results: number;
-    paginationResult: {
-      currentPage: number;
-      limit: number;
-      numberOfPages: number;
-    };
-    data: Category[];
-  };
-};
+import { 
+  useGetPlansQuery, 
+  useGetCategoriesQuery, 
+  useCreatePlanMutation, 
+  useUpdatePlanMutation, 
+  useDeletePlanMutation,
+  Plan,
+  PlanOption,
+  Category,
+  ValidationError,
+  ApiError
+} from "@/api/admin/plansApi";
 
 // Constants for better maintainability
 const DURATION_OPTIONS = {
@@ -765,10 +713,6 @@ DisplayCard.displayName = 'DisplayCard';
 // Main Component
 function PlansAdminPageContent() {
   const { t, locale } = useI18n();
-  const [plans, setPlans] = useState<Plan[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; plan: Plan | null }>({ open: false, plan: null });
 
@@ -792,148 +736,18 @@ function PlansAdminPageContent() {
     isActive: true
   });
 
+  // Use the RTK Query hooks
+  const { data: plansData, isLoading: plansLoading, error: plansError, refetch: refetchPlans } = useGetPlansQuery();
+  const { data: categoriesData, isLoading: categoriesLoading } = useGetCategoriesQuery();
+  const [createPlan, { isLoading: creatingPlan }] = useCreatePlanMutation();
+  const [updatePlan, { isLoading: updatingPlan }] = useUpdatePlanMutation();
+  const [deletePlan, { isLoading: deletingPlan }] = useDeletePlanMutation();
+
+  // Extract plans and categories from the API responses
+  const plans = plansData?.data?.data || [];
+  const categories = categoriesData?.data?.data || [];
+
   const isRTL = locale === "ar";
-  const API_BASE_URL = "http://72.60.178.180:8000/api/v1";
-
-  const getAuthHeaders = useCallback(() => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-
-      if (!token) {
-        console.error('Authentication token not found');
-        toast.error(locale === "ar" ? "لم يتم العثور على رمز المصادقة" : "Authentication token not found");
-        return {};
-      }
-
-      return { Authorization: `Bearer ${token}` };
-    }
-    return {};
-  }, [locale]);
-
-  const apiRequest = useCallback(async (endpoint: string, options: RequestInit = {}) => {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const authHeaders = getAuthHeaders();
-
-    if (!authHeaders.Authorization) {
-      throw new Error(locale === "ar" ? "مطلوب تسجيل الدخول" : "Authentication required");
-    }
-
-    const headers: Record<string, string> = {
-      ...authHeaders,
-    };
-
-    if (options.body && (options.method === 'POST' || options.method === 'PUT' || options.method === 'PATCH')) {
-      headers['Content-Type'] = 'application/json';
-    }
-
-    if (options.headers) {
-      Object.assign(headers, options.headers);
-    }
-
-    const config: RequestInit = {
-      ...options,
-      headers,
-    };
-
-    console.log('API Request:', {
-      url,
-      method: config.method || 'GET',
-      headers,
-      body: config.body
-    });
-
-    try {
-      const response = await fetch(url, config);
-
-      console.log('API Response Status:', response.status);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('API Error Response:', errorData);
-        throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      const responseData = await response.json();
-      console.log('API Response Data:', responseData);
-      return responseData;
-    } catch (error) {
-      console.error(`API request failed: ${endpoint}`, error);
-      throw error;
-    }
-  }, [getAuthHeaders, locale]);
-
-  const getPlans = useCallback(async () => {
-    return apiRequest('/plans', {
-      method: 'GET',
-    });
-  }, [apiRequest]);
-
-  const getCategories = useCallback(async () => {
-    return apiRequest('/categories', {
-      method: 'GET',
-    });
-  }, [apiRequest]);
-
-  const createPlan = useCallback(async (data: any) => {
-    return apiRequest('/plans', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-  }, [apiRequest]);
-
-  const updatePlan = useCallback(async (id: string, data: any) => {
-    return apiRequest(`/plans/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(data),
-    });
-  }, [apiRequest]);
-
-  const deletePlan = useCallback(async (id: string) => {
-    return apiRequest(`/plans/${id}`, {
-      method: 'DELETE',
-    });
-  }, [apiRequest]);
-
-  const fetchPlans = useCallback(async () => {
-    try {
-      setLoading(true);
-      const res = await getPlans() as PlansResponse;
-      const data = res?.data?.data || [];
-      setPlans(data);
-    } catch (err) {
-      console.error(err);
-      toast.error(t("failedToLoad") || "Failed to load plans");
-    } finally {
-      setLoading(false);
-    }
-  }, [getPlans, t]);
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      setCategoriesLoading(true);
-      const res = await getCategories() as CategoriesResponse;
-      // FIX: Access the categories array from the correct path in the API response
-      const data = res?.data?.data || [];
-      // Ensure it's an array, fallback to empty array if not
-      if (!Array.isArray(data)) {
-        console.warn("API response for categories is not an array, falling back to empty array.", res);
-        setCategories([]);
-      } else {
-        setCategories(data);
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error(t("failedToLoadCategories") || "Failed to load categories");
-      setCategories([]); // Ensure categories is always an array on error
-    } finally {
-      setCategoriesLoading(false);
-    }
-  }, [getCategories, t]);
-
-  useEffect(() => {
-    fetchPlans();
-    fetchCategories();
-  }, [fetchPlans, fetchCategories]);
 
   const resetForm = useCallback(() => {
     const defaultDuration = locale === "ar" ? "1 شهر" : "1 month";
@@ -1033,59 +847,55 @@ function PlansAdminPageContent() {
       console.log('Submitting plan data:', updatedForm);
 
       if (editingId === "new") {
-        await createPlan(updatedForm);
-        toast.success(t("created") || "Created");
+        await createPlan(updatedForm).unwrap();
+        toast.success(locale === "ar" ? "تم إنشاء الباقة بنجاح" : "Plan created successfully");
       } else if (editingId) {
-        await updatePlan(editingId, updatedForm);
-        toast.success(t("updated") || "Updated");
+        await updatePlan({ id: editingId, data: updatedForm }).unwrap();
+        toast.success(locale === "ar" ? "تم تحديث الباقة بنجاح" : "Plan updated successfully");
       }
 
       resetForm();
-      fetchPlans();
+      refetchPlans();
     } catch (err: any) {
       console.error(err);
-      if (err.message && typeof err.message === 'string') {
-        try {
-          const errorData = JSON.parse(err.message);
-          if (errorData.errors && Array.isArray(errorData.errors)) {
-            errorData.errors.forEach((error: any) => {
-              toast.error(error.msg);
-            });
-          } else {
-            toast.error(err.message);
-          }
-        } catch {
-          toast.error(err.message || t("failedToSave") || "Failed to save");
+      if (err && typeof err === 'object' && 'data' in err) {
+        const errorData = err.data as any;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          errorData.errors.forEach((error: ValidationError) => {
+            toast.error(error.msg);
+          });
+        } else {
+          toast.error(errorData.message || (locale === "ar" ? "فشل حفظ الباقة" : "Failed to save plan"));
         }
       } else {
-        toast.error(t("failedToSave") || "Failed to save");
+        toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل حفظ الباقة" : "Failed to save plan"));
       }
     }
-  }, [form, editingId, createPlan, updatePlan, resetForm, fetchPlans, t, locale]);
+  }, [form, editingId, createPlan, updatePlan, resetForm, refetchPlans, locale]);
 
   const handleDelete = useCallback(async () => {
     if (!deleteModal.plan?._id) return;
     try {
-      await deletePlan(deleteModal.plan._id);
-      toast.success(t("deleted") || "Deleted");
+      await deletePlan(deleteModal.plan._id).unwrap();
+      toast.success(locale === "ar" ? "تم حذف الباقة بنجاح" : "Plan deleted successfully");
       setDeleteModal({ open: false, plan: null });
-      fetchPlans();
-    } catch (err) {
+      refetchPlans();
+    } catch (err: any) {
       console.error(err);
-      toast.error(t("failedToDelete") || "Failed to delete");
+      toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل حذف الباقة" : "Failed to delete plan"));
     }
-  }, [deleteModal.plan, deletePlan, fetchPlans, t]);
+  }, [deleteModal.plan, deletePlan, refetchPlans, locale]);
 
   const togglePlanStatus = useCallback(async (plan: Plan) => {
     try {
-      await updatePlan(plan._id!, { ...plan, isActive: !plan.isActive });
-      toast.success(t("updated") || "Updated");
-      fetchPlans();
-    } catch (err) {
+      await updatePlan({ id: plan._id!, data: { ...plan, isActive: !plan.isActive } }).unwrap();
+      toast.success(locale === "ar" ? "تم تحديث حالة الباقة بنجاح" : "Plan status updated successfully");
+      refetchPlans();
+    } catch (err: any) {
       console.error(err);
-      toast.error(t("failedToUpdate") || "Failed to update");
+      toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل تحديث حالة الباقة" : "Failed to update plan status"));
     }
-  }, [updatePlan, fetchPlans, t]);
+  }, [updatePlan, refetchPlans, locale]);
 
   const handleFormChange = useCallback((updates: Partial<Plan>) => {
     setForm(prev => ({ ...prev, ...updates }));
@@ -1112,7 +922,7 @@ function PlansAdminPageContent() {
 
         {/* Plans Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {loading ? (
+          {plansLoading ? (
             <div className="col-span-full flex items-center justify-center p-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
@@ -1178,9 +988,18 @@ function PlansAdminPageContent() {
               <Button variant="outline" onClick={() => setDeleteModal({ open: false, plan: null })}>
                 {locale === "ar" ? "إلغاء" : "Cancel"}
               </Button>
-              <Button variant="destructive" onClick={handleDelete}>
-                <Trash2 className="w-4 h-4 mr-2" />
-                {locale === "ar" ? "حذف" : "Delete"}
+              <Button variant="destructive" onClick={handleDelete} disabled={deletingPlan}>
+                {deletingPlan ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    {locale === "ar" ? "جاري الحذف..." : "Deleting..."}
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    {locale === "ar" ? "حذف" : "Delete"}
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </DialogContent>

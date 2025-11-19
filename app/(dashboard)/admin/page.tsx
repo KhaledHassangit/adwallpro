@@ -1,77 +1,37 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react"; // Removed useEffect
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { Users, Shield, UserCheck, Activity, Building, Tag, TrendingUp, RefreshCw, BarChart3, PieChartIcon } from "lucide-react";
 import { useI18n } from "@/providers/LanguageProvider";
-import { API_BASE_URL } from "@/lib/api";
-import { getAuthCookie } from "@/lib/auth";
-// Import chart components from recharts (which is the recommended chart library for shadcn/ui)
+// Removed getAuthCookie import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { useGetAnalyticsQuery } from "@/api/admin/analyticsApi";
 
-interface AnalyticsData {
-  userCount: number;
-  adminCount: number;
-  companies: {
-    active: number;
-    pending: number;
-  };
-  categoryCount: number;
-  latestActivities: any[];
-  charts?: {
-    subscriptionsPerPlan?: {
-      labels: string[];
-      datasets: any[];
-    };
-  };
-}
+// The AnalyticsData interface is now in analyticsApi.ts, so we don't need it here.
 
 // Colors for the chart
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
+// Removed API_BASE_URL as it's now in axiosBaseQuery
 
 function AdminDashboardContent() {
   const { t } = useI18n();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [chartType, setChartType] = useState<'bar' | 'pie'>('bar'); // Toggle between chart types
+  const [chartType, setChartType] = useState<'bar' | 'pie'>('bar');
 
-  useEffect(() => {
-    fetchAnalytics();
-  }, []);
+  // Use the RTK Query hook to fetch analytics data
+  const { 
+    data: analyticsData, 
+    isLoading, 
+    isFetching, // isFetching is true during refetch
+    error, 
+    refetch 
+  } = useGetAnalyticsQuery();
 
-  const fetchAnalytics = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const token = getAuthCookie();
+  // Removed fetchAnalytics function, useEffect, and manual state (loading, error, analyticsData)
 
-      const response = await fetch(`${API_BASE_URL}/analytics`, {
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-      });
-
-      if (!response.ok) {
-        const text = await response.text();
-        throw new Error(text || "Failed to fetch analytics");
-      }
-
-      const payload = await response.json();
-      const data = payload?.data?.data || {};
-      setAnalyticsData(data);
-    } catch (error) {
-      console.error("Error fetching analytics:", error);
-      setError(error instanceof Error ? error.message : "Failed to load analytics");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Calculate derived statistics
+  // Calculate derived statistics (logic remains the same)
   const regularUsersCount = analyticsData ? analyticsData.userCount - analyticsData.adminCount : 0;
   const adminPercentage = analyticsData && analyticsData.userCount > 0 
     ? Math.round((analyticsData.adminCount / analyticsData.userCount) * 100) 
@@ -80,7 +40,6 @@ function AdminDashboardContent() {
     ? Math.round((regularUsersCount / analyticsData.userCount) * 100) 
     : 0;
 
-  // Calculate activity statistics
   const totalEvents = analyticsData?.latestActivities?.length || 0;
   const now = new Date();
   const last24Hours = new Date(now.getTime() - 24 * 60 * 60 * 1000);
@@ -90,13 +49,11 @@ function AdminDashboardContent() {
   const uniqueIPs = new Set(last24HoursActivities.map(activity => activity.ip));
   const activeUsers = uniqueIPs.size;
 
-  // Transform chart data for the chart components
   const getChartData = () => {
     if (!analyticsData?.charts?.subscriptionsPerPlan) return [];
     
     const { labels, datasets } = analyticsData.charts.subscriptionsPerPlan;
     
-    // If datasets is available and has data, use it
     if (datasets && datasets.length > 0 && datasets[0].data) {
       return labels.map((label, index) => ({
         name: label,
@@ -104,7 +61,6 @@ function AdminDashboardContent() {
       }));
     }
     
-    // Otherwise return empty array
     return [];
   };
 
@@ -127,22 +83,32 @@ function AdminDashboardContent() {
             </div>
             <Button
               variant="outline"
-              onClick={fetchAnalytics}
-              disabled={loading}
+              onClick={() => refetch()} // Use the refetch function from the hook
+              disabled={isFetching} // Use isFetching for the refresh button state
               className="gap-2"
             >
-              <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-              {loading ? (t("loading") || "Loading") : (t("refresh") || "Refresh")}
+              <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
+              {isFetching ? (t("loading") || "Loading") : (t("refresh") || "Refresh")}
             </Button>
           </div>
 
+          {/* Update error handling */}
           {error && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              {error}
+              {/* Error object from RTK Query has a specific structure */}
+              {(() => {
+                if (typeof error === 'object' && error && 'data' in error) {
+                  const data = error.data as { message?: string; error?: string };
+                  const message = data.message || data.error || "Failed to load analytics";
+                  return message;
+                }
+                return "An unknown error occurred";
+              })()}
             </div>
           )}
 
           {/* Stats Cards Grid */}
+          {/* ... all the card components remain the same, just using `analyticsData` which comes from the hook ... */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 mb-6">
             {/* Total Users Card */}
             <Card className="ultra-card border-0 hover:shadow-lg transition-shadow">
@@ -303,7 +269,7 @@ function AdminDashboardContent() {
             </Card>
           </div>
 
-          {/* Charts Section - Only render if data is available */}
+          {/* Charts Section */}
           {hasChartData && (
             <Card className="ultra-card mb-6">
               <CardHeader className="flex flex-row justify-between items-center">
@@ -392,7 +358,7 @@ function AdminDashboardContent() {
               </div>
             </CardHeader>
             <CardContent>
-              {loading ? (
+              {isLoading ? ( // Use isLoading for the initial load message
                 <div className="text-center text-muted-foreground py-6">
                   {t("loading") || "Loading analytics..."}
                 </div>

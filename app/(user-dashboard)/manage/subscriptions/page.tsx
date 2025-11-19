@@ -3,13 +3,14 @@
 import { useEffect, useState } from "react";
 import { ProtectedRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
-import { getAuthCookie, getCurrentUser } from "@/lib/auth";
+import { getCurrentUser } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
+import { useGetUserSubscriptionsQuery } from  "@/api/user/userApi";
 import {
     Calendar,
     CheckCircle,
@@ -23,79 +24,18 @@ import {
     TrendingUp
 } from "lucide-react";
 
-type PlanOption = {
-    duration: string;
-    priceUSD: number;
-    discountPercent?: number;
-    finalPriceUSD?: number;
-    adsCount: number;
-    categories: string[];
-    _id: string;
-};
-
-type Subscription = {
-    _id: string;
-    plan: {
-        _id: string;
-        name: string;
-        code: string;
-        color?: string;
-        description?: string;
-        planType?: string;
-        options?: PlanOption[];
-        features?: string[];
-        isActive?: boolean;
-    };
-    status: string;
-    expiresAt?: string;
-    createdAt?: string;
-};
-
 function UserSubscriptionsContent() {
     const { t, lang } = useI18n();
-    const [loading, setLoading] = useState(true);
-    const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
     const [error, setError] = useState<string | null>(null);
 
+    // Use the RTK Query hook for user subscriptions
+    const { data: subscriptions = [], isLoading, error: apiError, refetch } = useGetUserSubscriptionsQuery();
+
     useEffect(() => {
-        fetchSubscriptions();
-    }, []);
-
-    const fetchSubscriptions = async () => {
-        setLoading(true);
-        setError(null);
-        try {
-            const token = getAuthCookie();
-            if (!token) {
-                setError(t("authRequired") || "Authentication required");
-                setSubscriptions([]);
-                return;
-            }
-
-            const res = await fetch("http://72.60.178.180:8000/api/v1/subscriptions/my-subscriptions", {
-                method: "GET",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            const data = await res.json();
-
-            if (!res.ok) {
-                throw new Error(data.message || "Failed to load subscriptions");
-            }
-
-            // The API returns nested data: { data: { data: [...] } }
-            const list = data?.data?.data ?? data?.data ?? [];
-            setSubscriptions(Array.isArray(list) ? list : []);
-        } catch (err: any) {
-            console.error("Error fetching subscriptions:", err);
-            setError(err?.message || (t("failedToLoad") || "Failed to load subscriptions"));
-        } finally {
-            setLoading(false);
+        if (apiError) {
+            setError(apiError.message || (t("failedToLoad") || "Failed to load subscriptions"));
         }
-    };
+    }, [apiError, t]);
 
     const formatDate = (iso?: string) => {
         if (!iso) return "-";
@@ -177,7 +117,7 @@ function UserSubscriptionsContent() {
                     </div>
                 </div>
 
-                {loading ? (
+                {isLoading ? (
                     <div className="flex items-center justify-center h-40">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary" />
                     </div>
@@ -187,7 +127,7 @@ function UserSubscriptionsContent() {
                             <div className="text-center py-4">
                                 <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
                                 <p className="text-red-700 mb-4">{error}</p>
-                                <Button onClick={fetchSubscriptions} variant="outline">{t("retry") || "Retry"}</Button>
+                                <Button onClick={refetch} variant="outline">{t("retry") || "Retry"}</Button>
                             </div>
                         </CardContent>
                     </Card>

@@ -6,27 +6,16 @@ import { Label } from "@/components/ui/label";
 import { ProtectedRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
-import { useAuthStore, getCurrentUser, updateUserProfile, signOut, getAuthToken, refreshUserData, getAuthCookie } from "@/lib/auth";
+// FIX 1: Import useUserStore to access the user object
+import { useAuthStore, useUserStore, getCurrentUser, refreshUserData } from "@/lib/auth"; 
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-
-interface ValidationError {
-  value: string;
-  msg: string;
-  param: string;
-  location: string;
-}
-
-interface ApiError {
-  errors: ValidationError[];
-}
+import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/api/admin/profileApi";
 
 function ProfileContent() {
   const { t, lang } = useI18n();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [changingPassword, setChangingPassword] = useState(false);
   const [formData, setFormData] = useState({ name: "", phone: "" });
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -41,8 +30,12 @@ function ProfileContent() {
     confirm: false
   });
 
-  // Use the auth store directly - removed setUser since it doesn't exist in AuthState
-  const { user } = useAuthStore();
+  // FIX 2: Get the user from the correct store: useUserStore
+  const { user } = useUserStore(); 
+  
+  // Use the RTK Query mutations
+  const [updateProfile, { isLoading: saving }] = useUpdateProfileMutation();
+  const [changePassword, { isLoading: changingPassword }] = useChangePasswordMutation();
 
   useEffect(() => {
     // If user is already in the store, use it
@@ -53,10 +46,9 @@ function ProfileContent() {
       });
       setLoading(false);
     } else {
-      // Otherwise, try to get from localStorage
+      // Otherwise, try to get from localStorage (handled by Zustand persist)
       const currentUser = getCurrentUser();
       if (currentUser) {
-        // We can't directly update the store, so we'll just use the currentUser for the form
         setFormData({
           name: currentUser.name,
           phone: currentUser.phone || "",
@@ -64,7 +56,7 @@ function ProfileContent() {
       }
       setLoading(false);
     }
-  }, [user]); // Removed setUser from dependency array
+  }, [user]);
 
   // Validate phone number for Egypt and Saudi Arabia
   const validatePhoneNumber = (phone: string): boolean => {
@@ -126,20 +118,11 @@ function ProfileContent() {
     }
 
     try {
-      setSaving(true);
-
-      // Debug: Check current token before update
-      console.log("Current auth token before update:", getAuthToken());
-
-      // Use the new updateUserProfile function - REMOVED EMAIL FROM UPDATE
-      const updatedUser = await updateUserProfile({
+      // Use the updateProfile mutation
+      const updatedUser = await updateProfile({
         name: formData.name,
         phone: formData.phone,
-      });
-
-      // Debug: Check if token is still valid after update
-      console.log("Auth token after update:", getAuthToken());
-      console.log("Updated user data:", updatedUser);
+      }).unwrap();
 
       // Refresh user data to ensure consistency
       await refreshUserData();
@@ -150,39 +133,41 @@ function ProfileContent() {
         phone: updatedUser.phone || "",
       });
 
-      // The store and localStorage are already updated by updateUserProfile
+      // The store and localStorage are already updated by updateProfile
       toast.success(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
     } catch (error) {
       console.error("Error updating profile:", error);
 
       // Handle API validation errors
-      if (error && typeof error === 'object' && 'errors' in error) {
-        const apiError = error as ApiError;
-        const errors: Record<string, string> = {};
+      if (error && typeof error === 'object' && 'data' in error) {
+        const errorData = error.data as any;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
+          const errors: Record<string, string> = {};
 
-        apiError.errors.forEach((err) => {
-          // Translate error messages
-          let message = err.msg;
-          if (err.msg === "E-mail already in user") {
-            message = lang === "ar"
-              ? "البريد الإلكتروني مستخدم بالفعل"
-              : "Email is already in use";
-          } else if (err.msg === "Invalid phone number only accepted Egy and SA Phone numbers") {
-            message = lang === "ar"
-              ? "رقم الهاتف غير صالح. فقط أرقام مصر والسعودية مقبولة"
-              : "Invalid phone number. Only Egypt and Saudi Arabia numbers are accepted";
-          }
+          errorData.errors.forEach((err: ValidationError) => {
+            // Translate error messages
+            let message = err.msg;
+            if (err.msg === "E-mail already in user") {
+              message = lang === "ar"
+                ? "البريد الإلكتروني مستخدم بالفعل"
+                : "Email is already in use";
+            } else if (err.msg === "Invalid phone number only accepted Egy and SA Phone numbers") {
+              message = lang === "ar"
+                ? "رقم الهاتف غير صالح. فقط أرقام مصر والسعودية مقبولة"
+                : "Invalid phone number. Only Egypt and Saudi Arabia numbers are accepted";
+            }
 
-          errors[err.param] = message;
-        });
+            errors[err.param] = message;
+          });
 
-        setFieldErrors(errors);
-        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+          setFieldErrors(errors);
+          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
+        } else {
+          toast.error(errorData.message || (lang === "ar" ? "فشل تحديث الملف الشخصي" : "Failed to update profile"));
+        }
       } else {
         toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
       }
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -217,45 +202,32 @@ function ProfileContent() {
     }
 
     try {
-      setChangingPassword(true);
+      // Use the changePassword mutation
+      await changePassword({
+        currentPassword: passwordData.currentPassword,
+        password: passwordData.password,
+        passwordConfirm: passwordData.passwordConfirm
+      }).unwrap();
 
-      // Get the auth token from cookies instead of localStorage
-      const token = getAuthCookie(); // Changed from localStorage
+      // Success
+      toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
 
-      // Call the change password endpoint
-      const response = await fetch('https://adwallpro.com/api/v1/users/changeMyPassword', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          currentPassword: passwordData.currentPassword,
-          password: passwordData.password,
-          passwordConfirm: passwordData.passwordConfirm
-        })
+      // Reset password form
+      setPasswordData({
+        currentPassword: "",
+        password: "",
+        passwordConfirm: ""
       });
+    } catch (error) {
+      console.error("Error changing password:", error);
 
-      // Check if the response is HTML (error page) instead of JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        throw new Error(lang === "ar" ? "فشل الاتصال بالخادم" : "Server connection failed");
-      }
-
-      let data;
-      try {
-        data = await response.json();
-      } catch (parseError) {
-        console.error("Error parsing JSON response:", parseError);
-        throw new Error(lang === "ar" ? "استجابة غير صالحة من الخادم" : "Invalid response from server");
-      }
-
-      if (!response.ok) {
-        // Handle API validation errors
-        if (data.errors && Array.isArray(data.errors)) {
+      // Handle API validation errors
+      if (error && typeof error === 'object' && 'data' in error) {
+        const errorData = error.data as any;
+        if (errorData.errors && Array.isArray(errorData.errors)) {
           const errors: Record<string, string> = {};
 
-          data.errors.forEach((err: ValidationError) => {
+          errorData.errors.forEach((err: ValidationError) => {
             // Translate error messages
             let message = err.msg;
             if (err.msg === "Your current password is wrong") {
@@ -268,36 +240,13 @@ function ProfileContent() {
           });
 
           setPasswordFieldErrors(errors);
-          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct the errors");
+          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
         } else {
-          throw new Error(data.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+          toast.error(errorData.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
         }
       } else {
-        // Success
-        toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
-
-        // Reset password form
-        setPasswordData({
-          currentPassword: "",
-          password: "",
-          passwordConfirm: ""
-        });
-        
-        // Don't sign out the user, just show a success message
-        // If you want to keep the security practice of signing out, 
-        // uncomment the following lines:
-        /*
-        setTimeout(async () => {
-          await signOut();
-          router.push('/login');
-        }, 1500);
-        */
+        toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
       }
-    } catch (error) {
-      console.error("Error changing password:", error);
-      toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
-    } finally {
-      setChangingPassword(false);
     }
   };
 
@@ -422,7 +371,8 @@ function ProfileContent() {
                       id="email"
                       type="email"
                       disabled
-                      value={user?.email || ""} // Controlled input
+                      // This now correctly uses the user from useUserStore
+                      value={user?.email || ""} 
                       className={`disabled-input ${lang === "ar" ? "!pr-12 !pl-3" : "!pl-12 !pr-3"}`}
                       placeholder={lang === "ar" ? "example@email.com" : "example@email.com"}
                     />
