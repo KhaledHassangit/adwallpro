@@ -104,11 +104,11 @@ export function UltraFeatures() {
           <h2 className="text-ultra-lg font-black mb-6 text-balance">
             {locale === "ar" ? (
               <>
-                منصة <span className="gradient-text">AdWell</span> العصرية
+                منصة <span className="gradient-text">AdWall</span> العصرية
               </>
             ) : (
               <>
-                <span className="gradient-text">AdWell</span>{" "}
+                <span className="gradient-text">AdWall</span>{" "}
                 {t("modernPlatform")}
               </>
             )}
