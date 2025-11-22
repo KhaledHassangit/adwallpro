@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 import { useI18n } from "@/providers/LanguageProvider";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { getAuthHeaders } from "@/lib/auth";
 
 interface Coupon {
@@ -36,6 +36,7 @@ export function DeleteCouponDialog({
   coupon,
 }: DeleteCouponDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
 
   const handleDelete = async () => {
@@ -55,7 +56,7 @@ export function DeleteCouponDialog({
       if (!response.ok) {
         // Handle unauthorized access
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -73,7 +74,7 @@ export function DeleteCouponDialog({
 
       console.log("Coupon deleted successfully");
       
-      toast.success(t("couponDeletedSuccess"));
+      notifications.success(t("couponDeletedSuccess"));
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -92,7 +93,7 @@ export function DeleteCouponDialog({
         errorMessage = "Could not connect to server. Please try again later.";
       }
       
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

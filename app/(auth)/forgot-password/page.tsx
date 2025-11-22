@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { Mail, ArrowLeft, Key } from "lucide-react";
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [step, setStep] = useState(1); // 1: email, 2: reset code, 3: new password
@@ -45,11 +46,11 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || t("resetCodeError"));
       }
 
-      toast.success(t("resetCodeSent"));
+      notifications.success(t("resetCodeSent"));
       setStep(2);
     } catch (error: any) {
       console.error("Forgot password error:", error);
-      toast.error(error.message || t("resetCodeError"));
+      notifications.error(error.message || t("resetCodeError"));
     } finally {
       setLoading(false);
     }
@@ -77,11 +78,11 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || t("invalidResetCode"));
       }
 
-      toast.success(t("resetCodeSent"));
+      notifications.success(t("resetCodeSent"));
       setStep(3);
     } catch (error: any) {
       console.error("Verify reset code error:", error);
-      toast.error(error.message || t("invalidResetCode"));
+      notifications.error(error.message || t("invalidResetCode"));
     } finally {
       setLoading(false);
     }
@@ -109,11 +110,11 @@ export default function ForgotPasswordPage() {
         throw new Error(data.message || t("resetPasswordError"));
       }
 
-      toast.success(t("resetPasswordSuccess"));
+      notifications.success(t("resetPasswordSuccess"));
       router.push("/login");
     } catch (error: any) {
       console.error("Reset password error:", error);
-      toast.error(error.message || t("resetPasswordError"));
+      notifications.error(error.message || t("resetPasswordError"));
     } finally {
     setLoading(false);
     }

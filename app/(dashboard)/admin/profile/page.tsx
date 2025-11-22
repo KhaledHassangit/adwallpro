@@ -7,13 +7,14 @@ import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuthStore, useUserStore, getCurrentUser, refreshUserData } from "@/lib/auth";
-import { toast } from "sonner";
+import { useNotifications, localized } from "@/hooks/notifications";
 import { useRouter } from "next/navigation";
 import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/features/profileApi";
 
 // This file is mostly a copy of user profile page but wrapped with AdminRoute
 function AdminProfileContent() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
@@ -100,7 +101,7 @@ function AdminProfileContent() {
         phone: updatedUser.phone || "",
       });
 
-      toast.success(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
+      notifications.success(localized("تم تحديث الملف الشخصي بنجاح", "Profile updated successfully"));
     } catch (error) {
       console.error("Error updating admin profile:", error);
       if (error && typeof error === 'object' && 'errors' in error) {
@@ -123,9 +124,9 @@ function AdminProfileContent() {
         });
 
         setFieldErrors(errors);
-        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
+        notifications.error(localized("يرجى تصحيح الأخطاء", "Please correct errors"));
       } else {
-        toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
+        notifications.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
       }
     }
   };
@@ -161,14 +162,14 @@ function AdminProfileContent() {
         passwordConfirm: passwordData.passwordConfirm
       }).unwrap();
       
-      toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
+      notifications.success(localized("تم تغيير كلمة المرور بنجاح.", "Password changed successfully."));
       setPasswordData({ currentPassword: "", password: "", passwordConfirm: "" });
     } catch (error) {
       console.error("Error changing password:", error);
       
       // Handle 401 Unauthorized
       if (error && typeof error === 'object' && 'status' in error && error.status === 401) {
-        toast.error(lang === "ar" ? "الجلسة منتهية الصلاحية" : "Session expired");
+        notifications.error(localized("الجلسة منتهية الصلاحية", "Session expired"));
         router.push("/login");
         return;
       }
@@ -187,9 +188,9 @@ function AdminProfileContent() {
         });
         
         setPasswordFieldErrors(errors);
-        toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
+        notifications.error(localized("يرجى تصحيح الأخطاء", "Please correct errors"));
       } else {
-        toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+        notifications.error(error instanceof Error ? error.message : localized("فشل تغيير كلمة المرور", "Failed to change password"));
       }
     }
   };

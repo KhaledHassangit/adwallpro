@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { CompanyDetailsDialog } from "@/components/admin/company-details-dialog";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { cn } from "@/lib/utils";
 
 // دالة لتنظيف رابط الصورة المكرر
@@ -78,6 +78,7 @@ export function AdminCompaniesTable({
   onRefresh,
 }: AdminCompaniesTableProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [filteredCompanies, setFilteredCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
@@ -113,7 +114,7 @@ export function AdminCompaniesTable({
       if (data.totalPages) setTotalPages(data.totalPages);
     } catch (error) {
       console.error("Error fetching companies:", error);
-      toast.error(t("fetchCompaniesFailed"));
+      notifications.error(t("fetchCompaniesFailed"));
     } finally {
       setLoading(false);
     }
@@ -147,14 +148,14 @@ export function AdminCompaniesTable({
         throw new Error(errorMessage);
       }
 
-      toast.success(t("companyApproved"));
+      notifications.success(t("companyApproved"));
       fetchCompanies();
       onRefresh?.();
     } catch (error) {
       console.error("Error approving company:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("approveCompanyFailed");
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     }
   };
 
@@ -199,14 +200,14 @@ export function AdminCompaniesTable({
         company?.isApproved === true
           ? t("unapprovedSuccessfully")
           : t("rejectedSuccessfully");
-      toast.success(successMessage);
+      notifications.success(successMessage);
       fetchCompanies();
       onRefresh?.();
     } catch (error) {
       console.error("Error rejecting company:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("rejectCompanyFailed");
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     }
   };
 
@@ -237,14 +238,14 @@ export function AdminCompaniesTable({
         throw new Error(errorMessage);
       }
 
-      toast.success("تم حذف الشركة بنجاح");
+      notifications.success("تم حذف الشركة بنجاح");
       fetchCompanies();
       onRefresh?.();
     } catch (error) {
       console.error("Error deleting company:", error);
       const errorMessage =
         error instanceof Error ? error.message : "فشل في حذف الشركة";
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     }
   };
 

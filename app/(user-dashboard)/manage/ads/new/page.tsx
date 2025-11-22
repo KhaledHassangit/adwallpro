@@ -16,7 +16,7 @@ import { ImageUpload } from "@/components/forms/image-upload";
 import { ProtectedRoute } from "@/components/auth/route-guard";
 import { Breadcrumb } from "@/components/common/breadcrumb";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { Plus, Tags } from "@/components/ui/icon";
 import { getCurrentUser, getAuthCookie, useUserStore } from "@/lib/auth"; // Import useUserStore
 import { useI18n } from "@/providers/LanguageProvider";
@@ -30,6 +30,7 @@ interface Category {
 
 function AddAdPageContent() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
@@ -61,7 +62,7 @@ function AddAdPageContent() {
       
       if (!token) {
         console.error("No auth token found");
-        toast.error("Authentication required");
+        notifications.error("Authentication required");
         return;
       }
 
@@ -105,7 +106,7 @@ function AddAdPageContent() {
       console.log("Categories loaded successfully:", categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      toast.error(t("failedToFetchCategories") || "Failed to fetch categories");
+      notifications.error(t("failedToFetchCategories") || "Failed to fetch categories");
     } finally {
       setCategoriesLoading(false);
     }
@@ -136,7 +137,7 @@ function AddAdPageContent() {
 
       if (!userId) {
         console.error("User ID is undefined");
-        toast.error("User not authenticated. Please log in again.");
+        notifications.error("User not authenticated. Please log in again.");
         // Redirect to login page
         window.location.href = "/login";
         return;
@@ -218,7 +219,7 @@ function AddAdPageContent() {
       const successData = await response.json();
       console.log("Success response:", successData);
 
-      toast.success(t("adAddedSuccessfully") || "Ad added successfully");
+      notifications.success(t("adAddedSuccessfully") || "Ad added successfully");
 
       // إعادة تعيين النموذج
       setFormData({
@@ -244,7 +245,7 @@ function AddAdPageContent() {
       console.error("Error creating company:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("failedToAddAd") || "Failed to add ad";
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

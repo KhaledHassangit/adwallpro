@@ -29,7 +29,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/LanguageProvider";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { getAuthHeaders } from "@/lib/auth";
 
 interface Coupon {
@@ -59,6 +59,7 @@ export function EditCouponDialog({
   coupon,
 }: EditCouponDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     code: "",
@@ -151,7 +152,7 @@ export function EditCouponDialog({
       if (!response.ok) {
         // Handle unauthorized access
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -170,7 +171,7 @@ export function EditCouponDialog({
       const data = await response.json();
       console.log("Coupon updated successfully:", data);
       
-      toast.success(t("couponUpdatedSuccess"));
+      notifications.success(t("couponUpdatedSuccess"));
       onSuccess();
       onOpenChange(false);
     } catch (error) {
@@ -189,7 +190,7 @@ export function EditCouponDialog({
         errorMessage = "Could not connect to server. Please try again later.";
       }
       
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

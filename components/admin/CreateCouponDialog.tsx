@@ -29,7 +29,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useI18n } from "@/providers/LanguageProvider";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { getAuthHeaders } from "@/lib/auth";
 
 interface CreateCouponDialogProps {
@@ -44,6 +44,7 @@ export function CreateCouponDialog({
     onSuccess,
 }: CreateCouponDialogProps) {
     const { t } = useI18n();
+  const notifications = useNotifications();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
         code: "",
@@ -120,7 +121,7 @@ export function CreateCouponDialog({
             if (!response.ok) {
                 // Handle unauthorized access
                 if (response.status === 401) {
-                    toast.error(t("adminSessionExpired"));
+                    notifications.error(t("adminSessionExpired"));
                     window.location.href = "/login";
                     return;
                 }
@@ -132,7 +133,7 @@ export function CreateCouponDialog({
             const data = await response.json();
             console.log("Coupon created successfully:", data);
 
-            toast.success(t("couponCreatedSuccess"));
+            notifications.success(t("couponCreatedSuccess"));
             onSuccess();
             onOpenChange(false);
 
@@ -147,7 +148,7 @@ export function CreateCouponDialog({
             });
         } catch (error) {
             console.error("Error creating coupon:", error);
-            toast.error(error instanceof Error ? error.message : t("couponCreatedError"));
+            notifications.error(error instanceof Error ? error.message : t("couponCreatedError"));
         } finally {
             setLoading(false);
         }

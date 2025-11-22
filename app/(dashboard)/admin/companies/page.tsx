@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { toast } from "@/components/ui/use-toast";
+import { useNotifications } from "@/hooks/notifications";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +27,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 // Import the new RTK Query hooks and types
-import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation, type Company } from "@/features/companiesApi";
+import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation,  } from "@/features/companiesApi";
 
 // PaginationControls Component (no changes needed)
 function PaginationControls({
@@ -200,6 +200,7 @@ function AdminCompaniesTable({
   onPageChange: (page: number) => void;
 }) {
   const { t } = useI18n();
+  const notifications = useNotifications();
 
   // Use the RTK Query hook to fetch companies
   const {
@@ -251,17 +252,14 @@ function AdminCompaniesTable({
   const handleApprove = async () => {
     try {
       await approveCompany(approveModal.companyId).unwrap();
-      toast({
+      notifications.success(String(t("adminCompanyApprovedSuccess") || "Company approved successfully."), {
         title: String(t("adminSuccess") || "Success"),
-        description: String(t("adminCompanyApprovedSuccess") || "Company approved successfully."),
       });
       setApproveModal({ isOpen: false, companyId: "", companyName: "" });
       // No need for onRefresh, invalidatesTags handles refetching
     } catch (err) {
-      toast({
+      notifications.error(String(t("adminCompanyApproveError") || "Failed to approve company."), {
         title: String(t("adminError") || "Error"),
-        description: String(t("adminCompanyApproveError") || "Failed to approve company."),
-        variant: "destructive",
       });
     }
   };
@@ -270,16 +268,13 @@ function AdminCompaniesTable({
   const handleDelete = async () => {
     try {
       await deleteCompany(deleteModal.companyId).unwrap();
-      toast({
+      notifications.success(String(t("adminCompanyDeletedSuccess") || "Company deleted successfully."), {
         title: String(t("adminSuccess") || "Success"),
-        description: String(t("adminCompanyDeletedSuccess") || "Company deleted successfully."),
       });
       setDeleteModal({ isOpen: false, companyId: "", companyName: "" });
     } catch (err) {
-      toast({
+      notifications.error(String(t("adminCompanyDeleteError") || "Failed to delete company."), {
         title: String(t("adminError") || "Error"),
-        description: String(t("adminCompanyDeleteError") || "Failed to delete company."),
-        variant: "destructive",
       });
     }
   };

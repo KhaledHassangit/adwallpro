@@ -26,7 +26,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { getCurrentUser, getAuthCookie } from "@/lib/auth";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 
 import {
   Dialog,
@@ -87,6 +87,7 @@ interface Category {
 
 function UserAdsContent() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
@@ -160,7 +161,7 @@ function UserAdsContent() {
       setCompanies(companies);
     } catch (error) {
       console.error("Error fetching user companies:", error);
-      toast.error(t("failedToFetchAds"));
+      notifications.error(t("failedToFetchAds"));
     } finally {
       setLoading(false);
     }
@@ -219,16 +220,16 @@ function UserAdsContent() {
 
       if (response.ok) {
         setCompanies(companies.filter((company) => company._id !== companyToDelete));
-        toast.success(t("adDeletedSuccessfully"));
+        notifications.success(t("adDeletedSuccessfully"));
         setDeleteModalOpen(false);
         setCompanyToDelete(null);
       } else {
         const errorData = await response.json().catch(() => ({}));
-        toast.error(errorData.message || t("failedToDeleteAd"));
+        notifications.error(errorData.message || t("failedToDeleteAd"));
       }
     } catch (error) {
       console.error("Error deleting company:", error);
-      toast.error(t("errorDuringDeletion"));
+      notifications.error(t("errorDuringDeletion"));
     } finally {
       setDeleting(false);
     }
@@ -318,7 +319,7 @@ function UserAdsContent() {
     if (!companyToEdit) return;
 
     if (!validateForm()) {
-      toast.error(t("pleaseFixFormErrors"));
+      notifications.error(t("pleaseFixFormErrors"));
       return;
     }
 
@@ -357,16 +358,16 @@ function UserAdsContent() {
               : company
           )
         );
-        toast.success(t("adUpdatedSuccessfully"));
+        notifications.success(t("adUpdatedSuccessfully"));
         closeEditModal();
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || t("failedToUpdateAd");
-        toast.error(errorMessage);
+        notifications.error(errorMessage);
       }
     } catch (error) {
       console.error("Error updating company:", error);
-      toast.error(t("errorDuringUpdate"));
+      notifications.error(t("errorDuringUpdate"));
     } finally {
       setSaving(false);
     }
@@ -385,13 +386,13 @@ function UserAdsContent() {
     if (file) {
       // Check file size (limit to 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        toast.error(t("imageSizeLimit"));
+        notifications.error(t("imageSizeLimit"));
         return;
       }
 
       // Check file type
       if (!file.type.startsWith('image/')) {
-        toast.error(t("invalidImageType"));
+        notifications.error(t("invalidImageType"));
         return;
       }
 
@@ -402,7 +403,7 @@ function UserAdsContent() {
         setImageUploading(false);
       };
       reader.onerror = () => {
-        toast.error(t("errorReadingImage"));
+        notifications.error(t("errorReadingImage"));
         setImageUploading(false);
       };
       reader.readAsDataURL(file);

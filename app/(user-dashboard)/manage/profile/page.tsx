@@ -8,12 +8,13 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { User, Mail, Phone, Save, Loader2, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
 // FIX 1: Import useUserStore to access the user object
 import { useAuthStore, useUserStore, getCurrentUser, refreshUserData } from "@/lib/auth"; 
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { useRouter } from "next/navigation";
 import { useUpdateProfileMutation, useChangePasswordMutation, ValidationError, ApiError } from "@/features/profileApi";
 
 function ProfileContent() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({ name: "", phone: "" });
@@ -134,7 +135,10 @@ function ProfileContent() {
       });
 
       // The store and localStorage are already updated by updateProfile
-      toast.success(lang === "ar" ? "تم تحديث الملف الشخصي بنجاح" : "Profile updated successfully");
+      notifications.success({
+        ar: "تم تحديث الملف الشخصي بنجاح",
+        en: "Profile updated successfully",
+      });
     } catch (error) {
       console.error("Error updating profile:", error);
 
@@ -161,12 +165,20 @@ function ProfileContent() {
           });
 
           setFieldErrors(errors);
-          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
+          notifications.error({
+            ar: "يرجى تصحيح الأخطاء",
+            en: "Please correct errors",
+          });
         } else {
-          toast.error(errorData.message || (lang === "ar" ? "فشل تحديث الملف الشخصي" : "Failed to update profile"));
+          notifications.error(
+            errorData.message || {
+              ar: "فشل تحديث الملف الشخصي",
+              en: "Failed to update profile",
+            },
+          );
         }
       } else {
-        toast.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
+        notifications.error(error instanceof Error ? error.message : t("failedToUpdateProfile"));
       }
     }
   };
@@ -210,7 +222,10 @@ function ProfileContent() {
       }).unwrap();
 
       // Success
-      toast.success(lang === "ar" ? "تم تغيير كلمة المرور بنجاح." : "Password changed successfully.");
+      notifications.success({
+        ar: "تم تغيير كلمة المرور بنجاح.",
+        en: "Password changed successfully.",
+      });
 
       // Reset password form
       setPasswordData({
@@ -240,12 +255,27 @@ function ProfileContent() {
           });
 
           setPasswordFieldErrors(errors);
-          toast.error(lang === "ar" ? "يرجى تصحيح الأخطاء" : "Please correct errors");
+          notifications.error({
+            ar: "يرجى تصحيح الأخطاء",
+            en: "Please correct errors",
+          });
         } else {
-          toast.error(errorData.message || (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+          notifications.error(
+            errorData.message || {
+              ar: "فشل تغيير كلمة المرور",
+              en: "Failed to change password",
+            },
+          );
         }
       } else {
-        toast.error(error instanceof Error ? error.message : (lang === "ar" ? "فشل تغيير كلمة المرور" : "Failed to change password"));
+        notifications.error(
+          error instanceof Error
+            ? error.message
+            : {
+                ar: "فشل تغيير كلمة المرور",
+                en: "Failed to change password",
+              },
+        );
       }
     }
   };

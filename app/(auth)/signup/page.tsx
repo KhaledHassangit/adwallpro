@@ -8,12 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { Eye, EyeOff, Mail, Lock, User, UserPlus, Phone } from "lucide-react";
 
 export default function SignupPage() {
   const { t, locale } = useI18n(); // Assuming locale is available from useI18n
   const router = useRouter();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -33,19 +34,19 @@ export default function SignupPage() {
 
     // التحقق من تطابق كلمات المرور
     if (formData.password !== formData.passwordConfirm) {
-      toast.error(t("passwordsNotMatch"));
+      notifications.error(t("passwordsNotMatch"));
       return;
     }
 
     // التحقق من طول كلمة المرور
     if (formData.password.length < 6) {
-      toast.error(t("passwordMinLength"));
+      notifications.error(t("passwordMinLength"));
       return;
     }
 
     // التحقق من رقم الهاتف
     if (!formData.phone) {
-      toast.error(t("phoneRequired"));
+      notifications.error(t("phoneRequired"));
       return;
     }
 
@@ -76,13 +77,13 @@ export default function SignupPage() {
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("user_data", JSON.stringify(data.data.user));
 
-      toast.success(t("accountCreatedSuccess"));
+      notifications.success(t("accountCreatedSuccess"));
 
       // التوجه للصفحة الرئيسية
       router.push("/");
     } catch (error: any) {
       console.error("Signup error:", error);
-      toast.error(error.message || t("accountCreationFailed"));
+      notifications.error(error.message || t("accountCreationFailed"));
     } finally {
       setLoading(false);
     }

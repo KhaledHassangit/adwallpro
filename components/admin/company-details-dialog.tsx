@@ -25,7 +25,7 @@ import {
   Clock,
 } from "@/components/ui/icon";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 
 interface Company {
   _id: string;
@@ -68,6 +68,7 @@ export function CompanyDetailsDialog({
   onOpenChange,
   companyId,
 }: CompanyDetailsDialogProps) {
+  const notifications = useNotifications();
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -97,7 +98,7 @@ export function CompanyDetailsDialog({
       console.error("Error fetching company details:", error);
       const errorMessage =
         error instanceof Error ? error.message : "فشل في جلب تفاصيل الشركة";
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

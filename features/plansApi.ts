@@ -53,14 +53,19 @@ export const plansApi = createApi({
     }),
     
     // Get user subscriptions (moved from userApi.ts)
-    getUserSubscriptions: builder.query<Subscription[], void>({
-      query: () => ({
-        url: '/subscriptions/my-subscriptions',
-        method: 'GET',
-        withToken: true,
-      }),
-      providesTags: ['Subscription'], // Provides the 'Subscription' tag
-    }),
+    // Get user subscriptions (moved from userApi.ts)
+getUserSubscriptions: builder.query<Subscription[], void>({
+  query: () => ({
+    url: '/subscriptions/my-subscriptions',
+    method: 'GET',
+    withToken: true,
+  }),
+  // Transform the response to extract the data array
+  transformResponse: (response: { status: string; data: { data: Subscription[] } }) => {
+    return response.data.data;
+  },
+  providesTags: ['Subscription'], // Provides the 'Subscription' tag
+}),
   }),
 });
 

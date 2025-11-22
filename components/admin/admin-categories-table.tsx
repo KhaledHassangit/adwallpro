@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { EditCategoryDialog } from "@/components/admin/edit-category-dialog";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { getAuthHeaders } from "@/lib/auth";
 
 interface Category {
@@ -45,6 +45,7 @@ interface AdminCategoriesTableProps {
 
 export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
@@ -61,7 +62,7 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -73,7 +74,7 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
       setCategories(data?.data?.data || []);
     } catch (error) {
       console.error("Error fetching categories:", error);
-      toast.error(error instanceof Error ? error.message : t("adminFailedToFetchCategories"));
+      notifications.error(error instanceof Error ? error.message : t("adminFailedToFetchCategories"));
     } finally {
       setLoading(false);
     }
@@ -93,7 +94,7 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -101,14 +102,14 @@ export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
         throw new Error(errorData.message || t("adminFailedToDeleteCategory"));
       }
 
-      toast.success(t("adminCategoryDeletedSuccess"));
+      notifications.success(t("adminCategoryDeletedSuccess"));
       fetchCategories();
       onRefresh?.();
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
     } catch (error) {
       console.error("Error deleting category:", error);
-      toast.error(error instanceof Error ? error.message : t("adminFailedToDeleteCategory"));
+      notifications.error(error instanceof Error ? error.message : t("adminFailedToDeleteCategory"));
     }
   };
 

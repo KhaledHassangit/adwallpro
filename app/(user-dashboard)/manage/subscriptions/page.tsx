@@ -131,7 +131,7 @@ function UserSubscriptionsContent() {
                             </div>
                         </CardContent>
                     </Card>
-                ) : subscriptions.length === 0 ? (
+                ) : subscriptions?.length === 0 ? (
                     <Card className="text-center py-8">
                         <CardContent>
                             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -146,7 +146,7 @@ function UserSubscriptionsContent() {
                     </Card>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {subscriptions.map((s) => {
+                        {subscriptions?.map((s) => {
                             const daysLeft = calculateDaysLeft(s.expiresAt);
                             const progress = calculateProgress(s.createdAt, s.expiresAt);
                             const primaryOption = s.plan?.options?.[0];

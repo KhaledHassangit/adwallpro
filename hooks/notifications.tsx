@@ -1,53 +1,93 @@
 "use client"
 
+import { useCallback, type ComponentType } from "react"
 import { toast } from "sonner"
 import { CheckCircle, XCircle, AlertCircle, Info } from "lucide-react"
+import type { Locale } from "@/i18n/dict"
+import { useI18n } from "@/providers/LanguageProvider"
 
 export type NotificationType = "success" | "error" | "warning" | "info"
 
-interface NotificationOptions {
-  title?: string
-  description?: string
+export type LocalizedContent = string | Partial<Record<Locale, string>>
+
+export const localized = (ar: string, en: string): LocalizedContent => ({
+  ar,
+  en,
+})
+
+interface BaseNotificationOptions {
+  title?: LocalizedContent
+  description?: LocalizedContent
   duration?: number
 }
 
-export function showNotification(type: NotificationType, message: string, options?: NotificationOptions) {
-  const { title, description, duration = 4000 } = options || {}
+export interface NotificationOptions extends BaseNotificationOptions {
+  type?: NotificationType
+  message: LocalizedContent
+}
 
-  const icons = {
-    success: CheckCircle,
-    error: XCircle,
-    warning: AlertCircle,
-    info: Info,
-  }
+export interface ShowNotificationOptions extends NotificationOptions {
+  locale?: Locale
+}
+
+const icons: Record<NotificationType, ComponentType<{ className?: string }>> = {
+  success: CheckCircle,
+  error: XCircle,
+  warning: AlertCircle,
+  info: Info,
+}
+
+const resolveLocalizedContent = (content: LocalizedContent | undefined, locale: Locale): string | undefined => {
+  if (!content) return undefined
+  if (typeof content === "string") return content
+  return content[locale] ?? content.en ?? content.ar ?? ""
+}
+
+export function showNotification(options: ShowNotificationOptions) {
+  const { type = "info", duration = 4000, message, title, description, locale = "en" } = options
 
   const Icon = icons[type]
+  const resolvedTitle = resolveLocalizedContent(title, locale)
+  const resolvedMessage = resolveLocalizedContent(message, locale)
+  const resolvedDescription = resolveLocalizedContent(description, locale)
 
-  const config = {
+  const payload = {
     duration,
     icon: <Icon className="h-5 w-5" />,
     className: `toast-${type}`,
   }
 
-  if (title) {
-    toast(title, {
-      ...config,
-      description: description || message,
+  if (resolvedTitle) {
+    toast(resolvedTitle, {
+      ...payload,
+      description: resolvedMessage ?? resolvedDescription,
     })
   } else {
-    toast(message, config)
+    toast(resolvedMessage ?? resolvedDescription ?? "", payload)
   }
 }
 
-// Convenience functions
-export const notifications = {
-  success: (message: string, options?: NotificationOptions) => showNotification("success", message, options),
+export function useNotifications() {
+  const { locale } = useI18n()
 
-  error: (message: string, options?: NotificationOptions) => showNotification("error", message, options),
+  const notify = useCallback(
+    (options: NotificationOptions) => {
+      showNotification({ ...options, locale })
+    },
+    [locale],
+  )
 
-  warning: (message: string, options?: NotificationOptions) => showNotification("warning", message, options),
-
-  info: (message: string, options?: NotificationOptions) => showNotification("info", message, options),
+  return {
+    notify,
+    success: (message: LocalizedContent, options?: BaseNotificationOptions) =>
+      notify({ ...(options ?? {}), message, type: "success" }),
+    error: (message: LocalizedContent, options?: BaseNotificationOptions) =>
+      notify({ ...(options ?? {}), message, type: "error" }),
+    warning: (message: LocalizedContent, options?: BaseNotificationOptions) =>
+      notify({ ...(options ?? {}), message, type: "warning" }),
+    info: (message: LocalizedContent, options?: BaseNotificationOptions) =>
+      notify({ ...(options ?? {}), message, type: "info" }),
+  }
 }
 
 // Email notification functions (for server-side use)

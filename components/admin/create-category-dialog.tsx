@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/forms/image-upload";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { useI18n } from "@/providers/LanguageProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getAuthCookie } from "@/lib/auth";
@@ -29,6 +29,7 @@ export function CreateCategoryDialog({
   onSuccess,
 }: CreateCategoryDialogProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nameAr: "",
@@ -94,7 +95,7 @@ export function CreateCategoryDialog({
         throw new Error(errorMessage);
       }
 
-      toast.success(t("adminCategoryCreatedSuccess"));
+      notifications.success(t("adminCategoryCreatedSuccess"));
       onOpenChange(false);
       setFormData({
         nameAr: "",
@@ -109,7 +110,7 @@ export function CreateCategoryDialog({
       console.error("Error creating category:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("adminFailedToCreateCategory");
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/icon";
 import Link from "next/link";
 import Image from "next/image";
-import { toast } from "sonner";
 import type { Category } from "@/types/types";
 import { LoadingSpinner } from "../common/loading-spinner";
 import { useGetCategoriesQuery } from "@/features/categoriesApi";

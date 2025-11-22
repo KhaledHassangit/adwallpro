@@ -12,7 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
+import { useNotifications, localized } from "@/hooks/notifications";
 import { 
   useGetPlansQuery, 
   useCreatePlanMutation, 
@@ -709,6 +709,7 @@ DisplayCard.displayName = 'DisplayCard';
 // Main Component
 function PlansAdminPageContent() {
   const { t, locale } = useI18n();
+  const notifications = useNotifications();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; plan: Plan | null }>({ open: false, plan: null });
 
@@ -788,35 +789,35 @@ function PlansAdminPageContent() {
   const handleSubmit = useCallback(async () => {
     try {
       if (!form.name.trim()) {
-        toast.error(locale === "ar" ? "اسم الباقة مطلوب" : "Plan name is required");
+        notifications.error(localized("اسم الباقة مطلوب", "Plan name is required"));
         return;
       }
       if (!form.code.trim()) {
-        toast.error(locale === "ar" ? "رمز الباقة مطلوب" : "Plan code is required");
+        notifications.error(localized("رمز الباقة مطلوب", "Plan code is required"));
         return;
       }
       if (!form.planType) {
-        toast.error(locale === "ar" ? "نوع الباقة مطلوب" : "Plan type is required");
+        notifications.error(localized("نوع الباقة مطلوب", "Plan type is required"));
         return;
       }
 
       if (!form.options || form.options.length === 0) {
-        toast.error(locale === "ar" ? "يجب أن تحتوي الباقة على خيار واحد على الأقل" : "Plan must have at least one option");
+        notifications.error(localized("يجب أن تحتوي الباقة على خيار واحد على الأقل", "Plan must have at least one option"));
         return;
       }
 
       for (let i = 0; i < form.options.length; i++) {
         const option = form.options[i];
         if (!option.duration) {
-          toast.error(locale === "ar" ? `مدة الخيار ${i + 1} مطلوبة` : `Option ${i + 1} duration is required`);
+          notifications.error(localized(`مدة الخيار ${i + 1} مطلوبة`, `Option ${i + 1} duration is required`));
           return;
         }
         if (typeof option.priceUSD !== 'number' || option.priceUSD < 0) {
-          toast.error(locale === "ar" ? `سعر الخيار ${i + 1} مطلوب` : `Option ${i + 1} price is required`);
+          notifications.error(localized(`سعر الخيار ${i + 1} مطلوب`, `Option ${i + 1} price is required`));
           return;
         }
         if (typeof option.adsCount !== 'number' || option.adsCount < 0) {
-          toast.error(locale === "ar" ? `عدد إعلانات الخيار ${i + 1} مطلوب` : `Option ${i + 1} ads count is required`);
+          notifications.error(localized(`عدد إعلانات الخيار ${i + 1} مطلوب`, `Option ${i + 1} ads count is required`));
           return;
         }
       }
@@ -824,7 +825,7 @@ function PlansAdminPageContent() {
       const filteredFeatures = form.features?.filter(f => f.trim() !== "") || [];
 
       if (filteredFeatures.length === 0) {
-        toast.error(locale === "ar" ? "يجب أن تحتوي الباقة على ميزة واحدة على الأقل" : "Plan must have at least one feature");
+        notifications.error(localized("يجب أن تحتوي الباقة على ميزة واحدة على الأقل", "Plan must have at least one feature"));
         return;
       }
 
@@ -844,10 +845,10 @@ function PlansAdminPageContent() {
 
       if (editingId === "new") {
         await createPlan(updatedForm).unwrap();
-        toast.success(locale === "ar" ? "تم إنشاء الباقة بنجاح" : "Plan created successfully");
+        notifications.success(localized("تم إنشاء الباقة بنجاح", "Plan created successfully"));
       } else if (editingId) {
         await updatePlan({ id: editingId, data: updatedForm }).unwrap();
-        toast.success(locale === "ar" ? "تم تحديث الباقة بنجاح" : "Plan updated successfully");
+        notifications.success(localized("تم تحديث الباقة بنجاح", "Plan updated successfully"));
       }
 
       resetForm();
@@ -858,13 +859,13 @@ function PlansAdminPageContent() {
         const errorData = err.data as any;
         if (errorData.errors && Array.isArray(errorData.errors)) {
           errorData.errors.forEach((error: ValidationError) => {
-            toast.error(error.msg);
+            notifications.error(error.msg);
           });
         } else {
-          toast.error(errorData.message || (locale === "ar" ? "فشل حفظ الباقة" : "Failed to save plan"));
+          notifications.error(errorData.message || localized("فشل حفظ الباقة", "Failed to save plan"));
         }
       } else {
-        toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل حفظ الباقة" : "Failed to save plan"));
+        notifications.error(err instanceof Error ? err.message : localized("فشل حفظ الباقة", "Failed to save plan"));
       }
     }
   }, [form, editingId, createPlan, updatePlan, resetForm, refetchPlans, locale]);
@@ -873,23 +874,23 @@ function PlansAdminPageContent() {
     if (!deleteModal.plan?._id) return;
     try {
       await deletePlan(deleteModal.plan._id).unwrap();
-      toast.success(locale === "ar" ? "تم حذف الباقة بنجاح" : "Plan deleted successfully");
+      notifications.success(localized("تم حذف الباقة بنجاح", "Plan deleted successfully"));
       setDeleteModal({ open: false, plan: null });
       refetchPlans();
     } catch (err: any) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل حذف الباقة" : "Failed to delete plan"));
+      notifications.error(err instanceof Error ? err.message : localized("فشل حذف الباقة", "Failed to delete plan"));
     }
   }, [deleteModal.plan, deletePlan, refetchPlans, locale]);
 
   const togglePlanStatus = useCallback(async (plan: Plan) => {
     try {
       await updatePlan({ id: plan._id!, data: { ...plan, isActive: !plan.isActive } }).unwrap();
-      toast.success(locale === "ar" ? "تم تحديث حالة الباقة بنجاح" : "Plan status updated successfully");
+      notifications.success(localized("تم تحديث حالة الباقة بنجاح", "Plan status updated successfully"));
       refetchPlans();
     } catch (err: any) {
       console.error(err);
-      toast.error(err instanceof Error ? err.message : (locale === "ar" ? "فشل تحديث حالة الباقة" : "Failed to update plan status"));
+      notifications.error(err instanceof Error ? err.message : localized("فشل تحديث حالة الباقة", "Failed to update plan status"));
     }
   }, [updatePlan, refetchPlans, locale]);
 

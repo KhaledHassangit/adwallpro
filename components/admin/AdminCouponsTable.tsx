@@ -16,7 +16,7 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { format } from "date-fns";
 import { getAuthHeaders } from "@/lib/auth";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 
 interface Coupon {
   id: string;
@@ -44,6 +44,7 @@ export function AdminCouponsTable({
   onDelete 
 }: AdminCouponsTableProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false); // Start with false to avoid initial animation
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -77,7 +78,7 @@ export function AdminCouponsTable({
           
           // Handle unauthorized access
           if (response.status === 401) {
-            toast.error(t("adminSessionExpired"));
+            notifications.error(t("adminSessionExpired"));
             window.location.href = "/login";
             return;
           }

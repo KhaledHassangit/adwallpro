@@ -26,7 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 
 interface User {
   _id: string;
@@ -50,6 +50,7 @@ interface User {
 
 export function AdminUsersTable() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -69,7 +70,7 @@ export function AdminUsersTable() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -89,7 +90,7 @@ export function AdminUsersTable() {
       }
     } catch (error) {
       console.error("Error fetching users:", error);
-      toast.error(t("adminFailedToFetchUsers"));
+      notifications.error(t("adminFailedToFetchUsers"));
       setUsers([]);
       setTotalPages(1);
     } finally {
@@ -111,20 +112,20 @@ export function AdminUsersTable() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
         throw new Error(t("adminFailedToDeleteUser"));
       }
 
-      toast.success(t("adminUserDeletedSuccess"));
+      notifications.success(t("adminUserDeletedSuccess"));
       fetchUsers();
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (error) {
       console.error("Error deleting user:", error);
-      toast.error(t("adminFailedToDeleteUser"));
+      notifications.error(t("adminFailedToDeleteUser"));
     }
   };
 

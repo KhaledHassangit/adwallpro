@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { ImageUpload } from "@/components/forms/image-upload";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { useI18n } from "@/providers/LanguageProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { getAuthCookie } from "@/lib/auth"; // Import the auth function
@@ -42,6 +42,7 @@ export function EditCategoryDialog({
   onSuccess,
 }: EditCategoryDialogProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     nameAr: "",
@@ -79,7 +80,7 @@ export function EditCategoryDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) {
-      toast.error(t("adminNoCategorySelected"));
+      notifications.error(t("adminNoCategorySelected"));
       return;
     }
 
@@ -137,14 +138,14 @@ export function EditCategoryDialog({
 
       const result = await response.json();
       console.log("Update successful:", result);
-      toast.success(t("adminCategoryUpdatedSuccess"));
+      notifications.success(t("adminCategoryUpdatedSuccess"));
       onOpenChange(false);
       onSuccess();
     } catch (error) {
       console.error("Error updating category:", error);
       const errorMessage =
         error instanceof Error ? error.message : t("adminFailedToUpdateCategory");
-      toast.error(errorMessage);
+      notifications.error(errorMessage);
     } finally {
       setLoading(false);
     }

@@ -40,7 +40,7 @@ import {
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import {
   useGetCouponsQuery,
   useCreateCouponMutation,
@@ -290,6 +290,7 @@ interface CreateCouponDialogProps {
 
 function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [formData, setFormData] = useState({
     code: "",
     discountValue: "",
@@ -327,7 +328,7 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
         maxUses: Number(formData.usageLimit),
         isActive: formData.isActive,
       }).unwrap();
-      toast.success(String(t("couponCreatedSuccess") || "Coupon created successfully"));
+      notifications.success(String(t("couponCreatedSuccess") || "Coupon created successfully"));
       onOpenChange(false);
       setFormData({
         code: "",
@@ -341,7 +342,7 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
       onSuccess();
     } catch (err: unknown) {
       const apiError = err as ApiError;
-      toast.error(apiError?.data?.message || String(t("couponCreatedError") || "Failed to create coupon"));
+      notifications.error(apiError?.data?.message || String(t("couponCreatedError") || "Failed to create coupon"));
     }
   };
 
@@ -474,6 +475,7 @@ interface EditCouponDialogProps {
 
 function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [formData, setFormData] = useState({
     code: "",
     discountValue: "",
@@ -528,12 +530,12 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
           isActive: formData.isActive,
         },
       }).unwrap();
-      toast.success(String(t("couponUpdatedSuccess") || "Coupon updated successfully"));
+      notifications.success(String(t("couponUpdatedSuccess") || "Coupon updated successfully"));
       onOpenChange(false);
       onSuccess();
     } catch (err: unknown) {
       const apiError = err as ApiError;
-      toast.error(apiError?.data?.message || String(t("couponUpdatedError") || "Failed to update coupon"));
+      notifications.error(apiError?.data?.message || String(t("couponUpdatedError") || "Failed to update coupon"));
     }
   };
 
@@ -669,6 +671,7 @@ interface DeleteCouponDialogProps {
 
 function DeleteCouponDialog({ open, onOpenChange, onSuccess, coupon }: DeleteCouponDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
 
   const [deleteCoupon] = useDeleteCouponMutation();
@@ -678,12 +681,12 @@ function DeleteCouponDialog({ open, onOpenChange, onSuccess, coupon }: DeleteCou
     setLoading(true);
     try {
       await deleteCoupon(coupon._id).unwrap();
-      toast.success(String(t("couponDeletedSuccess") || "Coupon deleted successfully"));
+      notifications.success(String(t("couponDeletedSuccess") || "Coupon deleted successfully"));
       onOpenChange(false);
       onSuccess();
     } catch (err: unknown) {
       const apiError = err as ApiError;
-      toast.error(apiError?.data?.message || String(t("couponDeletedError") || "Failed to delete coupon"));
+      notifications.error(apiError?.data?.message || String(t("couponDeletedError") || "Failed to delete coupon"));
     } finally {
       setLoading(false);
     }

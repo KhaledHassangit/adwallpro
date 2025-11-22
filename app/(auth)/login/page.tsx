@@ -11,7 +11,7 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { signIn, useAuthStore, useUserStore } from "@/lib/auth";
 import { verifyGoogleToken } from "@/app/actions";
 import { GoogleLogin } from "@react-oauth/google";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
@@ -19,6 +19,7 @@ export const dynamic = 'force-dynamic';
 export default function LoginPage() {
   const { t, locale } = useI18n();
   const router = useRouter();
+  const notifications = useNotifications();
 
   // Get state setters from the correct stores
   const { setToken } = useAuthStore();
@@ -51,7 +52,7 @@ export default function LoginPage() {
       setUser(result.user);
       setToken(result.token);
 
-      toast.success(t("loginSuccess"));
+      notifications.success(t("loginSuccess"));
 
       // Redirect based on role
       const userRole = result.user?.role || "user";
@@ -62,14 +63,14 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Google login error:", error);
-      toast.error(error.message || "Google login failed");
+      notifications.error(error.message || "Google login failed");
     } finally {
       setGoogleLoading(false);
     }
   };
 
   const handleGoogleError = () => {
-    toast.error("Google login failed");
+    notifications.error("Google login failed");
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,7 +90,7 @@ export default function LoginPage() {
       setUser(user);
       setToken(token);
 
-      toast.success(t("loginSuccess"));
+      notifications.success(t("loginSuccess"));
 
       const userRole = user.role || "user";
       console.log("Final user role:", userRole);
@@ -101,7 +102,7 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Login error:", error);
-      toast.error(error.message || t("loginFailed"));
+      notifications.error(error.message || t("loginFailed"));
     } finally {
       setLoading(false);
     }

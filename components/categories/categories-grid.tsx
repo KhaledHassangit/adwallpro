@@ -6,7 +6,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/LanguageProvider";
 import { ArrowRight, Eye, Loader2 } from "@/components/ui/icon";
-import { toast } from "sonner";
 import type { Category } from "@/types/types";
 import { useGetCategoriesQuery } from "@/features/categoriesApi";
 

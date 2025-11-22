@@ -3,7 +3,7 @@
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore, useUserStore } from "@/lib/auth";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { Loader2 } from "lucide-react";
 export const dynamic = 'force-dynamic';
 function LoginSuccessContent() {
@@ -11,6 +11,7 @@ function LoginSuccessContent() {
   const searchParams = useSearchParams();
   const { setToken } = useAuthStore();
   const { setUser } = useUserStore();
+  const notifications = useNotifications();
 
   useEffect(() => {
     // Get the token from URL parameters
@@ -18,7 +19,7 @@ function LoginSuccessContent() {
     const error = searchParams.get("error");
 
     if (error) {
-      toast.error("Login failed: " + error);
+      notifications.error("Login failed: " + error);
       router.push("/login");
       return;
     }
@@ -45,7 +46,7 @@ function LoginSuccessContent() {
             localStorage.setItem("user_data", JSON.stringify(userData));
             setUser(userData);
 
-            toast.success("Login successful");
+            notifications.success("Login successful");
 
             // Redirect based on user role
             const userRole = userData.role || "user";
@@ -59,7 +60,7 @@ function LoginSuccessContent() {
           }
         } catch (error) {
           console.error("Error fetching user data:", error);
-          toast.error("Failed to complete login");
+          notifications.error("Failed to complete login");
           router.push("/login");
         }
       };
@@ -67,10 +68,10 @@ function LoginSuccessContent() {
       fetchUserData();
     } else {
       // No token found, redirect to login
-      toast.error("No authentication token found");
+      notifications.error("No authentication token found");
       router.push("/login");
     }
-  }, [router, searchParams, setToken, setUser]);
+  }, [notifications, router, searchParams, setToken, setUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 via-background to-secondary/5">

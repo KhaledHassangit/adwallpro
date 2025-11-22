@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { useI18n } from "@/providers/LanguageProvider";
 import {
   Users,
@@ -194,6 +194,7 @@ interface CreateAdminDialogProps {
 
 function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -207,13 +208,13 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.passwordConfirm) {
-      toast.error(String(t("passwordsDoNotMatch") || "Passwords do not match"));
+      notifications.error(String(t("passwordsDoNotMatch") || "Passwords do not match"));
       return;
     }
 
     try {
       await createAdmin(formData).unwrap();
-      toast.success(
+      notifications.success(
         String(t("adminCreatedSuccessfully") || "Admin created successfully")
       );
       onOpenChange(false);
@@ -225,7 +226,7 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
         phone: "",
       });
     } catch (err: any) {
-      toast.error(
+      notifications.error(
         err?.data?.message ||
           String(t("failedToCreateAdmin") || "Failed to create admin")
       );
@@ -349,6 +350,7 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
 // ==================== Users Table ====================
 function AdminUsersTable() {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -374,13 +376,13 @@ function AdminUsersTable() {
 
     try {
       await deleteUser(userToDelete._id).unwrap();
-      toast.success(
+      notifications.success(
         String(t("adminUserDeletedSuccess") || "User deleted successfully")
       );
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (err: any) {
-      toast.error(
+      notifications.error(
         err?.data?.message ||
           String(t("adminFailedToDeleteUser") || "Failed to delete user")
       );

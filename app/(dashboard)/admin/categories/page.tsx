@@ -45,7 +45,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { ImageUpload } from "@/components/forms/image-upload";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 // Import the new RTK Query hooks and types
 import {
   useGetCategoryStatsQuery,
@@ -207,6 +207,7 @@ interface AdminCategoriesTableProps {
 
 function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
@@ -233,12 +234,12 @@ function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
     if (!categoryToDelete) return;
     try {
       await deleteCategory(categoryToDelete._id).unwrap();
-      toast.success(String(t("adminCategoryDeletedSuccess") || "Category deleted successfully"));
+      notifications.success(String(t("adminCategoryDeletedSuccess") || "Category deleted successfully"));
       setDeleteDialogOpen(false);
       setCategoryToDelete(null);
       onRefresh?.();
     } catch (err: any) {
-      toast.error(err?.data?.message || String(t("adminFailedToDeleteCategory") || "Failed to delete category"));
+      notifications.error(err?.data?.message || String(t("adminFailedToDeleteCategory") || "Failed to delete category"));
     }
   };
 
@@ -405,6 +406,7 @@ interface CreateCategoryDialogProps {
 
 function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCategoryDialogProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [formData, setFormData] = useState({
     nameAr: "",
     nameEn: "",
@@ -433,12 +435,12 @@ function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCategoryD
 
     try {
       await createCategory(formDataToSend).unwrap();
-      toast.success(String(t("adminCategoryCreatedSuccess") || "Category created successfully"));
+      notifications.success(String(t("adminCategoryCreatedSuccess") || "Category created successfully"));
       onOpenChange(false);
       setFormData({ nameAr: "", nameEn: "", descriptionAr: "", descriptionEn: "", color: "#FF6B6B", image: null });
       onSuccess?.();
     } catch (err: any) {
-      toast.error(err?.data?.message || String(t("adminFailedToCreateCategory") || "Failed to create category"));
+      notifications.error(err?.data?.message || String(t("adminFailedToCreateCategory") || "Failed to create category"));
     }
   };
 
@@ -569,6 +571,7 @@ interface EditCategoryDialogProps {
 
 function EditCategoryDialog({ open, onOpenChange, category, onSuccess }: EditCategoryDialogProps) {
   const { t, lang } = useI18n();
+  const notifications = useNotifications();
   const [formData, setFormData] = useState({
     nameAr: "",
     nameEn: "",
@@ -600,7 +603,7 @@ function EditCategoryDialog({ open, onOpenChange, category, onSuccess }: EditCat
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!category) {
-      toast.error(String(t("adminNoCategorySelected") || "No category selected"));
+      notifications.error(String(t("adminNoCategorySelected") || "No category selected"));
       return;
     }
 
@@ -627,11 +630,11 @@ function EditCategoryDialog({ open, onOpenChange, category, onSuccess }: EditCat
 
     try {
       await updateCategory({ id: category._id, formData: formDataToSend }).unwrap();
-      toast.success(String(t("adminCategoryUpdatedSuccess") || "Category updated successfully"));
+      notifications.success(String(t("adminCategoryUpdatedSuccess") || "Category updated successfully"));
       onOpenChange(false);
       onSuccess?.();
     } catch (err: any) {
-      toast.error(err?.data?.message || String(t("adminFailedToUpdateCategory") || "Failed to update category"));
+      notifications.error(err?.data?.message || String(t("adminFailedToUpdateCategory") || "Failed to update category"));
     }
   };
 

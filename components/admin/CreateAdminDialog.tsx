@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 import { useI18n } from "@/providers/LanguageProvider";
 import { getAuthHeaders } from "@/lib/auth";
 
@@ -24,6 +24,7 @@ export function CreateAdminDialog({
   onOpenChange,
 }: CreateAdminDialogProps) {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -38,7 +39,7 @@ export function CreateAdminDialog({
 
     // التحقق من تطابق كلمات المرور
     if (formData.password !== formData.passwordConfirm) {
-      toast.error(t("passwordsDoNotMatch"));
+      notifications.error(t("passwordsDoNotMatch"));
       return;
     }
 
@@ -59,7 +60,7 @@ export function CreateAdminDialog({
 
       if (!response.ok) {
         if (response.status === 401) {
-          toast.error(t("adminSessionExpired"));
+          notifications.error(t("adminSessionExpired"));
           window.location.href = "/login";
           return;
         }
@@ -67,7 +68,7 @@ export function CreateAdminDialog({
         throw new Error(errorData.message || t("failedToCreateAdmin"));
       }
 
-      toast.success(t("adminCreatedSuccessfully"));
+      notifications.success(t("adminCreatedSuccessfully"));
       onOpenChange(false);
       setFormData({
         name: "",
@@ -78,7 +79,7 @@ export function CreateAdminDialog({
       });
     } catch (error) {
       console.error("Error creating admin:", error);
-      toast.error(error instanceof Error ? error.message : t("failedToCreateAdmin"));
+      notifications.error(error instanceof Error ? error.message : t("failedToCreateAdmin"));
     } finally {
       setLoading(false);
     }

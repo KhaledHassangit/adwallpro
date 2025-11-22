@@ -21,7 +21,7 @@ import {
   UserCheck,
   Shield,
 } from "@/components/ui/icon";
-import { toast } from "sonner";
+import { useNotifications } from "@/hooks/notifications";
 
 interface UserStats {
   totalUsers: number;
@@ -35,6 +35,7 @@ interface UserStats {
 
 export function AdminStats() {
   const { t } = useI18n();
+  const notifications = useNotifications();
   const [userStats, setUserStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -61,7 +62,7 @@ export function AdminStats() {
       setUserStats(data.data);
     } catch (error) {
       console.error("Error fetching user stats:", error);
-      toast.error("فشل في جلب إحصائيات المستخدمين");
+      notifications.error("فشل في جلب إحصائيات المستخدمين");
     } finally {
       setLoading(false);
     }
