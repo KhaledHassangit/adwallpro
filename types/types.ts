@@ -130,7 +130,6 @@ export interface CompaniesResponse {
   };
 }
 
-// Define the parameters for the fetch query
 export interface GetCompaniesParams {
   page: number;
   limit: number;
@@ -154,7 +153,6 @@ export interface Coupon {
   usedCount?: number;
 }
 
-// Define the shape of the API response
 export interface CouponsResponse {
   status: string;
   results: number;

@@ -378,13 +378,31 @@
   .ultra-grid {
     display: grid;
     gap: 2rem;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   }
 
   @media (max-width: 640px) {
     .ultra-grid {
       grid-template-columns: 1fr;
       gap: 1.5rem;
+    }
+  }
+
+  @media (min-width: 641px) and (max-width: 1024px) {
+    .ultra-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1025px) and (max-width: 1280px) {
+    .ultra-grid {
+      grid-template-columns: repeat(3, 1fr);
+    }
+  }
+
+  @media (min-width: 1281px) {
+    .ultra-grid {
+      grid-template-columns: repeat(4, 1fr);
     }
   }
 
@@ -516,40 +534,49 @@
   textarea::placeholder {
     color: hsl(var(--muted-foreground));
   }
-/* Add to your globals.css or component CSS */
-.disabled-input {
-  opacity: 0.5 !important;
-  background-color: rgba(243, 244, 246, 0.5) !important;
-  cursor: not-allowed !important;
-}
-  /* Select dropdown styling */
-  select {
-    appearance: none;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
-    background-position: right 0.5rem center;
-    background-repeat: no-repeat;
-    background-size: 1.5em 1.5em;
-    padding-right: 2.5rem;
+  
+  /* Image optimization for company cards */
+  .company-image-container {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    min-height: 200px;
   }
-
-  .dark select {
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%239ca3af' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+  
+  .company-image {
+    object-fit: cover;
+    transition: transform 0.5s ease;
   }
-
-  /* RTL-specific styles */
-  html[dir="rtl"] select {
-    background-position: left 0.5rem center;
-    padding-right: 1rem;
-    padding-left: 2.5rem;
+  
+  .company-card:hover .company-image {
+    transform: scale(1.05);
   }
-
-  /* Language-specific button styles */
-  :lang(en) .btn-ultra {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+  
+  .image-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
-
-  :lang(ar) .btn-ultra {
-    font-family: var(--font-almarai), system-ui, sans-serif;
+  
+  .dark .image-loading-overlay {
+    background: rgba(0, 0, 0, 0.8);
+  }
+  
+  /* Image placeholder */
+  .image-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.1) 0%, hsl(var(--primary) / 0.05) 100%);
   }
 }
 
@@ -694,4 +721,65 @@
 .container-premium {
   @apply mx-auto px-6 sm:px-8 lg:px-12;
   max-width: min(1600px, calc(100vw - 3rem));
+}
+
+/* Enhanced image styles for better display */
+.image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0.5rem;
+}
+
+.image-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.image-container:hover img {
+  transform: scale(1.05);
+}
+
+/* Loading state for images */
+.image-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.image-loading::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.dark .image-loading::before {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.image-loading::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  margin: -12px 0 0 -12px;
+  border: 2px solid hsl(var(--primary));
+  border-radius: 50%;
+  border-top-color: transparent;
+  animation: spin 1s linear infinite;
+  z-index: 2;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

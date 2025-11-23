@@ -13,15 +13,42 @@ import { useGetCategoriesQuery } from "@/features/categoriesApi";
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
+import { useMemo } from "react";
 
 export function CategoriesSlider() {
   const { locale, t } = useI18n();
 
   // Use RTK Query hook to fetch categories
-  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery();
+  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery({ page: 1, limit: 10 });
   
-  // Extract categories from the response
-  const categories = categoriesResponse?.data?.data || [];
+  // Extract categories from response with proper fallbacks
+  const categories = useMemo(() => {
+    if (!categoriesResponse) return [];
+    
+    // Try multiple possible paths to extract the categories array
+    const possiblePaths = [
+      categoriesResponse?.data?.data,
+      categoriesResponse?.data,
+      categoriesResponse?.data?.categories,
+      categoriesResponse?.categories,
+      categoriesResponse
+    ];
+    
+    for (const path of possiblePaths) {
+      if (Array.isArray(path)) return path;
+    }
+    
+    return [];
+  }, [categoriesResponse]);
+
+  // Function to get full image URL
+  const getImageUrl = (imagePath: string) => {
+    if (!imagePath) return "/placeholder.svg";
+    // If it's already a full URL, return as is
+    if (imagePath.startsWith("http")) return imagePath;
+    // Otherwise, prepend the base URL
+    return `http://72.60.178.180:8000/${imagePath}`;
+  };
 
   if (isLoading)
     return (
@@ -85,7 +112,7 @@ export function CategoriesSlider() {
           {categories.map((c) => {
             const name = locale === "ar" ? c.nameAr : c.nameEn;
             return (
-              <SwiperSlide key={c.slug}>
+              <SwiperSlide key={c._id}>
                 <Link href={`/companies/category/${c._id}`} className="group block">
                   <Card className="overflow-hidden border-0">
                     <div
@@ -98,7 +125,7 @@ export function CategoriesSlider() {
                     <CardContent className="p-0">
                       <div className="relative aspect-[4/3] w-full overflow-hidden">
                         <Image
-                          src={c.image || "/placeholder.svg"}
+                          src={getImageUrl(c.image)}
                           alt={name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"

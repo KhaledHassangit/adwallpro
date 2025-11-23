@@ -1,4 +1,3 @@
-// components/layout/dashboard-layout.tsx
 "use client";
 
 import { useState, useEffect, useRef } from "react";
@@ -6,12 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { LogOut, Menu, User2, Bell } from "lucide-react";
-import {  useUserStore, signOut } from "@/lib/auth"; 
+import { Badge } from "@/components/ui/badge";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { LogOut, Menu, User2, Bell, BellRing, Check, CheckCheck, X, ExternalLink, ChevronDown } from "lucide-react";
+import { useUserStore, signOut } from "@/lib/auth"; 
 import { useI18n } from "@/providers/LanguageProvider";
 import { LanguageSwitcher } from "@/components/common/language-switcher";
 import { ThemeToggle } from "@/components/common/theme-toggle";
-import { NotificationPanel } from "@/components/common/notification-panel";
 import Logo from "../Logo";
 import {
   LayoutDashboard,
@@ -25,6 +25,7 @@ import {
   User,
 } from "@/components/ui/icon";
 import { useNotificationStore } from "@/lib/notificationStore";
+import { useGetNotificationsQuery, useMarkAllAsReadMutation, useMarkAsReadMutation, useDeleteNotificationMutation } from "@/features/notificationsApi";
 
 // Define navigation items separately
 function getAdminNavItems(t: (key: string) => string) {
@@ -67,8 +68,8 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Notification state
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
-  const { fetchNotifications, unreadCount } = useNotificationStore();
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const [notificationLimit, setNotificationLimit] = useState(5); // Start with 5 notifications
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -76,6 +77,19 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Check if current language is RTL
   const isRTL = locale === "ar";
+
+  // Notification API hooks
+  const { data: notificationsData, isLoading, refetch } = useGetNotificationsQuery({
+    limit: notificationLimit, // Use dynamic limit
+  });
+  const [markAllAsRead] = useMarkAllAsReadMutation();
+  const [markAsRead] = useMarkAsReadMutation();
+  const [deleteNotification] = useDeleteNotificationMutation();
+
+  const notifications = notificationsData?.data?.data?.notifications || [];
+  const unreadCount = notifications.filter(n => !n.read).length;
+  const totalResults = notificationsData?.data?.results || 0;
+  const hasMore = notifications.length < totalResults;
 
   const handleSignOut = async () => {
     try {
@@ -88,6 +102,50 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   const handleNotificationClick = () => {
     setIsNotificationPanelOpen((prev) => !prev);
+  };
+
+  const handleMarkAllAsRead = async () => {
+    try {
+      await markAllAsRead().unwrap();
+      refetch();
+    } catch (error: any) {
+      console.error("Failed to mark all notifications as read:", error);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await markAsRead(id).unwrap();
+      refetch();
+    } catch (error: any) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+
+  const handleDeleteNotification = async (id: string) => {
+    try {
+      await deleteNotification(id).unwrap();
+      refetch();
+    } catch (error: any) {
+      console.error("Failed to delete notification:", error);
+    }
+  };
+
+  const handleLoadMore = () => {
+    setNotificationLimit(prev => prev + 5); // Load 5 more notifications
+  };
+
+  const getNotificationIcon = (type: string) => {
+    switch (type) {
+      case 'success':
+        return <Check className="h-4 w-4 text-green-500" />;
+      case 'error':
+        return <X className="h-4 w-4 text-red-500" />;
+      case 'warning':
+        return <Bell className="h-4 w-4 text-yellow-500" />;
+      default:
+        return <BellRing className="h-4 w-4 text-blue-500" />;
+    }
   };
 
   useEffect(() => {
@@ -113,20 +171,22 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Fetch notifications on component mount
+  // Close notification panel when clicking outside
   useEffect(() => {
-    if (!user?._id) {
-      setIsNotificationPanelOpen(false);
-      return;
-    }
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        isNotificationPanelOpen &&
+        notificationButtonRef.current &&
+        !notificationButtonRef.current.contains(event.target as Node) &&
+        !(event.target as Element).closest('.notification-dropdown')
+      ) {
+        setIsNotificationPanelOpen(false);
+      }
+    };
 
-    fetchNotifications();
-    
-    // Set up polling for new notifications (every 30 seconds)
-    const intervalId = setInterval(fetchNotifications, 30000);
-    
-    return () => clearInterval(intervalId);
-  }, [fetchNotifications, user?._id]);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [isNotificationPanelOpen]);
 
   return (
     <div className="flex min-h-screen relative" dir={isRTL ? "rtl" : "ltr"}>
@@ -243,26 +303,117 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
               "flex items-center gap-3",
               isRTL && "order-1"
             )}>
-              {/* Notification Icon */}
+              {/* Notification Icon with Dropdown */}
               <div className="relative">
-                <button
-                  ref={notificationButtonRef}
-                  onClick={handleNotificationClick}
-                  className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                >
-                  <Bell className="h-5 w-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-5 w-5 rounded-full bg-red-500 flex items-center justify-center text-white text-xs font-bold">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
-                </button>
-                
-                {/* Notification Panel */}
-                <NotificationPanel
-                  isOpen={isNotificationPanelOpen}
-                  onClose={() => setIsNotificationPanelOpen(false)}
-                />
+                <DropdownMenu open={isNotificationPanelOpen} onOpenChange={setIsNotificationPanelOpen}>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      ref={notificationButtonRef}
+                      variant="ghost"
+                      size="icon"
+                      className="relative"
+                    >
+                      <BellRing className="h-5 w-5" />
+                      {unreadCount > 0 && (
+                        <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </Badge>
+                      )}
+                      <span className="sr-only">Notifications</span>
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent 
+                    className="w-80 notification-dropdown bg-background border-border shadow-lg max-h-[400px] overflow-hidden" 
+                    align="end" 
+                    forceMount
+                  >
+                    <DropdownMenuLabel className="flex items-center justify-between bg-secondary/50 px-4 py-3">
+                      {String(t("notifications") || "Notifications")}
+                      {unreadCount > 0 && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleMarkAllAsRead}
+                          className="h-auto p-0 text-xs"
+                        >
+                          {String(t("markAllAsRead") || "Mark all as read")}
+                        </Button>
+                      )}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {isLoading ? (
+                        <div className="p-4 text-center">
+                          <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent mx-auto"></div>
+                        </div>
+                      ) : notifications.length > 0 ? (
+                        notifications.map((notification) => (
+                          <DropdownMenuItem
+                            key={notification._id}
+                            className={`flex flex-col items-start p-4 cursor-pointer notification-dropdown-item ${!notification.read ? 'bg-blue-50 dark:bg-blue-950/20' : ''}`}
+                            onClick={() => {
+                              if (!notification.read) {
+                                handleMarkAsRead(notification._id);
+                              }
+                            }}
+                          >
+                            <div className="flex w-full items-start justify-between">
+                              <div className="flex items-start gap-2">
+                                {getNotificationIcon(notification.type)}
+                                <div className="flex-1">
+                                  <h4 className="font-medium text-sm">{notification.title}</h4>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {notification.message}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {new Date(notification.createdAt).toLocaleString()}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleDeleteNotification(notification._id);
+                                }}
+                                className="h-auto p-0 text-red-500 hover:text-red-700"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </DropdownMenuItem>
+                        ))
+                      ) : (
+                        <div className="p-4 text-center text-muted-foreground">
+                          {String(t("noNotifications") || "No notifications")}
+                        </div>
+                      )}
+                    </div>
+                    {notifications.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {hasMore ? (
+                          <DropdownMenuItem className="cursor-pointer justify-center" onClick={handleLoadMore}>
+                            <Button variant="ghost" size="sm" className="w-full">
+                              <ChevronDown className="h-4 w-4 mr-2" />
+                              {String(t("loadMore") || "Load More")}
+                            </Button>
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem className="cursor-pointer justify-center" asChild>
+                            <a href="/admin/notifications" className="flex items-center justify-center w-full">
+                              <Button variant="ghost" size="sm" className="w-full">
+                                {String(t("viewAllNotifications") || "View all notifications")}
+                                <ExternalLink className="h-4 w-4 ml-2" />
+                              </Button>
+                            </a>
+                          </DropdownMenuItem>
+                        )}
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
               
               <LanguageSwitcher />

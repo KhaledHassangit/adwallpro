@@ -21,19 +21,12 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Breadcrumb } from "@/components/common/breadcrumb";
-import { useGetCompaniesQuery, useGetCategoryQuery } from "@/features/companiesApi";
-
-const cleanImageUrl = (imageUrl?: string): string => {
-  if (!imageUrl) return "";
-  return imageUrl.replace(
-    /^https:\/\/adwallpro\.com\/brands\/https:\/\/adwallpro\.com\/brands\//,
-    "https://adwallpro.com/brands/"
-  );
-};
+import { useGetCompaniesQuery, useGetCategoryQuery, useTrackCompanyViewMutation } from "@/features/companiesApi";
 
 // View tracking hook
 export const useViewTracker = () => {
   const [trackedViews, setTrackedViews] = useState<Set<string>>(new Set());
+  const [trackCompanyView] = useTrackCompanyViewMutation();
 
   const trackView = useCallback(async (companyId: string, type: 'click' | 'hover' = 'click') => {
     // Create a unique key for this company and tracking type
@@ -45,17 +38,10 @@ export const useViewTracker = () => {
     }
 
     try {
-      // Use fetch with keepalive for more reliable tracking
-      const response = await fetch(`http://72.60.178.180:8000/api/v1/company/${companyId}/view`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ type }),
-        keepalive: true // Helps ensure the request completes even if the page is unloading
-      });
-
-      if (response.ok) {
+      // Use the RTK Query mutation to track the view
+      const result = await trackCompanyView({ companyId, type }).unwrap();
+      
+      if (result) {
         // Mark as tracked in this session
         sessionStorage.setItem(key, 'true');
         setTrackedViews(prev => new Set(prev).add(key));
@@ -67,16 +53,18 @@ export const useViewTracker = () => {
       console.error('Error tracking view:', error);
       return false;
     }
-  }, []);
+  }, [trackCompanyView]);
 
   return { trackView, trackedViews };
 };
 
-// مكون كارت الشركة - نفس تصميم كارتات الفئات
+// Company Card Component
 function CompanyCard({ company }: { company: any }) {
   const { t } = useI18n();
   const { trackView } = useViewTracker();
   const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   // Handle card hover
   const handleCardHover = () => {
@@ -93,7 +81,7 @@ function CompanyCard({ company }: { company: any }) {
 
   // Handle card leave
   const handleCardLeave = () => {
-    // Clear the hover timer if user leaves before 1 second
+    // Clear hover timer if user leaves before 1 second
     if (hoverTimer) {
       clearTimeout(hoverTimer);
       setHoverTimer(null);
@@ -108,8 +96,36 @@ function CompanyCard({ company }: { company: any }) {
   // Handle contact link click
   const handleContactClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     trackView(company._id, 'click');
-    // Allow the default behavior (navigation) to continue
+    // Allow default behavior (navigation) to continue
   };
+
+  // Function to get the correct image URL
+  const getImageUrl = useCallback(() => {
+    // Try multiple possible image properties
+    const imageUrl = company.imageUrl || company.logo || company.image;
+    
+    if (!imageUrl) return null;
+    
+    // If it's already a full URL, return as is
+    if (imageUrl.startsWith("http")) return imageUrl;
+    
+    // Otherwise, prepend the base URL
+    return `https://www.adwallpro.com/uploads/categories/${imageUrl}`;
+  }, []);
+
+  const imageUrl = getImageUrl();
+
+  // Handle image load
+  const handleImageLoad = useCallback(() => {
+    setImageLoaded(true);
+    setImageError(false);
+  }, []);
+
+  // Handle image error
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+    setImageLoaded(false);
+  }, []);
 
   return (
     <Card 
@@ -117,35 +133,31 @@ function CompanyCard({ company }: { company: any }) {
       onMouseEnter={handleCardHover}
       onMouseLeave={handleCardLeave}
     >
-      {/* شريط ملون في الأعلى */}
+      {/* Color bar at the top */}
       <div className="h-[3px] w-full bg-gradient-to-r from-primary to-primary/80" />
 
       <CardContent className="p-0">
-        <div className="relative aspect-[4/3] w-full overflow-hidden">
-          {/* صورة الشركة أو placeholder */}
-          {company.logo ? (
+        <div className="company-image-container">
+          {/* Company logo or placeholder */}
+          {company?.imageUrl && !imageError ? (
             <div className="relative w-full h-full overflow-hidden">
               <Image
-                src={cleanImageUrl(company.logo)}
-                alt={company.companyName || "صورة الشركة"}
+                src={company.imageUrl}
+                alt={company.companyName || "Company Image"}
                 fill
-                className="object-cover group-hover:scale-105 transition-transform duration-500"
-                onError={(e) => {
-                  // في حالة فشل تحميل الصورة، اعرض placeholder
-                  const target = e.target as HTMLImageElement;
-                  target.style.display = "none";
-                  const placeholder = target.parentElement
-                    ?.nextElementSibling as HTMLElement;
-                  if (placeholder) placeholder.style.display = "flex";
-                }}
+                className="company-image"
+                onLoad={handleImageLoad}
+                onError={handleImageError}
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                priority={false}
               />
             </div>
           ) : null}
 
-          {/* Placeholder - يظهر إذا لم تكن هناك صورة أو فشل تحميلها */}
+          {/* Placeholder - shown if no image or if image fails to load */}
           <div
-            className={`w-full h-full bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center ${
-              company.logo ? "hidden" : "flex"
+            className={`image-placeholder ${
+              imageUrl && !imageError ? "hidden" : "flex"
             }`}
           >
             <div className="text-6xl opacity-20">🏢</div>
@@ -153,14 +165,14 @@ function CompanyCard({ company }: { company: any }) {
 
           <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-black/5 to-transparent" />
 
-          {/* معلومات الشركة في الأسفل */}
+          {/* Company info at the bottom */}
           <div className="absolute bottom-3 inset-x-3 flex items-center justify-between rounded-lg bg-white/70 px-3 py-2 text-foreground shadow-sm backdrop-blur-sm">
             <Link
               href={`/companies/${company._id}`}
               className="font-semibold truncate hover:text-primary transition-colors cursor-pointer"
               onClick={handleCardClick}
             >
-              {company.companyName || "شركة غير محددة"}
+              {company.companyName || "Unnamed Company"}
             </Link>
             <div className="flex items-center gap-2">
               {company.status === "approved" && (
@@ -176,16 +188,16 @@ function CompanyCard({ company }: { company: any }) {
           </div>
         </div>
 
-        {/* معلومات إضافية */}
+        {/* Additional information */}
         <div className="p-4 space-y-3">
-          {/* الوصف */}
+          {/* Description */}
           {company.description && (
             <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
               {company.description}
             </p>
           )}
 
-          {/* معلومات الاتصال */}
+          {/* Contact information */}
           <div className="flex flex-wrap gap-2">
             {company.whatsapp && (
               <a
@@ -265,17 +277,36 @@ export default function CompaniesCategoryPage() {
   const { data: category, isLoading: categoryLoading, error: categoryError } = useGetCategoryQuery(id || "");
   
   // Create params for companies query
-  const companiesParams = {
+  const companiesParams = useMemo(() => ({
     categoryId: id || "",
     search: searchQuery,
     country: countryFilter,
     city: cityFilter,
-  };
+    page: 1,
+    limit: 20,
+  }), [id, searchQuery, countryFilter, cityFilter]);
   
   const { data: companiesResponse, isLoading: companiesLoading, error: companiesError } = useGetCompaniesQuery(companiesParams);
   
-  // Extract companies from the response
-  const companies = companiesResponse?.data?.data || [];
+  // Extract companies from response
+  const companies = useMemo(() => {
+    if (!companiesResponse) return [];
+    
+    // Try multiple possible paths to extract the companies array
+    const possiblePaths = [
+      companiesResponse?.data?.data,
+      companiesResponse?.data,
+      companiesResponse?.data?.companies,
+      companiesResponse?.companies,
+      companiesResponse
+    ];
+    
+    for (const path of possiblePaths) {
+      if (Array.isArray(path)) return path;
+    }
+    
+    return [];
+  }, [companiesResponse]);
   
   const isLoading = categoryLoading || companiesLoading;
   const error = categoryError || companiesError;
@@ -284,9 +315,9 @@ export default function CompaniesCategoryPage() {
     ? locale === "ar"
       ? category.nameAr
       : category.nameEn
-    : "فئة غير محددة";
+    : "Category not found";
 
-  // عرض حالة التحميل
+  // Loading state
   if (isLoading) {
     return (
       <div className="container-premium py-8 pt-24">
@@ -300,7 +331,7 @@ export default function CompaniesCategoryPage() {
     );
   }
 
-  // عرض حالة الخطأ
+  // Error state
   if (error) {
     return (
       <div className="container-premium py-8 pt-24">
@@ -310,7 +341,7 @@ export default function CompaniesCategoryPage() {
           </div>
           <h2 className="text-xl font-semibold">{t("loadingError")}</h2>
           <p className="text-muted-foreground">
-            {error instanceof Error ? error.message : "فشل في جلب البيانات"}
+            {error instanceof Error ? error.message : "Failed to fetch data"}
           </p>
           <Button
             onClick={() => window.location.reload()}
@@ -344,7 +375,7 @@ export default function CompaniesCategoryPage() {
           {locale === "ar"
             ? `اكتشف أفضل الشركات في ${catName}`
             : `Discover the best companies in ${catName}`}
-        </p>
+          </p>
         <div className="flex items-center gap-4 mt-4">
           <span className="text-sm text-muted-foreground">
             {companies.length} {t("companiesAvailable")}
@@ -356,11 +387,11 @@ export default function CompaniesCategoryPage() {
         </div>
       </div>
 
-      {/* شريط البحث */}
+      {/* Search bar */}
       <Card className="ultra-card border-0 mb-8">
         <CardContent className="pt-6">
           <div className="flex flex-col md:flex-row gap-4">
-            {/* البحث العام */}
+            {/* General search */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
@@ -371,7 +402,7 @@ export default function CompaniesCategoryPage() {
               />
             </div>
 
-            {/* فلتر الدولة */}
+            {/* Country filter */}
             <div className="w-full md:w-48">
               <Input
                 placeholder={t("searchByCountry")}
@@ -380,7 +411,7 @@ export default function CompaniesCategoryPage() {
               />
             </div>
 
-            {/* فلتر المدينة */}
+            {/* City filter */}
             <div className="w-full md:w-48">
               <Input
                 placeholder={t("searchByCity")}
@@ -389,7 +420,7 @@ export default function CompaniesCategoryPage() {
               />
             </div>
 
-            {/* زر مسح الفلاتر */}
+            {/* Clear filters button */}
             {(searchQuery || countryFilter || cityFilter) && (
               <Button
                 variant="outline"
@@ -410,7 +441,7 @@ export default function CompaniesCategoryPage() {
       <div className="w-full">
         {companies.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
-            {/* أيقونة فارغة */}
+            {/* Empty icon */}
             <div className="relative mb-8">
               <div className="w-24 h-24 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
                 <div className="text-4xl opacity-40">🏢</div>
@@ -420,7 +451,7 @@ export default function CompaniesCategoryPage() {
               </div>
             </div>
 
-            {/* العنوان والوصف */}
+            {/* Title and description */}
             <div className="text-center space-y-3 mb-8">
               <h3 className="text-xl font-semibold text-foreground">
                 {companies.length === 0
@@ -445,7 +476,7 @@ export default function CompaniesCategoryPage() {
               )}
             </div>
 
-            {/* الأزرار */}
+            {/* Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
               {companies.length === 0 ? (
                 <>

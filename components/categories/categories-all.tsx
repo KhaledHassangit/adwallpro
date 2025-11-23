@@ -26,10 +26,27 @@ export function CategoriesAll() {
   const [showFilters, setShowFilters] = useState(false);
 
   // Use RTK Query hook to fetch categories
-  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery();
+  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery({ page: 1, limit: 100 });
   
-  // Extract categories from the response
-  const categories = categoriesResponse?.data?.data || [];
+  // Extract categories from response with proper fallbacks
+  const categories = useMemo(() => {
+    if (!categoriesResponse) return [];
+    
+    // Try multiple possible paths to extract the categories array
+    const possiblePaths = [
+      categoriesResponse?.data?.data,
+      categoriesResponse?.data,
+      categoriesResponse?.data?.categories,
+      categoriesResponse?.categories,
+      categoriesResponse
+    ];
+    
+    for (const path of possiblePaths) {
+      if (Array.isArray(path)) return path;
+    }
+    
+    return [];
+  }, [categoriesResponse]);
 
   const filteredCategories = useMemo(() => {
     if (!searchQuery) return categories;
@@ -40,12 +57,12 @@ export function CategoriesAll() {
     });
   }, [categories, searchQuery, locale]);
 
-  // Add this function to handle clearing the search
+  // Add this function to handle clearing search
   const handleClearSearch = () => {
     setSearchQuery("");
   };
 
-  // Function to get the full image URL
+  // Function to get full image URL
   const getImageUrl = (imagePath: string) => {
     if (!imagePath) return "/placeholder.svg";
     // If it's already a full URL, return as is
@@ -135,7 +152,7 @@ export function CategoriesAll() {
             {categories.slice(0, 8).map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
               return (
-                <Link key={cat.slug} href={`/companies/category/${cat._id}`}>
+                <Link key={cat._id} href={`/companies/category/${cat._id}`}>
                   <Button
                     variant="outline"
                     size="sm"
@@ -168,7 +185,7 @@ export function CategoriesAll() {
 
               return (
                 <Link
-                  key={cat.slug}
+                  key={cat._id}
                   href={`/companies/category/${cat._id}`}
                   className="block"
                 >
@@ -234,7 +251,7 @@ export function CategoriesAll() {
 
               return (
                 <Link
-                  key={cat.slug}
+                  key={cat._id}
                   href={`/companies/category/${cat._id}`}
                   className="block"
                 >

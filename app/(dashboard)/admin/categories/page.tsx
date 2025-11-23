@@ -54,7 +54,6 @@ import {
   useCreateCategoryMutation,
   useUpdateCategoryMutation,
   useDeleteCategoryMutation,
-  type Category,
 } from "@/features/categoriesApi";
 
 // ==================== Main Content Component ====================
@@ -306,7 +305,7 @@ function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
                     <TableCell className="text-center">
                       {category.image ? (
                         <img
-                          src={category.image}
+                          src={category.imageUrl}
                           alt={lang === "ar" ? category.nameAr : category.nameEn}
                           className="w-12 h-12 rounded-lg object-cover mx-auto"
                           onError={(e) => { (e.target as HTMLImageElement).src = ""; }}
@@ -453,8 +452,23 @@ function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCategoryD
     formDataToSend.append("descriptionEn", formData.descriptionEn);
     formDataToSend.append("color", formData.color);
 
-    if (formData.image && formData.image instanceof File) {
-      formDataToSend.append("image", formData.image);
+    // Handle image properly
+    if (formData.image) {
+      if (formData.image instanceof File) {
+        // Direct file upload
+        formDataToSend.append("image", formData.image);
+      } else if (typeof formData.image === 'string' && formData.image.startsWith("data:")) {
+        // Convert data URL to blob
+        try {
+          const response = await fetch(formData.image);
+          const blob = await response.blob();
+          formDataToSend.append("image", blob, "category-image.jpg");
+        } catch (error) {
+          console.error("Error converting data URL to blob:", error);
+          notifications.error(String(t("adminImageProcessingError") || "Error processing image"));
+          return;
+        }
+      }
     }
 
     try {
@@ -555,7 +569,12 @@ function CreateCategoryDialog({ open, onOpenChange, onSuccess }: CreateCategoryD
                 </div>
                 {formData.image && (
                   <p className="text-sm text-muted-foreground mt-2">
-                    {String(t("adminNewImageSelected") || "New image selected")}
+                    {formData.image instanceof File ?
+                      String(t("adminNewImageSelected") || "New image selected") :
+                      typeof formData.image === 'string' && formData.image.startsWith("data:") ?
+                      String(t("adminNewImageSelected") || "New image selected") :
+                      String(t("adminCurrentImage") || "Current image")
+                    }
                   </p>
                 )}
               </div>
@@ -638,18 +657,25 @@ function EditCategoryDialog({ open, onOpenChange, category, onSuccess }: EditCat
     formDataToSend.append("descriptionEn", formData.descriptionEn);
     formDataToSend.append("color", formData.color);
 
+    // Handle image properly
     if (formData.image) {
       if (formData.image instanceof File) {
+        // Direct file upload
         formDataToSend.append("image", formData.image);
-      } else if (typeof formData.image === "string") {
-        if (formData.image.startsWith("data:")) {
+      } else if (typeof formData.image === 'string' && formData.image.startsWith("data:")) {
+        // Convert data URL to blob
+        try {
           const response = await fetch(formData.image);
           const blob = await response.blob();
           formDataToSend.append("image", blob, "category-image.jpg");
-        } else {
-          formDataToSend.append("imageUrl", formData.image);
+        } catch (error) {
+          console.error("Error converting data URL to blob:", error);
+          notifications.error(String(t("adminImageProcessingError") || "Error processing image"));
+          return;
         }
       }
+      // Note: If formData.image is a string URL (not data URL), we don't append it
+      // as the backend already has this image
     }
 
     try {

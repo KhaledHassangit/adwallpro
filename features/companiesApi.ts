@@ -1,3 +1,5 @@
+// @/features/companiesApi.js
+
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
 import { CompaniesResponse, GetCompaniesParams } from '@/types/types';
@@ -10,8 +12,10 @@ export const companiesApi = createApi({
     // Get Companies with filters and pagination
     getCompanies: builder.query<CompaniesResponse, GetCompaniesParams>({
       query: (params) => {
-        // Simplified URL building. Assumes the API can handle combined query params.
+        // Build the appropriate URL based on the parameters
         let url = '/companies';
+        
+        // If we have a categoryId, use the category-specific endpoint
         if (params.categoryId && params.categoryId !== "all") {
           url = `/companies/category/${params.categoryId}`;
         } else if (params.search) {
@@ -23,11 +27,19 @@ export const companiesApi = createApi({
         return {
           url,
           method: 'GET',
-          params, // Pass all filters as query parameters
+          params: {
+            // Include pagination parameters
+            page: params.page || 1,
+            limit: params.limit || 10,
+            // Include filter parameters
+            ...(params.search && { search: params.search }),
+            ...(params.country && { country: params.country }),
+            ...(params.city && { city: params.city }),
+          },
           withToken: true,
         };
       },
-      providesTags: ['Company'], // Provides the 'Company' tag
+      providesTags: ['Company'], // Provides 'Company' tag
     }),
 
     // Get a single category
@@ -40,6 +52,16 @@ export const companiesApi = createApi({
       providesTags: ['Category'],
     }),
 
+    // Track company view
+    trackCompanyView: builder.mutation<any, { companyId: string; type: 'click' | 'hover' }>({
+      query: ({ companyId, type }) => ({
+        url: `/company/${companyId}/view`,
+        method: 'POST',
+        data: { type },
+        withToken: false, // No token required for view tracking
+      }),
+    }),
+
     // Approve a company
     approveCompany: builder.mutation<void, string>({
       query: (companyId) => ({
@@ -47,25 +69,26 @@ export const companiesApi = createApi({
         method: 'PATCH',
         withToken: true,
       }),
-      invalidatesTags: ['Company'], // Invalidate the 'Company' tag to refetch the list
+      invalidatesTags: ['Company'], // Invalidate 'Company' tag to refetch list
     }),
 
     // Delete a company
     deleteCompany: builder.mutation<void, string>({
       query: (companyId) => ({
-        url: `/company/${companyId}`, // Note: your original URL was `/company/` (singular)
+        url: `/companies/${companyId}`, // Fixed: use plural 'companies' not singular 'company'
         method: 'DELETE',
         withToken: true,
       }),
-      invalidatesTags: ['Company'], // Invalidate the 'Company' tag to refetch the list
+      invalidatesTags: ['Company'], // Invalidate 'Company' tag to refetch list
     }),
   }),
 });
 
-// Export the auto-generated hooks for use in components
+// Export auto-generated hooks for use in components
 export const {
   useGetCompaniesQuery,
   useGetCategoryQuery,
+  useTrackCompanyViewMutation,
   useApproveCompanyMutation,
   useDeleteCompanyMutation,
 } = companiesApi;

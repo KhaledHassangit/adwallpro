@@ -110,7 +110,7 @@ function AdminUsersContent() {
                 <div className="text-2xl font-bold">
                   {statsLoading
                     ? "..."
-                    : userStats?.totalUsers?.toLocaleString() || "0"}
+                    : userStats?.data?.data?.totalUsers?.toLocaleString() || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {String(t("adminRegisteredUser") || "Registered Users")}
@@ -127,7 +127,7 @@ function AdminUsersContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-yellow-600">
-                  {statsLoading ? "..." : userStats?.adminsCount || "0"}
+                  {statsLoading ? "..." : userStats?.data?.data?.adminsCount || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {String(t("adminAdminAccounts") || "Admin Accounts")}
@@ -146,7 +146,7 @@ function AdminUsersContent() {
                 <div className="text-2xl font-bold text-blue-600">
                   {statsLoading
                     ? "..."
-                    : userStats?.regularUsersCount?.toLocaleString() || "0"}
+                    : userStats?.data?.data?.regularUsersCount?.toLocaleString() || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {String(t("adminForAdsUsers") || "Ad Users")}
@@ -163,7 +163,7 @@ function AdminUsersContent() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">
-                  {statsLoading ? "..." : userStats?.activeThisWeek || "0"}
+                  {statsLoading ? "..." : userStats?.data?.data?.activeThisWeek || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
                   {String(
@@ -393,8 +393,8 @@ function AdminUsersTable() {
   }
 
   // Extract users and pagination from the response
-  const users = usersData?.data?.users || [];
-  const totalPages = usersData?.paginationResult?.numberOfPages || 1;
+  const users = usersData?.data?.data?.users || [];
+  const totalPages = usersData?.data?.paginationResult?.numberOfPages || 1;
 
   return (
     <>

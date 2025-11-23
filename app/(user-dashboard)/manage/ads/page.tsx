@@ -23,7 +23,7 @@ import {
   Save,
 } from "lucide-react";
 import Link from "next/link";
-import { getAuthCookie } from "@/lib/auth";
+import { getAuthCookie, getCurrentUser } from "@/lib/auth";
 import { useNotifications } from "@/hooks/notifications";
 import {
   Dialog,
@@ -56,6 +56,7 @@ export default function UserAdsPage() {
   // Pagination state
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const limit = 10; // Define limit for pagination calculation
 
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -91,31 +92,38 @@ export default function UserAdsPage() {
     fetchCompanies();
   }, [page]); // Refetch when page changes
 
- // Fix the fetchCategories function to correctly extract the data
-const fetchCategories = async () => {
-  try {
-    const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
-    if (response.ok) {
-      const data = await response.json();
-      // Fix: Correctly extract categories from the response
-      // The API might be returning data in a different structure than expected
-      const categoriesData = data?.data?.data || data?.data || [];
-      console.log("Fetched categories:", categoriesData); // Add this for debugging
-      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+  const fetchCategories = async () => {
+    try {
+      const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
+      if (response.ok) {
+        const data = await response.json();
+        // Fix: Correctly extract categories from the response
+        const categoriesData = data?.data?.data || data?.data || [];
+        console.log("Fetched categories:", categoriesData);
+        setCategories(Array.isArray(categoriesData) ? categoriesData : []);
+      }
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      setCategories([]); // Ensure categories is always an array
     }
-  } catch (error) {
-    console.error("Error fetching categories:", error);
-    setCategories([]); // Ensure categories is always an array
-  }
-};
+  };
+
   const fetchCompanies = async () => {
     try {
       setLoading(true);
       const token = getAuthCookie();
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser) {
+        console.error("No user found");
+        notifications.error(t("errorFetchingAds"));
+        setLoading(false);
+        return;
+      }
 
-      // Add pagination parameters
+      // Add pagination parameters and use the correct endpoint with user ID
       const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/companies/my-companies?page=${page}&limit=10`,
+        `http://72.60.178.180:8000/api/v1/companies/user/${currentUser._id}?page=${page}&limit=${limit}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -125,20 +133,30 @@ const fetchCategories = async () => {
 
       if (response.ok) {
         const data = await response.json();
-        setCompanies(data.data || []);
-        // Update total pages if available in response
-        if (data.paginationResult && data.paginationResult.numberOfPages) {
-          setTotalPages(data.paginationResult.numberOfPages);
-        } else if (data.totalPages) {
-          setTotalPages(data.totalPages);
+        
+        // FIX 1: Correctly access the nested array of companies
+        const companiesData = data?.data?.data || [];
+        setCompanies(companiesData);
+
+        // FIX 2: Correctly calculate total pages from the results count
+        const totalResults = data?.data?.results || 0;
+        if (totalResults > 0) {
+          setTotalPages(Math.ceil(totalResults / limit));
+        } else {
+          setTotalPages(1); // Default to 1 page if no results
         }
       } else {
-        // Handle error
         console.error("Failed to fetch companies");
+        // Set empty array on failure to prevent errors
+        setCompanies([]);
+        setTotalPages(1);
       }
     } catch (error) {
       console.error("Error fetching companies:", error);
       notifications.error(t("errorFetchingAds"));
+      // Set empty array on error to prevent errors
+      setCompanies([]);
+      setTotalPages(1);
     } finally {
       setLoading(false);
     }
@@ -200,7 +218,6 @@ const fetchCategories = async () => {
         notifications.success(t("adDeletedSuccessfully"));
         setDeleteModalOpen(false);
         setCompanyToDelete(null);
-        // Refresh list to keep pagination consistent
         fetchCompanies();
       } else {
         const errorData = await response.json().catch(() => ({}));
@@ -224,30 +241,18 @@ const fetchCategories = async () => {
     setCompanyToDelete(null);
   };
 
-  // Helper function to convert logo data to a usable image URL
   const getLogoImageUrl = (logo: any) => {
     if (!logo) return "";
 
-    // If logo is already a string URL, return it
     if (typeof logo === 'string') return logo;
-
-    // If logo is a base64 string
     if (typeof logo === 'string' && logo.startsWith('/9j/')) {
       return `data:image/jpeg;base64,${logo}`;
     }
-
-    // If logo has a data property with type and data
     if (logo.data && Array.isArray(logo.data)) {
-      // Convert the array of numbers to a Uint8Array
       const uint8Array = new Uint8Array(logo.data);
-
-      // Create a Blob from the Uint8Array
       const blob = new Blob([uint8Array], { type: 'image/jpeg' });
-
-      // Create a URL for the Blob
       return URL.createObjectURL(blob);
     }
-
     return "";
   };
 
@@ -255,10 +260,7 @@ const fetchCategories = async () => {
     console.log("Opening edit modal for company:", company);
     setCompanyToEdit(company);
 
-    // Extract category ID properly
     const categoryId = typeof company.categoryId === 'object' && company.categoryId ? (company.categoryId as any)._id : company.categoryId || "";
-
-    // Handle image - check for both image and logo properties
     const companyImage = company.image || getLogoImageUrl(company.logo);
 
     setEditForm({
@@ -304,19 +306,41 @@ const fetchCategories = async () => {
 
     try {
       setSaving(true);
+      const formData = new FormData();
+      
+      formData.append("companyName", editForm.companyName);
+      formData.append("description", editForm.description);
+      formData.append("categoryId", editForm.categoryId);
+      formData.append("city", editForm.city);
+      formData.append("country", editForm.country);
+      formData.append("website", editForm.website);
+      formData.append("whatsapp", editForm.whatsapp);
+      formData.append("facebook", editForm.facebook);
 
-      // Create a copy of form data
-      const formData = { ...editForm };
+      if (editForm.image) {
+        if (editForm.image instanceof File) {
+          formData.append("image", editForm.image);
+        } else if (typeof editForm.image === 'string' && editForm.image.startsWith("data:")) {
+          try {
+            const response = await fetch(editForm.image);
+            const blob = await response.blob();
+            formData.append("image", blob, "company-image.jpg");
+          } catch (error) {
+            console.error("Error converting data URL to blob:", error);
+            notifications.error(t("errorProcessingImage"));
+            return;
+          }
+        }
+      }
 
       const response = await fetch(
         `http://72.60.178.180:8000/api/v1/companies/${companyToEdit._id}`,
         {
           method: "PUT",
           headers: {
-            "Content-Type": "application/json",
             Authorization: `Bearer ${getAuthCookie()}`,
           },
-          body: JSON.stringify(formData),
+          body: formData,
         }
       );
 
@@ -333,7 +357,7 @@ const fetchCategories = async () => {
         );
         notifications.success(t("adUpdatedSuccessfully"));
         closeEditModal();
-        fetchCompanies(); // Refresh to ensure data consistency
+        fetchCompanies();
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || t("failedToUpdateAd");
@@ -349,7 +373,6 @@ const fetchCategories = async () => {
 
   const handleInputChange = (field: string, value: string) => {
     setEditForm((prev) => ({ ...prev, [field]: value }));
-    // Clear error for this field when user starts typing
     if (formErrors[field]) {
       setFormErrors((prev) => ({ ...prev, [field]: "" }));
     }
@@ -358,13 +381,10 @@ const fetchCategories = async () => {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check file size (limit to 5MB)
       if (file.size > 5 * 1024 * 1024) {
         notifications.error(t("imageSizeLimit"));
         return;
       }
-
-      // Check file type
       if (!file.type.startsWith('image/')) {
         notifications.error(t("invalidImageType"));
         return;
@@ -395,27 +415,20 @@ const fetchCategories = async () => {
     }
   };
 
-  // Helper function to get category name based on language
   const getCategoryName = (category: any) => {
     if (!category) return t("unknown");
-
-    // If category is already an object with nameAr and nameEn
     if (category.nameAr && category.nameEn) {
       return lang === "ar" ? category.nameAr : category.nameEn;
     }
-
-    // If category is just an ID string, try to find it in the categories list
     if (typeof category === 'string') {
       const foundCategory = categories.find((c) => c._id === category);
       if (foundCategory) {
         return lang === "ar" ? foundCategory.nameAr : foundCategory.nameEn;
       }
     }
-
     return t("unknown");
   };
 
-  // Helper function to get company name based on language
   const getCompanyName = (company: Company) => {
     if (lang === "ar" && company.companyName) {
       return company.companyName;
@@ -425,7 +438,6 @@ const fetchCategories = async () => {
     return company.companyName || t("undefined");
   };
 
-  // Helper function to get company description based on language
   const getCompanyDescription = (company: Company) => {
     if (lang === "ar" && company.description) {
       return company.description;
@@ -435,7 +447,8 @@ const fetchCategories = async () => {
     return company.description || t("noDescription");
   };
 
-  const filteredCompanies = companies.filter((company) => {
+  // Add a safety check for filteredCompanies
+  const filteredCompanies = (companies || []).filter((company) => {
     const matchesSearch =
       company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       company.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -856,7 +869,7 @@ const fetchCategories = async () => {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="Whatsapp">
+                  <Label htmlFor="whatsapp">
                     <Phone className="h-4 w-4 inline mr-1" />
                     {t("whatsappLabel")}
                   </Label>
