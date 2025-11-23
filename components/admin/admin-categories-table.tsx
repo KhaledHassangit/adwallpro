@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -10,265 +9,147 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Edit, Trash2 } from "@/components/ui/icon";
 import { useI18n } from "@/providers/LanguageProvider";
-import { Edit, Trash2, Tags } from "@/components/ui/icon";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { LoadingSpinner } from "@/components/common/loading-spinner";
-import { EditCategoryDialog } from "@/components/admin/edit-category-dialog";
-import { useNotifications } from "@/hooks/notifications";
-import { getAuthHeaders } from "@/lib/auth";
+import { useGetCouponsQuery, type Coupon } from "@/features/couponsApi";
+import { PaginationControl } from "@/components/ui/pagination-control";
+import { cn } from "@/lib/utils";
 
-interface Category {
-  _id: string;
-  nameAr: string;
-  nameEn: string;
-  descriptionAr: string;
-  descriptionEn: string;
-  color: string;
-  image?: string;
-  createdAt: string;
+interface AdminCouponsTableProps {
+  onEdit: (coupon: Coupon) => void;
+  onDelete: (coupon: Coupon) => void;
 }
 
-interface AdminCategoriesTableProps {
-  onRefresh?: () => void;
+interface ApiError {
+  data?: {
+    message?: string;
+  };
 }
 
-export function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
-  const { t, lang } = useI18n();
-  const notifications = useNotifications();
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
-  const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) {
+  const { t } = useI18n();
+  const [page, setPage] = useState(1);
+  const limit = 10;
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
-        headers: getAuthHeaders(),
-      });
+  const { data: response, isLoading, isFetching, error } = useGetCouponsQuery({ page, limit });
 
-      if (!response.ok) {
-        if (response.status === 401) {
-          notifications.error(t("adminSessionExpired"));
-          window.location.href = "/login";
-          return;
-        }
-        const errorData = await response.json();
-        throw new Error(errorData.message || t("adminFailedToFetchCategories"));
-      }
+  const coupons = response?.data?.data || [];
+  const totalPages = response?.paginationResult?.numberOfPages || 1;
 
-      const data = await response.json();
-      setCategories(data?.data?.data || []);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      notifications.error(error instanceof Error ? error.message : t("adminFailedToFetchCategories"));
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64 opacity-50">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent" />
+      </div>
+    );
+  }
 
-  const deleteCategory = async () => {
-    if (!categoryToDelete) return;
-
-    try {
-      const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/categories/${categoryToDelete._id}`,
-        {
-          method: "DELETE",
-          headers: getAuthHeaders(),
-        }
-      );
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          notifications.error(t("adminSessionExpired"));
-          window.location.href = "/login";
-          return;
-        }
-        const errorData = await response.json();
-        throw new Error(errorData.message || t("adminFailedToDeleteCategory"));
-      }
-
-      notifications.success(t("adminCategoryDeletedSuccess"));
-      fetchCategories();
-      onRefresh?.();
-      setDeleteDialogOpen(false);
-      setCategoryToDelete(null);
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      notifications.error(error instanceof Error ? error.message : t("adminFailedToDeleteCategory"));
-    }
-  };
-
-  const handleEditCategory = (category: Category) => {
-    setSelectedCategory(category);
-    setEditDialogOpen(true);
-  };
-
-  const handleDeleteClick = (category: Category) => {
-    setCategoryToDelete(category);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleEditSuccess = () => {
-    fetchCategories();
-    onRefresh?.();
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setEditDialogOpen(open);
-    if (!open) {
-      // Clear selected category when dialog closes
-      setTimeout(() => setSelectedCategory(null), 300);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  if (loading) {
-    return <LoadingSpinner />;
+  if (error) {
+    const apiError = error as ApiError;
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-500">
+          {String(apiError?.data?.message || "Failed to fetch coupons")}
+        </p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          {String(t("adminTryAgain") || "Try Again")}
+        </Button>
+      </div>
+    );
   }
 
   return (
-    <>
-      <Card className="ultra-card border p-6">
-        <CardContent>
-          <Table>
-            <TableHeader>
+    <div className="ultra-card p-6">
+      <div className="rounded-md mb-4">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="text-center">{String(t("couponCode") || "Code")}</TableHead>
+              <TableHead className="text-center">{String(t("discountValue") || "Discount")}</TableHead>
+              <TableHead className="text-center">{String(t("discountType") || "Type")}</TableHead>
+              <TableHead className="text-center">{String(t("startDate") || "Start Date")}</TableHead>
+              <TableHead className="text-center">{String(t("expiryDate") || "Expiry Date")}</TableHead>
+              <TableHead className="text-center">{String(t("usageLimit") || "Usage Limit")}</TableHead>
+              <TableHead className="text-center">{String(t("usedCount") || "Used Count")}</TableHead>
+              <TableHead className="text-center">{String(t("status") || "Status")}</TableHead>
+              <TableHead className="text-center">{String(t("actions") || "Actions")}</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {coupons.length === 0 ? (
               <TableRow>
-                <TableHead className="text-center">{t("adminCategoryImage")}</TableHead>
-                <TableHead className="text-center">{t("adminCategoryNameAr")}</TableHead>
-                <TableHead className="text-center">{t("adminCategoryNameEn")}</TableHead>
-                <TableHead className="text-center">{t("adminCategoryColor")}</TableHead>
-                <TableHead className="text-center">{t("adminCategoryCreatedAt")}</TableHead>
-                <TableHead className="text-center">{t("adminActions")}</TableHead>
+                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
+                  {String(t("noCouponsFound") || "No coupons found")}
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {categories.map((category) => (
-                <TableRow key={category._id}>
+            ) : (
+              coupons.map((coupon) => (
+                <TableRow key={coupon._id}>
+                  <TableCell className="font-medium text-center">{coupon.couponCode}</TableCell>
                   <TableCell className="text-center">
-                    {category.image ? (
-                      <img
-                        src={category.image}
-                        alt={lang === "ar" ? category.nameAr : category.nameEn}
-                        className="w-12 h-12 rounded-lg object-cover mx-auto"
-                        onError={(e) => {
-                          console.error("Image failed to load:", category.image);
-                          e.currentTarget.src = "";
-                        }}
-                      />
-                    ) : (
-                      <div className="w-12 h-12 rounded-lg bg-gray-200 flex items-center justify-center mx-auto">
-                        <Tags className="h-6 w-6 text-gray-400" />
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="font-medium text-center">
-                    <div>
-                      <div>{category.nameAr}</div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[200px]" title={category.descriptionAr}>
-                        {category.descriptionAr}
-                      </div>
-                    </div>
+                    {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : `$${coupon.discountValue}`}
                   </TableCell>
                   <TableCell className="text-center">
-                    <div>
-                      <div>{category.nameEn}</div>
-                      <div className="text-xs text-muted-foreground truncate max-w-[200px]" title={category.descriptionEn}>
-                        {category.descriptionEn}
-                      </div>
-                    </div>
+                    <Badge variant="outline" className="mx-auto w-fit">
+                      {coupon.discountType === "percentage" ? String(t("percentage") || "Percentage") : String(t("fixedAmount") || "Fixed")}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-center">{coupon.startDate || String(t("notSet") || "Not Set")}</TableCell>
+                  <TableCell className="text-center">{coupon.expiryDate}</TableCell>
+                  <TableCell className="text-center">{coupon.maxUses || String(t("unlimited") || "Unlimited")}</TableCell>
+                  <TableCell className="text-center">{coupon.usedCount || 0}</TableCell>
+                  <TableCell className="text-center">
+                    <Badge
+                      className={cn(
+                        "mx-auto w-fit",
+                        coupon.isActive ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"
+                      )}
+                    >
+                      {coupon.isActive ? String(t("active") || "Active") : String(t("inactive") || "Inactive")}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-2">
-                      <div
-                        className="w-4 h-4 rounded-full border"
-                        style={{ backgroundColor: category.color }}
-                      />
-                      <span className="text-sm text-muted-foreground">
-                        {category.color}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    {new Date(category.createdAt).toLocaleDateString(
-                      lang === "ar" ? "ar-SA" : "en-US"
-                    )}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex justify-center gap-2">
                       <Button
-                        variant="ghost"
                         size="sm"
-                        onClick={() => handleEditCategory(category)}
-                        className="text-blue-500 hover:text-blue-700 hover:bg-blue-50"
+                        variant="outline"
+                        onClick={() => onEdit(coupon)}
+                        className="h-8 w-8 p-0 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50"
+                        disabled={isFetching}
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
                       <Button
-                        variant="ghost"
                         size="sm"
-                        onClick={() => handleDeleteClick(category)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                        variant="outline"
+                        onClick={() => onDelete(coupon)}
+                        className="h-8 w-8 p-0 rounded-full border-red-200 text-red-600 hover:bg-red-50"
+                        disabled={isFetching}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* Edit Category Dialog */}
-      <EditCategoryDialog
-        open={editDialogOpen}
-        onOpenChange={handleDialogClose}
-        category={selectedCategory}
-        onSuccess={handleEditSuccess}
+      {isFetching && (
+        <div className="flex justify-center items-center py-4">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        </div>
+      )}
+
+      <PaginationControl
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
       />
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t("adminDeleteCategoryTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {categoryToDelete ? 
-                `${t("adminDeleteCategoryConfirmation")} ${lang === "ar" ? categoryToDelete.nameAr : categoryToDelete.nameEn}?` : 
-                `${t("adminDeleteCategoryConfirmation")} ${t("adminThisCategory")}?`
-              }
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("adminCancel")}</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={deleteCategory}
-              className="bg-red-600 hover:bg-red-700"
-            >
-              {t("adminDelete")}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+    </div>
   );
 }

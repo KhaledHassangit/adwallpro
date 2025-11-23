@@ -1,6 +1,6 @@
 "use client";
 
-import { useState , useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
@@ -46,6 +46,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { useNotifications } from "@/hooks/notifications";
+import { PaginationControl } from "@/components/ui/pagination-control";
 // Import the new RTK Query hooks and types
 import {
   useGetCategoryStatsQuery,
@@ -212,13 +213,29 @@ function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<Category | null>(null);
+  
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const limit = 10;
 
-  // Use the RTK Query hook to fetch categories
-  const { data: response, isLoading, error } = useGetCategoriesQuery();
+  // Use the RTK Query hook to fetch categories with pagination
+  const { data: response, isLoading, error } = useGetCategoriesQuery({ page, limit });
   // Use the mutation hook to delete a category
   const [deleteCategory] = useDeleteCategoryMutation();
 
+  // Extract categories and pagination info from response
   const categories = response?.data?.data || [];
+  
+  // Update total pages when response changes
+  useEffect(() => {
+    if (response?.data?.paginationResult) {
+      setTotalPages(response.data.paginationResult.numberOfPages);
+    } else if (response?.results) {
+      // Fallback if paginationResult is missing but we have results count
+      setTotalPages(Math.ceil(response.results / limit));
+    }
+  }, [response]);
 
   const handleEditCategory = (category: Category) => {
     setSelectedCategory(category);
@@ -359,6 +376,13 @@ function AdminCategoriesTable({ onRefresh }: AdminCategoriesTableProps) {
               )}
             </TableBody>
           </Table>
+
+          {/* Pagination Control */}
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
@@ -48,9 +48,12 @@ import {
   useDeleteCouponMutation,
   type Coupon,
 } from "@/features/couponsApi";
+import { LoadingSpinner } from "@/components/common/loading-spinner";
+import { AdminCouponsTable } from "@/components/admin/AdminCouponsTable";
 
 // Type definitions
 type DiscountType = "percentage" | "fixed";
+
 interface ApiError {
   data?: {
     message?: string;
@@ -61,40 +64,29 @@ interface ApiError {
 function AdminCouponsContent() {
   const { t } = useI18n();
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [showEditDialog, setShowEditDialog] = useState(false);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  const [createCoupon] = useCreateCouponMutation();
-  const [updateCoupon] = useUpdateCouponMutation();
-  const [deleteCoupon] = useDeleteCouponMutation();
-
-  const handleEdit = (coupon: Coupon) => {
+  const handleEditCoupon = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    setShowEditDialog(true);
+    setEditDialogOpen(true);
   };
 
-  const handleDelete = (coupon: Coupon) => {
+  const handleDeleteCoupon = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
-    setShowDeleteDialog(true);
+    setDeleteDialogOpen(true);
   };
 
-  const handleCreateSuccess = () => {
-    setRefreshKey((prev) => prev + 1);
-    setShowCreateDialog(false);
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      setSelectedCoupon(null);
+    }
   };
 
-  const handleEditSuccess = () => {
+  const handleRefresh = () => {
     setRefreshKey((prev) => prev + 1);
-    setShowEditDialog(false);
-    setSelectedCoupon(null);
-  };
-
-  const handleDeleteSuccess = () => {
-    setRefreshKey((prev) => prev + 1);
-    setShowDeleteDialog(false);
-    setSelectedCoupon(null);
   };
 
   return (
@@ -106,177 +98,53 @@ function AdminCouponsContent() {
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-3xl font-bold gradient-text">
-                  {String(t("adminCoupons") || "Coupons Management")}
+                  {String(t("adminCouponsManagementTitle") || "Coupons Management")}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                  {String(t("adminCouponsDesc") || "Manage and create discount coupons.")}
+                  {String(t("adminCouponsManagementDesc") || "Manage and create discount coupons.")}
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => setShowCreateDialog(true)}
-                className="btn-ultra hover:bg-primary/90"
-              >
-                <PlusCircle className="h-4 w-4 mr-2" />
-                {String(t("adminCreateCoupon") || "Create Coupon")}
-              </Button>
-            </div>
+            <Button
+              onClick={() => setShowCreateDialog(true)}
+              className="btn-ultra hover:bg-primary/90"
+            >
+              <PlusCircle className="h-4 w-4 mr-2" />
+              {String(t("adminAddNewCoupon") || "Add New Coupon")}
+            </Button>
           </div>
 
           {/* Coupons Table */}
           <AdminCouponsTable
             key={refreshKey}
-            onEdit={handleEdit}
-            onDelete={handleDelete}
+            onEdit={handleEditCoupon}
+            onDelete={handleDeleteCoupon}
           />
 
           {/* Create Coupon Dialog */}
           <CreateCouponDialog
             open={showCreateDialog}
             onOpenChange={setShowCreateDialog}
-            onSuccess={handleCreateSuccess}
+            onSuccess={handleRefresh}
           />
 
           {/* Edit Coupon Dialog */}
           <EditCouponDialog
-            open={showEditDialog}
-            onOpenChange={setShowEditDialog}
+            open={editDialogOpen}
+            onOpenChange={handleDialogClose}
             coupon={selectedCoupon}
-            onSuccess={handleEditSuccess}
+            onSuccess={handleRefresh}
           />
 
-          {/* Delete Confirmation Dialog */}
+          {/* Delete Coupon Dialog */}
           <DeleteCouponDialog
-            open={showDeleteDialog}
-            onOpenChange={setShowDeleteDialog}
+            open={deleteDialogOpen}
+            onOpenChange={setDeleteDialogOpen}
             coupon={selectedCoupon}
-            onSuccess={handleDeleteSuccess}
+            onSuccess={handleRefresh}
           />
         </div>
       </div>
-    </div>
-  );
-}
-
-// ==================== Coupons Table Component ====================
-interface AdminCouponsTableProps {
-  key?: number;
-  onEdit: (coupon: Coupon) => void;
-  onDelete: (coupon: Coupon) => void;
-}
-
-function AdminCouponsTable({ key, onEdit, onDelete }: AdminCouponsTableProps) {
-  const { t } = useI18n();
-
-  const { data: response, isLoading, isFetching, error } = useGetCouponsQuery();
-  const coupons = response?.data?.data || [];
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64 opacity-50">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-current border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (error) {
-    const apiError = error as ApiError;
-    return (
-      <div className="text-center py-8">
-        <p className="text-red-500">
-          {String(apiError?.data?.message || "Failed to fetch coupons")}
-        </p>
-        <Button onClick={() => window.location.reload()} className="mt-4">
-          {String(t("adminTryAgain") || "Try Again")}
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="ultra-card p-6">
-      <div className="rounded-md">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="text-center">{String(t("couponCode") || "Code")}</TableHead>
-              <TableHead className="text-center">{String(t("discountValue") || "Discount")}</TableHead>
-              <TableHead className="text-center">{String(t("discountType") || "Type")}</TableHead>
-              <TableHead className="text-center">{String(t("startDate") || "Start Date")}</TableHead>
-              <TableHead className="text-center">{String(t("expiryDate") || "Expiry Date")}</TableHead>
-              <TableHead className="text-center">{String(t("usageLimit") || "Usage Limit")}</TableHead>
-              <TableHead className="text-center">{String(t("usedCount") || "Used Count")}</TableHead>
-              <TableHead className="text-center">{String(t("status") || "Status")}</TableHead>
-              <TableHead className="text-center">{String(t("actions") || "Actions")}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {coupons.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                  {String(t("noCouponsFound") || "No coupons found")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              coupons.map((coupon) => (
-                <TableRow key={coupon._id}>
-                  <TableCell className="font-medium text-center">{coupon.couponCode}</TableCell>
-                  <TableCell className="text-center">
-                    {coupon.discountType === "percentage" ? `${coupon.discountValue}%` : `$${coupon.discountValue}`}
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <Badge variant="outline" className="mx-auto w-fit">
-                      {coupon.discountType === "percentage" ? String(t("percentage") || "Percentage") : String(t("fixedAmount") || "Fixed")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">{coupon.startDate || String(t("notSet") || "Not Set")}</TableCell>
-                  <TableCell className="text-center">{coupon.expiryDate}</TableCell>
-                  <TableCell className="text-center">{coupon.maxUses || String(t("unlimited") || "Unlimited")}</TableCell>
-                  <TableCell className="text-center">{coupon.usedCount || 0}</TableCell>
-                  <TableCell className="text-center">
-                    <Badge
-                      className={cn(
-                        "mx-auto w-fit",
-                        coupon.isActive ? "bg-green-500 hover:bg-green-600 text-white" : "bg-red-500 hover:bg-red-600 text-white"
-                      )}
-                    >
-                      {coupon.isActive ? String(t("active") || "Active") : String(t("inactive") || "Inactive")}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onEdit(coupon)}
-                        className="h-8 w-8 p-0 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50"
-                        disabled={isFetching}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => onDelete(coupon)}
-                        className="h-8 w-8 p-0 rounded-full border-red-200 text-red-600 hover:bg-red-50"
-                        disabled={isFetching}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-      {isFetching && (
-        <div className="flex justify-center items-center py-4">
-          <div className="h-6 w-6 animate-spin rounded-full border-2 border-current border-t-transparent" />
-        </div>
-      )}
     </div>
   );
 }
@@ -363,32 +231,32 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="code">{String(t("couponCode") || "Coupon Code")}</Label>
-            <Input 
-              id="code" 
-              value={formData.code} 
-              onChange={(e) => handleInputChange("code", e.target.value)} 
-              placeholder={String(t("couponCodePlaceholder") || "e.g., SUMMER2023")} 
-              className={cn(errors.code && "border-red-500")} 
+            <Input
+              id="code"
+              value={formData.code}
+              onChange={(e) => handleInputChange("code", e.target.value)}
+              placeholder={String(t("couponCodePlaceholder") || "e.g., SUMMER2023")}
+              className={cn(errors.code && "border-red-500")}
             />
             {errors.code && <p className="text-sm text-red-500">{errors.code}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="discountValue">{String(t("discountValue") || "Discount Value")}</Label>
-              <Input 
-                id="discountValue" 
-                value={formData.discountValue} 
-                onChange={(e) => handleInputChange("discountValue", e.target.value)} 
-                type="number" 
-                placeholder="10" 
-                className={cn(errors.discountValue && "border-red-500")} 
+              <Input
+                id="discountValue"
+                value={formData.discountValue}
+                onChange={(e) => handleInputChange("discountValue", e.target.value)}
+                type="number"
+                placeholder="10"
+                className={cn(errors.discountValue && "border-red-500")}
               />
               {errors.discountValue && <p className="text-sm text-red-500">{errors.discountValue}</p>}
             </div>
             <div>
               <Label htmlFor="discountType">{String(t("discountType") || "Discount Type")}</Label>
-              <Select 
-                value={formData.discountType} 
+              <Select
+                value={formData.discountType}
                 onValueChange={(value: DiscountType) => handleInputChange("discountType", value)}
               >
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
@@ -410,11 +278,11 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={formData.startDate} 
-                    onSelect={(date: Date | undefined) => handleInputChange("startDate", date)} 
-                    initialFocus 
+                  <Calendar
+                    mode="single"
+                    selected={formData.startDate}
+                    onSelect={(date: Date | undefined) => handleInputChange("startDate", date)}
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -429,11 +297,11 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={formData.expiryDate} 
-                    onSelect={(date: Date | undefined) => handleInputChange("expiryDate", date)} 
-                    initialFocus 
+                  <Calendar
+                    mode="single"
+                    selected={formData.expiryDate}
+                    onSelect={(date: Date | undefined) => handleInputChange("expiryDate", date)}
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -441,13 +309,13 @@ function CreateCouponDialog({ open, onOpenChange, onSuccess }: CreateCouponDialo
           </div>
           <div>
             <Label htmlFor="usageLimit">{String(t("usageLimit") || "Usage Limit")}</Label>
-            <Input 
-              id="usageLimit" 
-              value={formData.usageLimit} 
-              onChange={(e) => handleInputChange("usageLimit", e.target.value)} 
-              type="number" 
-              placeholder="100" 
-              className={cn(errors.usageLimit && "border-red-500")} 
+            <Input
+              id="usageLimit"
+              value={formData.usageLimit}
+              onChange={(e) => handleInputChange("usageLimit", e.target.value)}
+              type="number"
+              placeholder="100"
+              className={cn(errors.usageLimit && "border-red-500")}
             />
             {errors.usageLimit && <p className="text-sm text-red-500">{errors.usageLimit}</p>}
           </div>
@@ -489,7 +357,7 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
 
   const [updateCoupon, { isLoading }] = useUpdateCouponMutation();
 
-  useEffect(() => {
+  React.useEffect(() => {
     if (coupon) {
       setFormData({
         code: coupon.couponCode,
@@ -556,35 +424,35 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <Label htmlFor="code">{String(t("couponCode") || "Coupon Code")}</Label>
-            <Input 
-              id="code" 
-              value={formData.code} 
-              onChange={(e) => handleInputChange("code", e.target.value)} 
-              placeholder="SUMMER2023" 
-              disabled={isLoading} 
-              className={cn(errors.code && "border-red-500")} 
+            <Input
+              id="code"
+              value={formData.code}
+              onChange={(e) => handleInputChange("code", e.target.value)}
+              placeholder="SUMMER2023"
+              disabled={isLoading}
+              className={cn(errors.code && "border-red-500")}
             />
             {errors.code && <p className="text-sm text-red-500">{errors.code}</p>}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <Label htmlFor="discountValue">{String(t("discountValue") || "Discount Value")}</Label>
-              <Input 
-                id="discountValue" 
-                value={formData.discountValue} 
-                onChange={(e) => handleInputChange("discountValue", e.target.value)} 
-                type="number" 
-                placeholder="10" 
-                disabled={isLoading} 
-                className={cn(errors.discountValue && "border-red-500")} 
+              <Input
+                id="discountValue"
+                value={formData.discountValue}
+                onChange={(e) => handleInputChange("discountValue", e.target.value)}
+                type="number"
+                placeholder="10"
+                disabled={isLoading}
+                className={cn(errors.discountValue && "border-red-500")}
               />
               {errors.discountValue && <p className="text-sm text-red-500">{errors.discountValue}</p>}
             </div>
             <div>
               <Label htmlFor="discountType">{String(t("discountType") || "Discount Type")}</Label>
-              <Select 
-                value={formData.discountType} 
-                onValueChange={(value: DiscountType) => handleInputChange("discountType", value)} 
+              <Select
+                value={formData.discountType}
+                onValueChange={(value: DiscountType) => handleInputChange("discountType", value)}
                 disabled={isLoading}
               >
                 <SelectTrigger><SelectValue placeholder="Select type" /></SelectTrigger>
@@ -606,11 +474,11 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={formData.startDate} 
-                    onSelect={(date: Date | undefined) => handleInputChange("startDate", date)} 
-                    initialFocus 
+                  <Calendar
+                    mode="single"
+                    selected={formData.startDate}
+                    onSelect={(date: Date | undefined) => handleInputChange("startDate", date)}
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -625,11 +493,11 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0">
-                  <Calendar 
-                    mode="single" 
-                    selected={formData.expiryDate} 
-                    onSelect={(date: Date | undefined) => handleInputChange("expiryDate", date)} 
-                    initialFocus 
+                  <Calendar
+                    mode="single"
+                    selected={formData.expiryDate}
+                    onSelect={(date: Date | undefined) => handleInputChange("expiryDate", date)}
+                    initialFocus
                   />
                 </PopoverContent>
               </Popover>
@@ -637,14 +505,14 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
           </div>
           <div>
             <Label htmlFor="usageLimit">{String(t("usageLimit") || "Usage Limit")}</Label>
-            <Input 
-              id="usageLimit" 
-              value={formData.usageLimit} 
-              onChange={(e) => handleInputChange("usageLimit", e.target.value)} 
-              type="number" 
-              placeholder="100" 
-              disabled={isLoading} 
-              className={cn(errors.usageLimit && "border-red-500")} 
+            <Input
+              id="usageLimit"
+              value={formData.usageLimit}
+              onChange={(e) => handleInputChange("usageLimit", e.target.value)}
+              type="number"
+              placeholder="100"
+              disabled={isLoading}
+              className={cn(errors.usageLimit && "border-red-500")}
             />
             {errors.usageLimit && <p className="text-sm text-red-500">{errors.usageLimit}</p>}
           </div>
@@ -662,6 +530,7 @@ function EditCouponDialog({ open, onOpenChange, coupon, onSuccess }: EditCouponD
   );
 }
 
+// ==================== Delete Coupon Dialog Component ====================
 interface DeleteCouponDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;

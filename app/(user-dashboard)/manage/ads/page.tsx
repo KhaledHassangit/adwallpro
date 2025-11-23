@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { ProtectedRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
 import {
   Building2,
@@ -15,19 +14,17 @@ import {
   CheckCircle,
   AlertCircle,
   Search,
-  X,
-  Save,
-  Globe,
-  Phone,
-  MapPin,
-  Facebook,
   Camera,
   ImageOff,
+  MapPin,
+  Globe,
+  Phone,
+  Facebook,
+  Save,
 } from "lucide-react";
 import Link from "next/link";
-import { getCurrentUser, getAuthCookie } from "@/lib/auth";
+import { getAuthCookie } from "@/lib/auth";
 import { useNotifications } from "@/hooks/notifications";
-
 import {
   Dialog,
   DialogContent,
@@ -46,64 +43,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PaginationControl } from "@/components/ui/pagination-control";
+import { Company, Category } from "@/types/types";
 
-// *** CHANGE 1: Updated the Company interface to match your data structure ***
-interface Company {
-  _id: string;
-  companyName: string;
-  companyNameEn?: string;
-  description: string;
-  descriptionEn?: string;
-  categoryId: {
-    _id: string;
-    nameAr: string;
-    nameEn: string;
-    color?: string;
-  };
-  status: "approved" | "pending" | "rejected"; // Changed from isApproved: boolean
-  createdAt: string;
-  image?: string;
-  logo?: any;
-  email?: string;
-  __v?: number;
-  city?: string;
-  country?: string;
-  website?: string;
-  whatsapp?: string;
-  facebook?: string;
-  slug?: string;
-  ratingsQuantity?: number;
-  views?: number;
-  updatedAt?: string;
-  userId?: string;
-}
-
-interface Category {
-  _id: string;
-  nameAr: string;
-  nameEn: string;
-  color?: string;
-}
-
-function UserAdsContent() {
+export default function UserAdsPage() {
   const { t, lang } = useI18n();
   const notifications = useNotifications();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
   const [companyToDelete, setCompanyToDelete] = useState<string | null>(null);
-  const [companyToEdit, setCompanyToEdit] = useState<Company | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [companyToEdit, setCompanyToEdit] = useState<Company | null>(null);
   const [saving, setSaving] = useState(false);
   const [imageUploading, setImageUploading] = useState(false);
-  const currentUser = getCurrentUser();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state for editing
   const [editForm, setEditForm] = useState({
     companyName: "",
     description: "",
@@ -116,52 +81,64 @@ function UserAdsContent() {
     image: "",
   });
 
-  // Form validation errors
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    fetchUserCompanies();
     fetchCategories();
   }, []);
 
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch("http://72.60.178.180:8000/api/v1/categories", {
-        headers: {
-          Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setCategories(data.data?.data || data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching categories:", error);
+  useEffect(() => {
+    fetchCompanies();
+  }, [page]); // Refetch when page changes
+
+ // Fix the fetchCategories function to correctly extract the data
+const fetchCategories = async () => {
+  try {
+    const response = await fetch("http://72.60.178.180:8000/api/v1/categories");
+    if (response.ok) {
+      const data = await response.json();
+      // Fix: Correctly extract categories from the response
+      // The API might be returning data in a different structure than expected
+      const categoriesData = data?.data?.data || data?.data || [];
+      console.log("Fetched categories:", categoriesData); // Add this for debugging
+      setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     }
-  };
-
-  const fetchUserCompanies = async () => {
-    if (!currentUser) return;
-
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    setCategories([]); // Ensure categories is always an array
+  }
+};
+  const fetchCompanies = async () => {
     try {
       setLoading(true);
+      const token = getAuthCookie();
+
+      // Add pagination parameters
       const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/companies/user/${currentUser._id}`,
+        `http://72.60.178.180:8000/api/v1/companies/my-companies?page=${page}&limit=10`,
         {
           headers: {
-            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
-      if (!response.ok) throw new Error(t("failedToFetchAds"));
-      const data = await response.json();
-      const companies = data?.data?.data || data || [];
-      console.log("Fetched user companies:", companies);
-      setCompanies(companies);
+      if (response.ok) {
+        const data = await response.json();
+        setCompanies(data.data || []);
+        // Update total pages if available in response
+        if (data.paginationResult && data.paginationResult.numberOfPages) {
+          setTotalPages(data.paginationResult.numberOfPages);
+        } else if (data.totalPages) {
+          setTotalPages(data.totalPages);
+        }
+      } else {
+        // Handle error
+        console.error("Failed to fetch companies");
+      }
     } catch (error) {
-      console.error("Error fetching user companies:", error);
-      notifications.error(t("failedToFetchAds"));
+      console.error("Error fetching companies:", error);
+      notifications.error(t("errorFetchingAds"));
     } finally {
       setLoading(false);
     }
@@ -213,7 +190,7 @@ function UserAdsContent() {
         {
           method: "DELETE",
           headers: {
-            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
+            Authorization: `Bearer ${getAuthCookie()}`,
           },
         }
       );
@@ -223,6 +200,8 @@ function UserAdsContent() {
         notifications.success(t("adDeletedSuccessfully"));
         setDeleteModalOpen(false);
         setCompanyToDelete(null);
+        // Refresh list to keep pagination consistent
+        fetchCompanies();
       } else {
         const errorData = await response.json().catch(() => ({}));
         notifications.error(errorData.message || t("failedToDeleteAd"));
@@ -254,34 +233,34 @@ function UserAdsContent() {
 
     // If logo is a base64 string
     if (typeof logo === 'string' && logo.startsWith('/9j/')) {
-        return `data:image/jpeg;base64,${logo}`;
+      return `data:image/jpeg;base64,${logo}`;
     }
-    
+
     // If logo has a data property with type and data
     if (logo.data && Array.isArray(logo.data)) {
       // Convert the array of numbers to a Uint8Array
       const uint8Array = new Uint8Array(logo.data);
-      
+
       // Create a Blob from the Uint8Array
       const blob = new Blob([uint8Array], { type: 'image/jpeg' });
-      
+
       // Create a URL for the Blob
       return URL.createObjectURL(blob);
     }
-    
+
     return "";
   };
 
   const openEditModal = (company: Company) => {
     console.log("Opening edit modal for company:", company);
     setCompanyToEdit(company);
-    
+
     // Extract category ID properly
-    const categoryId = company.categoryId?._id || company.categoryId || "";
-    
+    const categoryId = typeof company.categoryId === 'object' && company.categoryId ? (company.categoryId as any)._id : company.categoryId || "";
+
     // Handle image - check for both image and logo properties
     const companyImage = company.image || getLogoImageUrl(company.logo);
-    
+
     setEditForm({
       companyName: company.companyName,
       description: company.description,
@@ -325,23 +304,17 @@ function UserAdsContent() {
 
     try {
       setSaving(true);
-      
+
       // Create a copy of form data
       const formData = { ...editForm };
-      
-      // Handle image if it's a base64 string (newly uploaded)
-      if (formData.image && formData.image.startsWith('data:')) {
-        // If your API requires separate image upload, handle it here
-        // For now, we'll send it as part of form data
-      }
-      
+
       const response = await fetch(
         `http://72.60.178.180:8000/api/v1/companies/${companyToEdit._id}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${getAuthCookie()}`, // Changed from localStorage
+            Authorization: `Bearer ${getAuthCookie()}`,
           },
           body: JSON.stringify(formData),
         }
@@ -350,7 +323,7 @@ function UserAdsContent() {
       if (response.ok) {
         const responseData = await response.json();
         const updatedCompany = responseData.data || responseData;
-        
+
         setCompanies(
           companies.map((company) =>
             company._id === companyToEdit._id
@@ -360,6 +333,7 @@ function UserAdsContent() {
         );
         notifications.success(t("adUpdatedSuccessfully"));
         closeEditModal();
+        fetchCompanies(); // Refresh to ensure data consistency
       } else {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.message || t("failedToUpdateAd");
@@ -422,14 +396,14 @@ function UserAdsContent() {
   };
 
   // Helper function to get category name based on language
-  const getCategoryName = (category: Company['categoryId']) => {
+  const getCategoryName = (category: any) => {
     if (!category) return t("unknown");
-    
+
     // If category is already an object with nameAr and nameEn
     if (category.nameAr && category.nameEn) {
       return lang === "ar" ? category.nameAr : category.nameEn;
     }
-    
+
     // If category is just an ID string, try to find it in the categories list
     if (typeof category === 'string') {
       const foundCategory = categories.find((c) => c._id === category);
@@ -437,7 +411,7 @@ function UserAdsContent() {
         return lang === "ar" ? foundCategory.nameAr : foundCategory.nameEn;
       }
     }
-    
+
     return t("unknown");
   };
 
@@ -461,7 +435,6 @@ function UserAdsContent() {
     return company.description || t("noDescription");
   };
 
-  // *** CHANGE 2: Updated the filtering logic to use `status` ***
   const filteredCompanies = companies.filter((company) => {
     const matchesSearch =
       company.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -474,7 +447,6 @@ function UserAdsContent() {
     return matchesSearch && matchesStatus;
   });
 
-  // *** CHANGE 3: Updated the status badge logic to use `status` ***
   const getStatusBadge = (company: Company) => {
     if (company.status === "approved") {
       return (
@@ -506,7 +478,7 @@ function UserAdsContent() {
         {/* Header */}
         <div className="mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border/30 pb-4">
           <div className="transition-all duration-300">
-              <h1 className="text-ultra-xl gradient-text mb-2">
+            <h1 className="text-ultra-xl gradient-text mb-2">
               {t("manageAds")}
             </h1>
             <p className="text-muted-foreground mt-2">
@@ -536,7 +508,7 @@ function UserAdsContent() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-10 pr-4 py-2 border border-border/50 rounded-lg
-                   bg-background/60 backdrop-blur outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
+                     bg-background/60 backdrop-blur outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all duration-300"
                 />
               </div>
 
@@ -546,13 +518,11 @@ function UserAdsContent() {
                   {
                     key: "approved",
                     label: t("approved"),
-                    // *** CHANGE 4: Updated the approved count to use `status` ***
                     count: companies.filter((c) => c.status === "approved").length,
                   },
                   {
                     key: "pending",
                     label: t("pending"),
-                    // *** CHANGE 5: Updated the pending count to use `status` ***
                     count: companies.filter((c) => c.status !== "approved").length,
                   },
                 ].map((btn) => (
@@ -561,8 +531,8 @@ function UserAdsContent() {
                     onClick={() => setStatusFilter(btn.key)}
                     size="sm"
                     className={`transition-all duration-300 ${statusFilter === btn.key
-                        ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
-                        : "bg-transparent border border-border/60 text-foreground hover:bg-muted/30"
+                      ? "bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-md"
+                      : "bg-transparent border border-border/60 text-foreground hover:bg-muted/30"
                       }`}
                   >
                     {btn.label} ({btn.count})
@@ -670,6 +640,15 @@ function UserAdsContent() {
             ))
           )}
         </div>
+
+        {/* Pagination Control */}
+        {!loading && (
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        )}
 
         {/* Delete Confirmation Modal */}
         <Dialog open={deleteModalOpen} onOpenChange={setDeleteModalOpen}>
@@ -830,7 +809,7 @@ function UserAdsContent() {
                 />
                 {formErrors.description && (
                   <p className="text-sm text-red-500">{formErrors.description}</p>
-                  )}
+                )}
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -905,7 +884,7 @@ function UserAdsContent() {
                 />
                 {formErrors.facebook && (
                   <p className="text-sm text-red-500">{formErrors.facebook}</p>
-                  )}
+                )}
               </div>
 
               <DialogFooter>
@@ -917,7 +896,11 @@ function UserAdsContent() {
                 >
                   {t("cancel")}
                 </Button>
-                <Button type="submit" className="btn-ultra text-white" disabled={saving || imageUploading}>
+                <Button
+                  type="submit"
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 text-white"
+                  disabled={saving}
+                >
                   {saving ? (
                     <>
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
@@ -926,7 +909,7 @@ function UserAdsContent() {
                   ) : (
                     <>
                       <Save className="h-4 w-4 mr-2" />
-                      {t("save")}
+                      {t("saveChanges")}
                     </>
                   )}
                 </Button>
@@ -936,13 +919,5 @@ function UserAdsContent() {
         </Dialog>
       </div>
     </main>
-  );
-}
-
-export default function UserAdsPage() {
-  return (
-    <ProtectedRoute>
-      <UserAdsContent />
-    </ProtectedRoute>
   );
 }

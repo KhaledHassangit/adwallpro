@@ -23,17 +23,22 @@ import {
     TrendingUp
 } from "lucide-react";
 import { useGetUserSubscriptionsQuery } from "@/features/plansApi";
+import { PaginationControl } from "@/components/ui/pagination-control";
 
 function UserSubscriptionsContent() {
     const { t, lang } = useI18n();
     const [error, setError] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
 
-    // Use the RTK Query hook for user subscriptions
-    const { data: subscriptions = [], isLoading, error: apiError, refetch } = useGetUserSubscriptionsQuery();
+    // Use the RTK Query hook for user subscriptions with pagination
+    const { data: subscriptionsData, isLoading, error: apiError, refetch } = useGetUserSubscriptionsQuery({ page, limit: 10 });
+
+    const subscriptions = subscriptionsData?.data || [];
+    const totalPages = subscriptionsData?.totalPages || 1;
 
     useEffect(() => {
         if (apiError) {
-            setError(apiError.message || (t("failedToLoad") || "Failed to load subscriptions"));
+            setError((apiError as any).message || (t("failedToLoad") || "Failed to load subscriptions"));
         }
     }, [apiError, t]);
 
@@ -145,135 +150,142 @@ function UserSubscriptionsContent() {
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {subscriptions?.map((s) => {
-                            const daysLeft = calculateDaysLeft(s.expiresAt);
-                            const progress = calculateProgress(s.createdAt, s.expiresAt);
-                            const primaryOption = s.plan?.options?.[0];
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {subscriptions?.map((s) => {
+                                const daysLeft = calculateDaysLeft(s.expiresAt);
+                                const progress = calculateProgress(s.createdAt, s.expiresAt);
+                                const primaryOption = s.plan?.options?.[0];
 
-                            return (
-                                <Card key={s._id} className="overflow-hidden relative" style={{ borderTopColor: s.plan?.color || "#ddd", borderTopWidth: "4px" }}>
-                                    <CardHeader className="pb-3">
-                                        <div className="flex items-center justify-between">
-                                            <div className="flex items-center gap-2">
-                                                <div
-                                                    className="w-4 h-4 rounded-full"
-                                                    style={{ backgroundColor: s.plan?.color || "#ddd" }}
-                                                />
-                                                <CardTitle className="text-lg">{s.plan?.name}</CardTitle>
-                                            </div>
-                                            {getStatusBadge(s.status)}
-                                        </div>
-                                        <p className="text-sm text-muted-foreground">{s.plan?.description}</p>
-                                    </CardHeader>
-
-                                    <CardContent className="space-y-4">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground">{t("planCode") || "Plan Code"}</span>
-                                            <span className=" text-sm  px-2 py-1 ">{s.plan?.code}</span>
-                                        </div>
-
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-sm text-muted-foreground">{t("planType") || "Plan Type"}</span>
-                                            <span className="font-medium">{s.plan?.planType}</span>
-                                        </div>
-
-                                        {primaryOption && (
-                                            <>
-                                                <Separator />
-                                                <div className="space-y-2">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-muted-foreground">{t("duration") || "Duration"}</span>
-                                                        <span className="font-medium">{primaryOption.duration}</span>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-muted-foreground">{t("price") || "Price"}</span>
-                                                        <div className="flex items-center gap-2">
-                                                            {primaryOption.discountPercent && (
-                                                                <span className="text-sm line-through text-muted-foreground">${primaryOption.priceUSD}</span>
-                                                            )}
-                                                            <span className="font-bold text-lg">${primaryOption.finalPriceUSD || primaryOption.priceUSD}</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-muted-foreground">{t("adsIncluded") || "Ads Included"}</span>
-                                                        <span className="font-medium">{primaryOption.adsCount}</span>
-                                                    </div>
-
-                                                    <div>
-                                                        <span className="text-sm text-muted-foreground">{t("categories") || "Categories"}</span>
-                                                        <div className="flex flex-wrap gap-1 mt-1">
-                                                            {primaryOption.categories.map((cat, idx) => (
-                                                                <Badge key={idx} variant="outline" className="text-xs">{cat}</Badge>
-                                                            ))}
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
-
-                                        <Separator />
-
-                                        <div>
-                                            <h4 className="font-medium mb-2">{t("features") || "Features"}</h4>
-                                            <ul className="space-y-1">
-                                                {s.plan?.features?.map((feature, idx) => (
-                                                    <li key={idx} className="flex items-start gap-2 text-sm">
-                                                        <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
-                                                        <span>{feature}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-
-                                        <Separator />
-
-                                        <div className="space-y-2">
+                                return (
+                                    <Card key={s._id} className="overflow-hidden relative" style={{ borderTopColor: s.plan?.color || "#ddd", borderTopWidth: "4px" }}>
+                                        <CardHeader className="pb-3">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">{t("subscriptionStatus") || "Status"}</span>
+                                                <div className="flex items-center gap-2">
+                                                    <div
+                                                        className="w-4 h-4 rounded-full"
+                                                        style={{ backgroundColor: s.plan?.color || "#ddd" }}
+                                                    />
+                                                    <CardTitle className="text-lg">{s.plan?.name}</CardTitle>
+                                                </div>
                                                 {getStatusBadge(s.status)}
                                             </div>
+                                            <p className="text-sm text-muted-foreground">{s.plan?.description}</p>
+                                        </CardHeader>
 
+                                        <CardContent className="space-y-4">
                                             <div className="flex items-center justify-between">
-                                                <span className="text-sm text-muted-foreground">{t("expiresAt") || "Expires At"}</span>
-                                                <span className="font-medium">{formatDate(s.expiresAt)}</span>
+                                                <span className="text-sm text-muted-foreground">{t("planCode") || "Plan Code"}</span>
+                                                <span className=" text-sm  px-2 py-1 ">{s.plan?.code}</span>
                                             </div>
 
-                                            {s.status === "active" && daysLeft !== null && (
-                                                <div className="space-y-1">
-                                                    <div className="flex items-center justify-between">
-                                                        <span className="text-sm text-muted-foreground">{t("timeLeft") || "Time Left"}</span>
-                                                        <span className="font-medium">{daysLeft} {t("days") || "days"}</span>
+                                            <div className="flex items-center justify-between">
+                                                <span className="text-sm text-muted-foreground">{t("planType") || "Plan Type"}</span>
+                                                <span className="font-medium">{s.plan?.planType}</span>
+                                            </div>
+
+                                            {primaryOption && (
+                                                <>
+                                                    <Separator />
+                                                    <div className="space-y-2">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-muted-foreground">{t("duration") || "Duration"}</span>
+                                                            <span className="font-medium">{primaryOption.duration}</span>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-muted-foreground">{t("price") || "Price"}</span>
+                                                            <div className="flex items-center gap-2">
+                                                                {primaryOption.discountPercent && (
+                                                                    <span className="text-sm line-through text-muted-foreground">${primaryOption.priceUSD}</span>
+                                                                )}
+                                                                <span className="font-bold text-lg">${primaryOption.finalPriceUSD || primaryOption.priceUSD}</span>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-muted-foreground">{t("adsIncluded") || "Ads Included"}</span>
+                                                            <span className="font-medium">{primaryOption.adsCount}</span>
+                                                        </div>
+
+                                                        <div>
+                                                            <span className="text-sm text-muted-foreground">{t("categories") || "Categories"}</span>
+                                                            <div className="flex flex-wrap gap-1 mt-1">
+                                                                {primaryOption.categories?.map((cat, idx) => (
+                                                                    <Badge key={idx} variant="outline" className="text-xs">{cat}</Badge>
+                                                                ))}
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                    <Progress value={100 - progress} className="h-2" />
-                                                </div>
+                                                </>
                                             )}
-                                        </div>
-                                    </CardContent>
 
-                                    <CardFooter className="pt-3 flex gap-2">
-                                        {s.status === "active" ? (
-                                            <Button className="flex-1" variant="outline">
-                                                <RefreshCw className="w-4 h-4 mr-2" />
-                                                {t("renew") || "Renew"}
-                                            </Button>
-                                        ) : (
-                                            <Button className="flex-1">
-                                                <CreditCard className="w-4 h-4 mr-2" />
-                                                {t("subscribe") || "Subscribe"}
-                                            </Button>
-                                        )}
+                                            <Separator />
 
-                                        <Button variant="outline" size="sm">
-                                            <Tag className="w-4 h-4" />
-                                        </Button>
-                                    </CardFooter>
-                                </Card>
-                            );
-                        })}
-                    </div>
+                                            <div>
+                                                <h4 className="font-medium mb-2">{t("features") || "Features"}</h4>
+                                                <ul className="space-y-1">
+                                                    {s.plan?.features?.map((feature, idx) => (
+                                                        <li key={idx} className="flex items-start gap-2 text-sm">
+                                                            <CheckCircle className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                                                            <span>{feature}</span>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </div>
+
+                                            <Separator />
+
+                                            <div className="space-y-2">
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm text-muted-foreground">{t("subscriptionStatus") || "Status"}</span>
+                                                    {getStatusBadge(s.status)}
+                                                </div>
+
+                                                <div className="flex items-center justify-between">
+                                                    <span className="text-sm text-muted-foreground">{t("expiresAt") || "Expires At"}</span>
+                                                    <span className="font-medium">{formatDate(s.expiresAt)}</span>
+                                                </div>
+
+                                                {s.status === "active" && daysLeft !== null && (
+                                                    <div className="space-y-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm text-muted-foreground">{t("timeLeft") || "Time Left"}</span>
+                                                            <span className="font-medium">{daysLeft} {t("days") || "days"}</span>
+                                                        </div>
+                                                        <Progress value={100 - progress} className="h-2" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </CardContent>
+
+                                        <CardFooter className="pt-3 flex gap-2">
+                                            {s.status === "active" ? (
+                                                <Button className="flex-1" variant="outline">
+                                                    <RefreshCw className="w-4 h-4 mr-2" />
+                                                    {t("renew") || "Renew"}
+                                                </Button>
+                                            ) : (
+                                                <Button className="flex-1">
+                                                    <CreditCard className="w-4 h-4 mr-2" />
+                                                    {t("subscribe") || "Subscribe"}
+                                                </Button>
+                                            )}
+
+                                            <Button variant="outline" size="sm">
+                                                <Tag className="w-4 h-4" />
+                                            </Button>
+                                        </CardFooter>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                        <PaginationControl
+                            currentPage={page}
+                            totalPages={totalPages}
+                            onPageChange={setPage}
+                        />
+                    </>
                 )}
             </div>
         </main>

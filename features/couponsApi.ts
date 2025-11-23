@@ -2,7 +2,8 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
 import { Coupon, CouponsResponse } from '@/types/types';
 
-// Define the shape of the data for type safety
+// Re-export types for convenience
+export type { Coupon, CouponsResponse };
 
 export const couponsApi = createApi({
     reducerPath: 'couponsApi',
@@ -10,12 +11,16 @@ export const couponsApi = createApi({
     tagTypes: ['Coupon'], // Tag for cache invalidation
     endpoints: (builder) => ({
         // Get all Coupons
-        getCoupons: builder.query<CouponsResponse, void>({
-            query: () => ({
-                url: '/coupons',
-                method: 'GET',
-                withToken: true,
-            }),
+        getCoupons: builder.query<CouponsResponse, { page?: number; limit?: number } | void>({
+            query: (params) => {
+                const page = params && 'page' in params ? params.page : 1;
+                const limit = params && 'limit' in params ? params.limit : 10;
+                return {
+                    url: `/coupons?page=${page}&limit=${1}`,
+                    method: 'GET',
+                    withToken: true,
+                };
+            },
             providesTags: ['Coupon'], // Provides the 'Coupon' tag
         }),
 

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
-import { Building2, Filter, AlertCircle, Search, Loader2, ChevronLeft, ChevronRight, MoreHorizontal } from "@/components/ui/icon";
+import { Building2, Filter, AlertCircle, Search, Loader2, ChevronLeft, ChevronRight, MoreHorizontal, Check, X, Eye, Trash2 } from "@/components/ui/icon";
 import { useI18n } from "@/providers/LanguageProvider";
 import {
   Select,
@@ -26,8 +26,27 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-// Import the new RTK Query hooks and types
-import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation,  } from "@/features/companiesApi";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import Image from "next/image";
+import { cn } from "@/lib/utils";
+import { CompanyDetailsDialog } from "@/components/admin/company-details-dialog";
+import { PaginationControl } from "@/components/ui/pagination-control";
+// Import the RTK Query hooks and types
+import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutation } from "@/features/companiesApi";
+
+// دالة لتنظيف رابط الصورة المكرر
+const cleanImageUrl = (imageUrl?: string): string => {
+  if (!imageUrl) return "";
+  return imageUrl.replace(
+    /^https:\/\/adwallpro\.com\/brands\/https:\/\/adwallpro\.com\/brands\//,
+    "https://adwallpro.com/brands/"
+  );
+};
 
 // PaginationControls Component (no changes needed)
 function PaginationControls({
@@ -248,6 +267,10 @@ function AdminCompaniesTable({
     companyName: "",
   });
 
+  // Company details dialog state
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [selectedCompanyId, setSelectedCompanyId] = useState<string | null>(null);
+
   // Handle approve with the mutation
   const handleApprove = async () => {
     try {
@@ -259,6 +282,20 @@ function AdminCompaniesTable({
       // No need for onRefresh, invalidatesTags handles refetching
     } catch (err) {
       notifications.error(String(t("adminCompanyApproveError") || "Failed to approve company."), {
+        title: String(t("adminError") || "Error"),
+      });
+    }
+  };
+
+  // Handle reject (unapprove) with the mutation
+  const handleReject = async (companyId: string, companyName: string) => {
+    try {
+      await approveCompany({ id: companyId, isApproved: false }).unwrap();
+      notifications.success(String(t("adminCompanyRejectedSuccess") || "Company rejected successfully."), {
+        title: String(t("adminSuccess") || "Success"),
+      });
+    } catch (err) {
+      notifications.error(String(t("adminCompanyRejectError") || "Failed to reject company."), {
         title: String(t("adminError") || "Error"),
       });
     }
@@ -276,6 +313,32 @@ function AdminCompaniesTable({
       notifications.error(String(t("adminCompanyDeleteError") || "Failed to delete company."), {
         title: String(t("adminError") || "Error"),
       });
+    }
+  };
+
+  // Handle view details
+  const handleViewDetails = (companyId: string) => {
+    setSelectedCompanyId(companyId);
+    setDetailsDialogOpen(true);
+  };
+
+  // Get status badge
+  const getStatusBadge = (status: string) => {
+    if (status === "approved") {
+      return (
+        <Badge className="bg-green-100 text-green-800 border-green-200">
+          ✓ {String(t("adminApproved") || "Approved")}
+        </Badge>
+      );
+    } else {
+      return (
+        <Badge
+          variant="secondary"
+          className="bg-yellow-100 text-yellow-800 border-yellow-200"
+        >
+          ⏳ {String(t("adminPending") || "Pending")}
+        </Badge>
+      );
     }
   };
 
@@ -314,124 +377,408 @@ function AdminCompaniesTable({
   }
 
   return (
-    <div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{String(t("adminCompanyName") || "Company Name")}</TableHead>
-            <TableHead>{String(t("adminCompanyContact") || "Contact")}</TableHead>
-            <TableHead>{String(t("adminCompanyLocation") || "Location")}</TableHead>
-            <TableHead>{String(t("adminCompanyStatus") || "Status")}</TableHead>
-            <TableHead>{String(t("adminActions") || "Actions")}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {companies.map((company) => (
-            <TableRow key={company._id}>
-              <TableCell>
-                <div className="flex items-center gap-3">
-                  <Avatar className="h-10 w-10">
-                    <AvatarImage src={company.logo} alt={company.companyName} />
-                    <AvatarFallback>
-                      {company.companyName.substring(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <div className="font-medium">{company.companyName}</div>
-                    <div className="text-sm text-muted-foreground truncate max-w-xs">
-                      {company.description}
+    <div className="space-y-4">
+      {/* عنوان الجدول */}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold gradient-text">
+          {String(t("adminCompanies") || "Companies")} ({companies.length})
+        </h3>
+      </div>
+
+      {/* الجدول للشاشات الكبيرة */}
+      <div className="hidden lg:block">
+        <Card className="ultra-card border-0 overflow-hidden">
+          <CardContent className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow className="bg-gradient-to-r from-primary/5 to-primary/10 border-b border-primary/20">
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyImage") || "Image")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyName") || "Company Name")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyCategory") || "Category")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyLocation") || "Location")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyOwner") || "Owner")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyStatus") || "Status")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary">
+                    {String(t("adminCompanyRegistrationDate") || "Registration Date")}
+                  </TableHead>
+                  <TableHead className="font-semibold text-primary text-center">
+                    {String(t("adminActions") || "Actions")}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {companies.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={8} className="text-center py-8">
+                      <div className="flex flex-col items-center gap-2">
+                        <Search className="h-8 w-8 text-muted-foreground" />
+                        <p className="text-muted-foreground">
+                          {String(t("adminNoCompaniesFound") || "No companies found")}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  companies.map((company: any, index: number) => (
+                    <TableRow
+                      key={company._id}
+                      className={cn(
+                        "hover:bg-muted/50 transition-colors",
+                        index % 2 === 0
+                          ? "bg-background dark:bg-muted/20"
+                          : "bg-muted/30 dark:bg-muted/10"
+                      )}
+                    >
+                      <TableCell>
+                        {company.logo ? (
+                          <div className="relative w-12 h-12 rounded-lg overflow-hidden border border-border/50 hover:scale-105 transition-transform duration-200 cursor-pointer group">
+                            <Image
+                              src={cleanImageUrl(company.logo)}
+                              alt={company.companyName || "Company Image"}
+                              fill
+                              className="object-cover"
+                              onClick={() =>
+                                window.open(
+                                  cleanImageUrl(company.logo),
+                                  "_blank"
+                                )
+                              }
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = "none";
+                                const placeholder = target.parentElement
+                                  ?.nextElementSibling as HTMLElement;
+                                if (placeholder)
+                                  placeholder.style.display = "flex";
+                              }}
+                            />
+                          </div>
+                        ) : null}
+                        <div
+                          className={`w-12 h-12 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-border/50 ${company.logo ? "hidden" : "flex"
+                            }`}
+                        >
+                          <div className="text-lg opacity-40">🏢</div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium text-foreground">
+                        {company.companyName}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {company.category?.name || "-"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {company.city}, {company.country}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {company.user?.name || "-"}
+                      </TableCell>
+                      <TableCell>
+                        {getStatusBadge(company.status)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground">
+                        {new Date(company.createdAt).toLocaleDateString(
+                          t("locale") === "ar" ? "ar-SA" : "en-US"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center justify-center gap-1">
+                          {/* أزرار الموافقة والرفض للشركات المعلقة */}
+                          {company.status !== "approved" && (
+                            <>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-green-600 border-green-600 hover:bg-green-50 h-8 w-8 p-0"
+                                onClick={() =>
+                                  setApproveModal({
+                                    isOpen: true,
+                                    companyId: company._id,
+                                    companyName: company.companyName,
+                                  })
+                                }
+                                title={String(t("adminApprove") || "Approve")}
+                              >
+                                <Check className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="text-red-600 border-red-600 hover:bg-red-50 h-8 w-8 p-0"
+                                onClick={() => handleReject(company._id, company.companyName)}
+                                title={String(t("adminReject") || "Reject")}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </>
+                          )}
+
+                          {/* زر إلغاء الموافقة للشركات الموافق عليها */}
+                          {company.status === "approved" && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-orange-600 border-orange-600 hover:bg-orange-50 h-8 w-8 p-0"
+                              onClick={() => handleReject(company._id, company.companyName)}
+                              title={String(t("adminUnapprove") || "Unapprove")}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
+                          )}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                              >
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                onClick={() => handleViewDetails(company._id)}
+                              >
+                                <Eye className="h-4 w-4 mr-2" />
+                                {String(t("adminViewDetails") || "View Details")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onClick={() =>
+                                  setDeleteModal({
+                                    isOpen: true,
+                                    companyId: company._id,
+                                    companyName: company.companyName,
+                                  })
+                                }
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                {String(t("adminDelete") || "Delete")}
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* عرض الكروت للشاشات الصغيرة */}
+      <div className="lg:hidden space-y-4">
+        {companies.length === 0 ? (
+          <Card className="ultra-card border-0">
+            <CardContent className="py-12">
+              <div className="flex flex-col items-center gap-4 text-center">
+                <Search className="h-12 w-12 text-muted-foreground" />
+                <div>
+                  <p className="text-lg font-medium text-muted-foreground">
+                    {String(t("adminNoCompaniesFound") || "No companies found")}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          companies.map((company: any) => (
+            <Card
+              key={company._id}
+              className="ultra-card border-0 overflow-hidden"
+            >
+              <CardContent className="p-4">
+                <div className="space-y-3">
+                  {/* الصورة واسم الشركة والحالة */}
+                  <div className="flex items-start gap-3">
+                    {/* صورة الشركة */}
+                    <div className="flex-shrink-0">
+                      {company.logo ? (
+                        <div className="relative w-16 h-16 rounded-lg overflow-hidden border border-border/50 hover:scale-105 transition-transform duration-200 cursor-pointer group">
+                          <Image
+                            src={cleanImageUrl(company.logo)}
+                            alt={company.companyName || "Company Image"}
+                            fill
+                            className="object-cover"
+                            onClick={() =>
+                              window.open(
+                                cleanImageUrl(company.logo),
+                                "_blank"
+                              )
+                            }
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = "none";
+                              const placeholder = target.parentElement
+                                ?.nextElementSibling as HTMLElement;
+                              if (placeholder)
+                                placeholder.style.display = "flex";
+                            }}
+                          />
+                        </div>
+                      ) : null}
+                      <div
+                        className={`w-16 h-16 rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 flex items-center justify-center border border-border/50 ${company.logo ? "hidden" : "flex"
+                          }`}
+                      >
+                        <div className="text-2xl opacity-40">🏢</div>
+                      </div>
+                    </div>
+
+                    {/* اسم الشركة والحالة */}
+                    <div className="flex-1 flex items-start justify-between">
+                      <div>
+                        <h4 className="font-semibold text-foreground">
+                          {company.companyName}
+                        </h4>
+                        <p className="text-sm text-muted-foreground">
+                          {company.category?.name || "-"}
+                        </p>
+                      </div>
+                      {getStatusBadge(company.status)}
                     </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm">{company.email}</div>
-                  {company.whatsapp && (
-                    <div className="text-sm text-muted-foreground">
-                      {String(t("adminWhatsApp") || "WhatsApp")}: {company.whatsapp}
+
+                  {/* المعلومات */}
+                  <div className="grid grid-cols-2 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">{String(t("adminCity") || "City")}: </span>
+                      <span className="text-foreground">
+                        {company.city}, {company.country}
+                      </span>
                     </div>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>
-                <div className="space-y-1">
-                  <div className="text-sm">{company.country}</div>
-                  <div className="text-sm text-muted-foreground">{company.city}</div>
-                </div>
-              </TableCell>
-              <TableCell>
-                <Badge
-                  variant={company.status === "approved" ? "default" : "secondary"}
-                  className={
-                    company.status === "approved"
-                      ? "bg-green-100 text-green-800 hover:bg-green-200"
-                      : "bg-orange-100 text-orange-800 hover:bg-orange-200"
-                  }
-                >
-                  {company.status === "approved"
-                    ? String(t("adminApproved") || "Approved")
-                    : String(t("adminPending") || "Pending")}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                <div className="flex gap-2">
-                  {company.status !== "approved" && (
-                    <Button
-                      size="sm"
-                      onClick={() =>
-                        setApproveModal({
-                          isOpen: true,
-                          companyId: company._id,
-                          companyName: company.companyName,
-                        })
-                      }
-                      className="bg-green-600 hover:bg-green-700"
-                      disabled={isApproving}
-                    >
-                      {String(t("adminApprove") || "Approve")}
-                    </Button>
-                  )}
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      setDeleteModal({
-                        isOpen: true,
-                        companyId: company._id,
-                        companyName: company.companyName,
-                      })
-                    }
-                    className="text-red-600 border-red-600 hover:bg-red-50"
-                    disabled={isDeleting}
-                  >
-                    {String(t("adminDelete") || "Delete")}
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                    <div>
+                      <span className="text-muted-foreground">
+                        {String(t("adminOwner") || "Owner")}:{" "}
+                      </span>
+                      <span className="text-foreground">
+                        {company.user?.name || "-"}
+                      </span>
+                    </div>
+                  </div>
 
-      {isFetching && currentPage > 1 && (
-        <div className="flex justify-center items-center py-4">
-          <Loader2 className="h-6 w-6 animate-spin text-primary" />
-        </div>
-      )}
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">
+                      {String(t("adminRegistrationDate") || "Registration Date")}:{" "}
+                    </span>
+                    <span className="text-foreground">
+                      {new Date(company.createdAt).toLocaleDateString(
+                        t("locale") === "ar" ? "ar-SA" : "en-US"
+                      )}
+                    </span>
+                  </div>
 
-      {totalPages > 1 && (
-        <div className="mt-4 border-t pt-4">
-          <PaginationControls
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={onPageChange}
-            loading={isFetching}
-          />
-        </div>
-      )}
+                  {/* الأزرار */}
+                  <div className="flex items-center justify-between pt-2 border-t border-border">
+                    <div className="flex items-center gap-2">
+                      {/* أزرار الموافقة والرفض للشركات المعلقة */}
+                      {company.status !== "approved" && (
+                        <>
+                          <Button
+                            size="sm"
+                            className="bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() =>
+                              setApproveModal({
+                                isOpen: true,
+                                companyId: company._id,
+                                companyName: company.companyName,
+                              })
+                            }
+                          >
+                            <Check className="h-4 w-4 mr-1" />
+                            {String(t("adminApprove") || "Approve")}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-red-600 border-red-600 hover:bg-red-50"
+                            onClick={() => handleReject(company._id, company.companyName)}
+                          >
+                            <X className="h-4 w-4 mr-1" />
+                            {String(t("adminReject") || "Reject")}
+                          </Button>
+                        </>
+                      )}
 
-      {/* Modals (no change to structure, just ensure text is cast to string) */}
+                      {/* زر إلغاء الموافقة للشركات الموافق عليها */}
+                      {company.status === "approved" && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-orange-600 border-orange-600 hover:bg-orange-50"
+                          onClick={() => handleReject(company._id, company.companyName)}
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          {String(t("adminUnapprove") || "Unapprove")}
+                        </Button>
+                      )}
+                    </div>
+
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() => handleViewDetails(company._id)}
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          {String(t("adminViewDetails") || "View Details")}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          className="text-destructive"
+                          onClick={() =>
+                            setDeleteModal({
+                              isOpen: true,
+                              companyId: company._id,
+                              companyName: company.companyName,
+                            })
+                          }
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          {String(t("adminDelete") || "Delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+
+      {/* Pagination */}
+      <PaginationControl
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={onPageChange}
+      />
+
+      {/* Company Details Dialog */}
+      <CompanyDetailsDialog
+        open={detailsDialogOpen}
+        onOpenChange={setDetailsDialogOpen}
+        companyId={selectedCompanyId}
+      />
+
+      {/* Modals */}
       <ConfirmationModal
         isOpen={approveModal.isOpen}
         onClose={() => setApproveModal({ isOpen: false, companyId: "", companyName: "" })}

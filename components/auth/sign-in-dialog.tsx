@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useI18n } from "@/providers/LanguageProvider";
-import { signOut, getCurrentUser, useAuthStore, type User } from "@/lib/auth";
+import { signOut, useUserStore, type User } from "@/lib/auth"; // <-- 1. Import useUserStore
 import { LogIn, LogOut, Shield, UserIcon, Sparkles } from "@/components/ui/icon";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
@@ -12,17 +12,12 @@ import { Button } from "../ui/button";
 export function SignInDialog() {
   const { t, locale } = useI18n();
   const router = useRouter();
-  const { user } = useAuthStore();
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const { user } = useUserStore(); // <-- 2. Get user from the correct store
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const isArabic = locale === "ar";
 
-  useEffect(() => {
-    const userFromAuth = getCurrentUser();
-    setCurrentUser(userFromAuth);
-  }, [user]);
-
+  // This effect for closing the dropdown is fine
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (
@@ -38,12 +33,14 @@ export function SignInDialog() {
 
   const handleSignOut = async () => {
     await signOut();
-    setCurrentUser(null);
+    // The component will automatically re-render with `user` as null
+    // because the signOut function updates the Zustand store.
     router.push("/");
     window.location.reload();
   };
 
-  if (currentUser) {
+  // The component now uses the `user` from the store directly
+  if (user) {
     return (
       <div className="relative w-full lg:w-auto" ref={dropdownRef}>
         <button
@@ -56,12 +53,12 @@ export function SignInDialog() {
               : "text-foreground/80 hover:text-primary-600"
           )}
         >
-          {currentUser.role === "admin" ? (
+          {user.role === "admin" ? (
             <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
           ) : (
             <UserIcon className="h-5 w-5 sm:h-6 sm:w-6 text-primary-600 dark:text-primary-400" />
           )}
-          <span className="truncate">{currentUser.name || currentUser.email}</span>
+          <span className="truncate">{user.name || user.email}</span>
           <svg
             className={cn(
               "h-4 w-4 ml-auto transform transition-transform duration-300",
@@ -86,7 +83,7 @@ export function SignInDialog() {
           )}
         >
           <Link
-            href={currentUser.role === "admin" ? "/admin/dashboard" : "/manage"}
+            href={user.role === "admin" ? "/admin/" : "/manage"}
             onClick={() => setOpen(false)}
             className={cn(
               "flex items-center gap-2.5 px-4 py-2.5 text-[15px] font-semibold transition-all duration-200 w-full",
@@ -123,7 +120,6 @@ export function SignInDialog() {
       </Link>
     </div>
   );
-
 }
 
 export function SignInButton() {

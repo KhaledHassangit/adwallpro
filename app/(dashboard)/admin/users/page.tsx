@@ -42,6 +42,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
+import { PaginationControl } from "@/components/ui/pagination-control";
+import { getAuthHeaders } from "@/lib/auth";
 
 import {
   useGetUserStatsQuery,
@@ -354,42 +356,45 @@ function AdminUsersTable() {
   const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-
-  const { data: response, isLoading, error } = useGetUsersQuery({
-    page,
-    limit: 10,
-  });
-
-  const [deleteUser, { isLoading: isDeleting }] = useDeleteUserMutation();
-
-  const users = response?.data?.data?.users || [];
-  const totalResults = response?.results || 0;
-  const totalPages = Math.ceil(totalResults / 10);
+  
+  // Using the RTK Query hook instead of manual fetch
+  const { 
+    data: usersData, 
+    isLoading, 
+    error,
+    refetch 
+  } = useGetUsersQuery({ page, limit: 10 });
+  
+  const [deleteUser] = useDeleteUserMutation();
 
   const handleDeleteClick = (user: User) => {
     setUserToDelete(user);
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
+  const handleDeleteUser = async () => {
     if (!userToDelete) return;
 
     try {
       await deleteUser(userToDelete._id).unwrap();
-      notifications.success(
-        String(t("adminUserDeletedSuccess") || "User deleted successfully")
-      );
+      notifications.success(t("adminUserDeletedSuccess"));
+      refetch();
       setDeleteDialogOpen(false);
       setUserToDelete(null);
-    } catch (err: any) {
+    } catch (error: any) {
       notifications.error(
-        err?.data?.message ||
-          String(t("adminFailedToDeleteUser") || "Failed to delete user")
+        error?.data?.message || t("adminFailedToDeleteUser")
       );
     }
   };
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  // Extract users and pagination from the response
+  const users = usersData?.data?.users || [];
+  const totalPages = usersData?.paginationResult?.numberOfPages || 1;
 
   return (
     <>
@@ -398,40 +403,21 @@ function AdminUsersTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">
-                  {String(t("adminUserName") || "Name")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminUserEmail") || "Email")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminUserRole") || "Role")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminUserPhone") || "Phone")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminUserSubscription") || "Subscription")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminUserRegistrationDate") || "Registration Date")}
-                </TableHead>
-                <TableHead className="text-center">
-                  {String(t("adminActions") || "Actions")}
-                </TableHead>
+                <TableHead className="text-center">{t("adminUserName")}</TableHead>
+                <TableHead className="text-center">{t("adminUserEmail")}</TableHead>
+                <TableHead className="text-center">{t("adminUserRole")}</TableHead>
+                <TableHead className="text-center">{t("adminUserPhone")}</TableHead>
+                <TableHead className="text-center">{t("adminUserSubscription")}</TableHead>
+                <TableHead className="text-center">{t("adminUserRegistrationDate")}</TableHead>
+                <TableHead className="text-center">{t("adminActions")}</TableHead>
               </TableRow>
             </TableHeader>
-
             <TableBody>
-              {users.length ? (
+              {users?.length ? (
                 users.map((user) => (
                   <TableRow key={user._id}>
-                    <TableCell className="font-medium text-center">
-                      {user.name}
-                    </TableCell>
-
+                    <TableCell className="font-medium text-center">{user.name}</TableCell>
                     <TableCell className="text-center">{user.email}</TableCell>
-
                     <TableCell className="text-center">
                       <Badge
                         variant={
@@ -439,52 +425,35 @@ function AdminUsersTable() {
                         }
                         className="mx-auto w-fit"
                       >
-                        {user.role === "admin"
-                          ? String(t("adminRoleAdmin") || "Admin")
-                          : String(t("adminRoleUser") || "User")}
+                        {user.role === "admin" ? t("adminRoleAdmin") : t("adminRoleUser")}
                       </Badge>
                     </TableCell>
-
-                    <TableCell className="text-center">
-                      {user.phone || "-"}
-                    </TableCell>
-
+                    <TableCell className="text-center">{user.phone || "-"}</TableCell>
                     <TableCell className="text-center">
                       {user.subscription ? (
                         <Badge
-                          variant={
-                            user.subscription.isActive ? "default" : "outline"
-                          }
+                          variant={user.subscription.isActive ? "default" : "outline"}
                           className="mx-auto w-fit"
                         >
-                          {user.subscription.isActive
-                            ? String(t("adminSubscriptionActive") || "Active")
-                            : String(
-                                t("adminSubscriptionInactive") || "Inactive"
-                              )}
+                          {user.subscription.isActive ? t("adminSubscriptionActive") : t("adminSubscriptionInactive")}
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="mx-auto w-fit">
-                          {String(
-                            t("adminNoSubscription") || "No Subscription"
-                          )}
+                          {t("adminNoSubscription")}
                         </Badge>
                       )}
                     </TableCell>
-
                     <TableCell className="text-center">
                       {new Date(user.createdAt).toLocaleDateString(
                         lang === "ar" ? "ar-SA" : "en-US"
                       )}
                     </TableCell>
-
                     <TableCell className="text-center">
                       <Button
                         variant="ghost"
                         size="sm"
                         onClick={() => handleDeleteClick(user)}
                         className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                        disabled={isDeleting}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -497,7 +466,7 @@ function AdminUsersTable() {
                     colSpan={7}
                     className="text-center text-muted-foreground py-8"
                   >
-                    {String(t("adminNoUsersFound") || "No users found")}
+                    {t("adminNoUsersFound")}
                   </TableCell>
                 </TableRow>
               )}
@@ -505,63 +474,33 @@ function AdminUsersTable() {
           </Table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              {String(t("adminPrevious") || "Previous")}
-            </Button>
-
-            <span className="text-sm text-muted-foreground">
-              {`${String(t("adminPageOf") || "Page")} ${page} / ${totalPages}`}
-            </span>
-
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              {String(t("adminNext") || "Next")}
-            </Button>
-          </div>
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
-      {/* Delete Dialog */}
-      <AlertDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-      >
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {String(t("adminDeleteUserTitle") || "Delete User")}
-            </AlertDialogTitle>
+            <AlertDialogTitle>{t("adminDeleteUserTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {userToDelete
-                ? `${String(
-                    t("adminDeleteUserConfirmation") ||
-                      "Are you sure you want to delete"
-                  )} ${userToDelete.name}?`
-                : `${String(
-                    t("adminDeleteUserConfirmation") ||
-                      "Are you sure you want to delete this user"
-                  )}?`}
+              {userToDelete ?
+                `${t("adminDeleteUserConfirmation")} ${userToDelete.name}?` :
+                `${t("adminDeleteUserConfirmation")} ${t("adminThisUser")}?`
+              }
             </AlertDialogDescription>
           </AlertDialogHeader>
-
           <AlertDialogFooter>
-            <AlertDialogCancel>
-              {String(t("cancel") || "Cancel")}
-            </AlertDialogCancel>
-
+            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={handleDeleteUser}
               className="bg-red-600 hover:bg-red-700"
             >
-              {String(t("adminDelete") || "Delete")}
+              {t("adminDelete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

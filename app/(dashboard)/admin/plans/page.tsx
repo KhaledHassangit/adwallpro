@@ -13,14 +13,15 @@ import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2 } from "lucide-react";
 import { useNotifications, localized } from "@/hooks/notifications";
-import { 
-  useGetPlansQuery, 
-  useCreatePlanMutation, 
-  useUpdatePlanMutation, 
+import {
+  useGetPlansQuery,
+  useCreatePlanMutation,
+  useUpdatePlanMutation,
   useDeletePlanMutation,
 } from "@/features/plansApi";
-import { Category, Plan, PlanOption } from "@/types/types";
+import { Category, Plan, PlanOption, ValidationError } from "@/types/types";
 import { useGetCategoriesQuery } from "@/features/categoriesApi";
+import { PaginationControl } from "@/components/ui/pagination-control";
 
 // Constants for better maintainability
 const DURATION_OPTIONS = {
@@ -64,27 +65,27 @@ const getPlanIcon = (planType?: string) => {
 
 const getContrastColor = (hexColor?: string) => {
   if (!hexColor) return '#ffffff';
-  
+
   const r = parseInt(hexColor.slice(1, 3), 16);
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
-  
+
   const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-  
+
   return luminance > 0.5 ? '#000000' : '#ffffff';
 };
 
 const getLighterColor = (hexColor?: string, percent = 20) => {
   if (!hexColor) return '#f3f4f6';
-  
+
   const r = parseInt(hexColor.slice(1, 3), 16);
   const g = parseInt(hexColor.slice(3, 5), 16);
   const b = parseInt(hexColor.slice(5, 7), 16);
-  
+
   const newR = Math.min(255, Math.floor(r + (255 - r) * percent / 100));
   const newG = Math.min(255, Math.floor(g + (255 - g) * percent / 100));
   const newB = Math.min(255, Math.floor(b + (255 - b) * percent / 100));
-  
+
   return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
 };
 
@@ -394,9 +395,9 @@ const EditCard = memo(({ form, locale, categories, categoriesLoading, onFormChan
   return (
     <Card className="relative overflow-hidden border-2 border-dashed border-primary shadow-xl hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
       {/* Header with dynamic color */}
-      <div 
+      <div
         className="p-6 text-white"
-        style={{ 
+        style={{
           backgroundColor: form.color,
           color: textColor
         }}
@@ -421,9 +422,9 @@ const EditCard = memo(({ form, locale, categories, categoriesLoading, onFormChan
               />
             </div>
           </div>
-          <Badge 
+          <Badge
             className="bg-white/20 text-white border-white/30 backdrop-blur-sm"
-            style={{ 
+            style={{
               backgroundColor: 'rgba(255, 255, 255, 0.2)',
               color: textColor
             }}
@@ -673,7 +674,7 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
             ))}
             {plan.features && plan.features.length > 3 && (
               <li className="text-sm text-muted-foreground">
-                +{plan.features.length - 3} {locale === "ar" ? "مزايا أخرى" : "more features"}
+                +{plan.features.length - 3} {locale === "ar" ? "مزيد من المزايا" : "more features"}
               </li>
             )}
           </ul>
@@ -712,6 +713,7 @@ function PlansAdminPageContent() {
   const notifications = useNotifications();
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; plan: Plan | null }>({ open: false, plan: null });
+  const [page, setPage] = useState(1);
 
   const defaultDuration = useMemo(() => locale === "ar" ? "1 شهر" : "1 month", [locale]);
 
@@ -734,7 +736,7 @@ function PlansAdminPageContent() {
   });
 
   // Use the RTK Query hooks
-  const { data: plansData, isLoading: plansLoading, error: plansError, refetch: refetchPlans } = useGetPlansQuery();
+  const { data: plansData, isLoading: plansLoading, error: plansError, refetch: refetchPlans } = useGetPlansQuery({ page, limit: 10 });
   const { data: categoriesData, isLoading: categoriesLoading } = useGetCategoriesQuery();
   const [createPlan, { isLoading: creatingPlan }] = useCreatePlanMutation();
   const [updatePlan, { isLoading: updatingPlan }] = useUpdatePlanMutation();
@@ -742,6 +744,7 @@ function PlansAdminPageContent() {
 
   // Extract plans and categories from the API responses
   const plans = plansData?.data?.data || [];
+  const totalPages = plansData?.data?.paginationResult?.numberOfPages || 1;
   const categories = categoriesData?.data?.data || [];
 
   const isRTL = locale === "ar";
@@ -965,6 +968,15 @@ function PlansAdminPageContent() {
             </>
           )}
         </div>
+
+        {/* Pagination Control */}
+        {!plansLoading && (
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        )}
 
         {/* Delete Confirmation Dialog */}
         <Dialog open={deleteModal.open} onOpenChange={(open) => setDeleteModal({ open, plan: deleteModal.plan })}>

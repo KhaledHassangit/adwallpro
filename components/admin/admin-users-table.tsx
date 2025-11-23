@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { useNotifications } from "@/hooks/notifications";
+import { PaginationControl } from "@/components/ui/pagination-control";
 
 interface User {
   _id: string;
@@ -62,7 +63,7 @@ export function AdminUsersTable() {
     try {
       setLoading(true);
       const response = await fetch(
-        `http://72.60.178.180:8000/api/v1/users?page=${page}&limit=10`,
+        `http://72.60.178.180:8000/api/v1/users?page=${page}&limit=2`,
         {
           headers: getAuthHeaders(),
         }
@@ -82,7 +83,12 @@ export function AdminUsersTable() {
       // Updated to handle the correct API response structure
       if (data && data.data && data.data.data && Array.isArray(data.data.data.users)) {
         setUsers(data.data.data.users);
-        setTotalPages(Math.ceil((data.data.results || data.data.data.users.length) / 10));
+        // Use paginationResult if available, otherwise calculate from results
+        if (data.data.paginationResult) {
+          setTotalPages(data.data.paginationResult.numberOfPages);
+        } else {
+          setTotalPages(Math.ceil((data.data.results || data.data.data.users.length) / 10));
+        }
       } else {
         console.warn("Unexpected API response structure:", data);
         setUsers([]);
@@ -220,25 +226,11 @@ export function AdminUsersTable() {
           </Table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between mt-4">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-            >
-              {t("adminPrevious")}
-            </Button>
-            <span className="text-sm text-muted-foreground">
-              {`${t("adminPageOf")} ${page} / ${totalPages}`}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-            >
-              {t("adminNext")}
-            </Button>
-          </div>
+          <PaginationControl
+            currentPage={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
         </CardContent>
       </Card>
 
@@ -248,8 +240,8 @@ export function AdminUsersTable() {
           <AlertDialogHeader>
             <AlertDialogTitle>{t("adminDeleteUserTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {userToDelete ? 
-                `${t("adminDeleteUserConfirmation")} ${userToDelete.name}?` : 
+              {userToDelete ?
+                `${t("adminDeleteUserConfirmation")} ${userToDelete.name}?` :
                 `${t("adminDeleteUserConfirmation")} ${t("adminThisUser")}?`
               }
             </AlertDialogDescription>

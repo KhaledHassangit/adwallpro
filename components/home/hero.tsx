@@ -14,12 +14,12 @@ import {
 } from "@/components/ui/icon";
 import { UltraSlider } from "./slider";
 import { useEffect, useState } from "react";
-import { useAuthStore } from "@/lib/auth";
+import { useUserStore } from "@/lib/auth";
 
 export function UltraHero() {
   const { t } = useI18n();
   const [mounted, setMounted] = useState(false);
-  const { user } = useAuthStore();
+  const { user } = useUserStore();
 
   useEffect(() => {
     setMounted(true);

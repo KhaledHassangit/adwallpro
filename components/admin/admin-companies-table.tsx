@@ -32,6 +32,7 @@ import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { CompanyDetailsDialog } from "@/components/admin/company-details-dialog";
 import { useNotifications } from "@/hooks/notifications";
 import { cn } from "@/lib/utils";
+import { PaginationControl } from "@/components/ui/pagination-control";
 
 // دالة لتنظيف رابط الصورة المكرر
 const cleanImageUrl = (imageUrl?: string): string => {
@@ -687,31 +688,11 @@ export function AdminCompaniesTable({
       </div>
 
       {/* Pagination */}
-      <Card className="ultra-card border-0">
-        <CardContent className="py-4">
-          <div className="flex items-center justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="border-primary/20 text-primary hover:bg-primary/10"
-            >
-              السابق
-            </Button>
-            <span className="text-sm text-muted-foreground bg-primary/5 px-3 py-1 rounded-full">
-              صفحة {page} من {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="border-primary/20 text-primary hover:bg-primary/10"
-            >
-              التالي
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <PaginationControl
+        currentPage={page}
+        totalPages={totalPages}
+        onPageChange={setPage}
+      />
 
       {/* Company Details Dialog */}
       <CompanyDetailsDialog

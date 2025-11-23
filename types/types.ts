@@ -120,8 +120,13 @@ export interface Company {
 export interface CompaniesResponse {
   status: string;
   results: number;
+  paginationResult?: {
+    currentPage: number;
+    limit: number;
+    numberOfPages: number;
+  };
   data: {
-      data: Company[];
+    data: Company[];
   };
 }
 
@@ -137,25 +142,30 @@ export interface GetCompaniesParams {
 }
 
 export interface Coupon {
-    _id: string;
-    couponCode: string;
-    discountType: "percentage" | "fixed";
-    discountValue: number;
-    isActive: boolean;
-    createdDate: string;
-    expiryDate: string;
-    startDate?: string;
-    maxUses?: number;
-    usedCount?: number;
+  _id: string;
+  couponCode: string;
+  discountType: "percentage" | "fixed";
+  discountValue: number;
+  isActive: boolean;
+  createdDate: string;
+  expiryDate: string;
+  startDate?: string;
+  maxUses?: number;
+  usedCount?: number;
 }
 
 // Define the shape of the API response
 export interface CouponsResponse {
-    status: string;
-    results: number;
-    data: {
-        data: Coupon[];
-    };
+  status: string;
+  results: number;
+  paginationResult?: {
+    currentPage: number;
+    limit: number;
+    numberOfPages: number;
+  };
+  data: {
+    data: Coupon[];
+  };
 }
 
 export interface PlanOption {
@@ -306,6 +316,11 @@ export interface UserStats {
 export interface PaginatedUsersResponse {
   status: string;
   results: number;
+  paginationResult?: {
+    currentPage: number;
+    limit: number;
+    numberOfPages: number;
+  };
   data: {
     data: {
       users: User[];
