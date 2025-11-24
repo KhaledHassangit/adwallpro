@@ -11,6 +11,7 @@ export interface Notification {
   userId?: string;
   createdAt: string;
   updatedAt: string;
+  link?: string;
 }
 
 export interface NotificationsResponse {
@@ -45,15 +46,16 @@ export const notificationsApi = createApi({
         withToken: true,
       }),
       providesTags: ['Notification'],
-      // Transform the response to match the expected structure
+      // Simplified transform to extract notifications directly
       transformResponse: (response: any) => {
+        console.log("Raw response from getNotifications:", response);
         return {
           status: response.status,
           message: response.message,
           data: {
-            results: response.data.results,
+            results: response.data?.results || 0,
             data: {
-              notifications: response.data.data.notifications
+              notifications: response.data?.data || []
             }
           }
         };

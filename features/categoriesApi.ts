@@ -1,5 +1,3 @@
-// @/features/categoriesApi.js
-
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '@/lib/baseURL'; // Adjust path if needed
 import { Category, CategoryStats, UpdateCategoryParams } from '@/types/types'; // Adjust path if needed
@@ -7,16 +5,17 @@ import { Category, CategoryStats, UpdateCategoryParams } from '@/types/types'; /
 // Define a type for the expected paginated response for better type safety and developer experience.
 // This structure should match what your backend API returns.
 interface PaginatedCategoriesResponse {
+  status: string;
+  message: string;
   data: {
-    data: Category[];
+    results: number;
     paginationResult?: {
       currentPage: number;
       numberOfPages: number;
       limit: number;
-      // Add other pagination fields if your API provides them (e.g., nextPage, prevPage)
     };
+    data: Category[];
   };
-  results?: number; // Total number of categories across all pages
 }
 
 export const categoriesApi = createApi({
@@ -33,22 +32,48 @@ export const categoriesApi = createApi({
       }),
     }),
 
-    // Get all Categories with Pagination and Sorting
-    getCategories: builder.query<PaginatedCategoriesResponse, { page?: number; limit?: number; sort?: string }>({
-      query: ({ page = 1, limit = 100, sort }) => {
-        // Build the query object. Only include 'sort' if it's provided.
-        const queryParams: { page: string; limit: string; sort?: string } = {
+    // Get all Categories with Pagination, Sorting, and Search
+    getCategories: builder.query<PaginatedCategoriesResponse, { 
+      page?: number; 
+      limit?: number; 
+      sort?: string;
+      keyword?: string;
+      category?: string; // Add category filter parameter
+    }>({
+      query: ({ page = 1, limit = 100, sort, keyword, category }) => {
+        // Build the query object. Only include parameters if they're provided.
+        const queryParams: { page: string; limit: string; sort?: string; keyword?: string; category?: string } = {
           page: String(page),
           limit: String(limit),
         };
+        
         if (sort) {
           queryParams.sort = sort;
         }
+        
+        if (keyword) {
+          queryParams.keyword = keyword;
+        }
+        
+        if (category) {
+          queryParams.category = category;
+        }
+
+        // Determine the URL based on whether we have search/filter parameters
+        const hasSearchOrFilter = keyword || category;
+        const baseUrl = hasSearchOrFilter ? '/categories/search' : '/categories';
+        
+        // Build query parameters for search/filter
+        let searchParams = new URLSearchParams();
+        if (keyword) searchParams.append('keyword', keyword);
+        if (category) searchParams.append('category', category);
+        searchParams.append('page', String(page));
+        searchParams.append('limit', String(limit));
 
         return {
-          url: '/categories',
+          url: hasSearchOrFilter ? `${baseUrl}?${searchParams.toString()}` : baseUrl,
           method: 'GET',
-          params: queryParams, // Parameters are sent as query string (e.g., /categories?page=1&limit=10)
+          params: hasSearchOrFilter ? {} : queryParams, // Only send params for non-search requests
           withToken: false, // Set to true if this endpoint requires authentication
         };
       },

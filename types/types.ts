@@ -66,8 +66,9 @@ export interface Category {
   descriptionAr: string;
   descriptionEn: string;
   color: string;
-  image: string;
+  imageUrl: string;
   createdAt: string;
+  image:string
 }
 
 export interface CategoryStats {

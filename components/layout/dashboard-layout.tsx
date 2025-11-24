@@ -45,31 +45,29 @@ function getUserNavItems(t: (key: string) => string) {
     { title: t("overview"), href: "/manage", icon: LayoutDashboard },
     { title: t("adsManagement"), href: "/manage/ads", icon: Eye },
     { title: t("subscriptionPlans"), href: "/manage/subscriptions", icon: Ticket },
-    { title: t("personalProfile"), href: "/manage/profile", icon: User2 },
+    { title: t("personalProfile"), href: "/manage/profile", icon: User },
   ];
 }
 
-// *** CHANGE: Add userType to the props ***
 interface DashboardLayoutProps {
   children: React.ReactNode;
-  userType?: "admin" | "user"; // New prop to explicitly set the user type
+  userType?: "admin" | "user";
 }
 
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const { t, locale } = useI18n();
   const pathname = usePathname();
   
-  // Get user data from the store
+  // Get user data from store
   const { user } = useUserStore();
   
-  // *** CHANGE: Determine navigation based on the new prop ***
-  // This is now a simple, server-safe check. No more client-side guessing.
+  // Determine navigation based on userType prop
   const navItems = userType === "admin" ? getAdminNavItems(t) : getUserNavItems(t);
 
   // Notification state
   const [isNotificationPanelOpen, setIsNotificationPanelOpen] = useState(false);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
-  const [notificationLimit, setNotificationLimit] = useState(5); // Start with 5 notifications
+  const [notificationLimit, setNotificationLimit] = useState(5);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLargeScreen, setIsLargeScreen] = useState(false);
@@ -80,14 +78,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
 
   // Notification API hooks
   const { data: notificationsData, isLoading, refetch } = useGetNotificationsQuery({
-    limit: notificationLimit, // Use dynamic limit
+    limit: notificationLimit,
   });
   const [markAllAsRead] = useMarkAllAsReadMutation();
   const [markAsRead] = useMarkAsReadMutation();
   const [deleteNotification] = useDeleteNotificationMutation();
 
+  // FIX: Extract notifications correctly from the API response
   const notifications = notificationsData?.data?.data?.notifications || [];
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
   const totalResults = notificationsData?.data?.results || 0;
   const hasMore = notifications.length < totalResults;
 
@@ -132,7 +131,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   };
 
   const handleLoadMore = () => {
-    setNotificationLimit(prev => prev + 5); // Load 5 more notifications
+    setNotificationLimit(prev => prev + 5);
   };
 
   const getNotificationIcon = (type: string) => {
@@ -159,7 +158,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isSidebarOpen, isLargeScreen]);
 
-  // Controls state based on screen size
   useEffect(() => {
     const handleResize = () => {
       const large = window.innerWidth >= 1024;
@@ -171,7 +169,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Close notification panel when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -195,7 +192,6 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         ref={sidebarRef}
         className={cn(
           "fixed lg:relative z-30 w-64 h-screen lg:h-auto lg:min-h-screen transition-all duration-300 ease-in-out",
-          // Adjust transform classes for RTL
           isRTL
             ? isSidebarOpen
               ? "translate-x-0 right-0"
@@ -328,7 +324,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                     forceMount
                   >
                     <DropdownMenuLabel className="flex items-center justify-between bg-secondary/50 px-4 py-3">
-                      {String(t("notifications") || "Notifications")}
+                      {t("notifications")}
                       {unreadCount > 0 && (
                         <Button
                           variant="ghost"
@@ -336,7 +332,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                           onClick={handleMarkAllAsRead}
                           className="h-auto p-0 text-xs"
                         >
-                          {String(t("markAllAsRead") || "Mark all as read")}
+                          {t("markAllAsRead")}
                         </Button>
                       )}
                     </DropdownMenuLabel>
@@ -386,7 +382,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                         ))
                       ) : (
                         <div className="p-4 text-center text-muted-foreground">
-                          {String(t("noNotifications") || "No notifications")}
+                          {t("noNotifications")}
                         </div>
                       )}
                     </div>
@@ -397,14 +393,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                           <DropdownMenuItem className="cursor-pointer justify-center" onClick={handleLoadMore}>
                             <Button variant="ghost" size="sm" className="w-full">
                               <ChevronDown className="h-4 w-4 mr-2" />
-                              {String(t("loadMore") || "Load More")}
+                              {t("loadMore")}
                             </Button>
                           </DropdownMenuItem>
                         ) : (
                           <DropdownMenuItem className="cursor-pointer justify-center" asChild>
                             <a href="/admin/notifications" className="flex items-center justify-center w-full">
                               <Button variant="ghost" size="sm" className="w-full">
-                                {String(t("viewAllNotifications") || "View all notifications")}
+                                {t("viewAllNotifications")}
                                 <ExternalLink className="h-4 w-4 ml-2" />
                               </Button>
                             </a>

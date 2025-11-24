@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { Users, Shield, UserCheck, Activity, Building, Tag, TrendingUp, RefreshCw, BarChart3, PieChartIcon } from "lucide-react";
 import { useI18n } from "@/providers/LanguageProvider";
-// Removed getAuthCookie import
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { useGetAnalyticsQuery } from "@/features/analyticsApi";
 

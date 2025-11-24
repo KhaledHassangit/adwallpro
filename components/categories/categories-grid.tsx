@@ -5,15 +5,14 @@ import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/providers/LanguageProvider";
-import { ArrowRight, Eye, Loader2 } from "@/components/ui/icon";
-import type { Category } from "@/types/types";
+import { ArrowRight,  Eye, Loader2 } from "@/components/ui/icon";
 import { useGetCategoriesQuery } from "@/features/categoriesApi";
 
-// Swiper imports
 import { Swiper, SwiperSlide } from "swiper/react";
 import { Autoplay } from "swiper/modules";
 import "swiper/css";
 import { useMemo } from "react";
+import { ArrowLeft } from "lucide-react";
 
 export function CategoriesSlider() {
   const { locale, t } = useI18n();
@@ -21,16 +20,12 @@ export function CategoriesSlider() {
   // Use RTK Query hook to fetch categories
   const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery({ page: 1, limit: 10 });
   
-  // Extract categories from response with proper fallbacks
   const categories = useMemo(() => {
     if (!categoriesResponse) return [];
     
-    // Try multiple possible paths to extract the categories array
     const possiblePaths = [
       categoriesResponse?.data?.data,
       categoriesResponse?.data,
-      categoriesResponse?.data?.categories,
-      categoriesResponse?.categories,
       categoriesResponse
     ];
     
@@ -41,14 +36,7 @@ export function CategoriesSlider() {
     return [];
   }, [categoriesResponse]);
 
-  // Function to get full image URL
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder.svg";
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith("http")) return imagePath;
-    // Otherwise, prepend the base URL
-    return `http://72.60.178.180:8000/${imagePath}`;
-  };
+ 
 
   if (isLoading)
     return (
@@ -70,6 +58,9 @@ export function CategoriesSlider() {
       </section>
     );
 
+  const ArrowIcon = locale === "ar" ? ArrowLeft : ArrowRight;
+  const arrowMarginClass = locale === "ar" ? "mr-2" : "ml-2";
+
   return (
     <section className="py-16 md:py-20">
       <div className="container-premium">
@@ -90,7 +81,7 @@ export function CategoriesSlider() {
             <Link href="/categories">
               <Eye className="h-5 w-5 mr-2" />
               {t("viewAllCategories")}
-              <ArrowRight className="h-4 w-4 ml-2" />
+              <ArrowIcon className={`h-4 w-4 ${arrowMarginClass}`} />
             </Link>
           </Button>
         </div>
@@ -125,7 +116,7 @@ export function CategoriesSlider() {
                     <CardContent className="p-0">
                       <div className="relative aspect-[4/3] w-full overflow-hidden">
                         <Image
-                          src={getImageUrl(c.image)}
+                          src={c.imageUrl}
                           alt={name}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"

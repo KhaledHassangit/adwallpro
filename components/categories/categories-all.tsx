@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useI18n } from "@/providers/LanguageProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/common/empty-state";
 import {
   Search,
@@ -12,64 +11,90 @@ import {
   Grid3X3,
   List,
   ArrowRight,
+  ChevronLeft,
+  ChevronRight,
 } from "@/components/ui/icon";
 import Link from "next/link";
 import Image from "next/image";
-import type { Category } from "@/types/types";
 import { LoadingSpinner } from "../common/loading-spinner";
 import { useGetCategoriesQuery } from "@/features/categoriesApi";
+import { ArrowLeft } from "lucide-react";
+import { PaginationControl } from "../ui/pagination-control";
+import { Category } from "@/types/types";
 
 export function CategoriesAll() {
   const { locale, t } = useI18n();
   const [searchQuery, setSearchQuery] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [showFilters, setShowFilters] = useState(false);
-
-  // Use RTK Query hook to fetch categories
-  const { data: categoriesResponse, isLoading, error } = useGetCategoriesQuery({ page: 1, limit: 100 });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   
-  // Extract categories from response with proper fallbacks
-  const categories = useMemo(() => {
-    if (!categoriesResponse) return [];
+  const itemsPerPage = 16; 
+  
+  const { data: categoriesResponse, isLoading, error, isFetching } = useGetCategoriesQuery({
+    page: currentPage,
+    limit: itemsPerPage,
+    keyword: searchKeyword,
+    category: selectedCategory
+  });
+  
+  const { categories, pagination } = useMemo(() => {
+    if (!categoriesResponse?.data) return { categories: [], pagination: null };
     
-    // Try multiple possible paths to extract the categories array
-    const possiblePaths = [
-      categoriesResponse?.data?.data,
-      categoriesResponse?.data,
-      categoriesResponse?.data?.categories,
-      categoriesResponse?.categories,
-      categoriesResponse
-    ];
+    const categoriesArray = categoriesResponse.data.data || [];
     
-    for (const path of possiblePaths) {
-      if (Array.isArray(path)) return path;
-    }
+    const paginationInfo = categoriesResponse.data.paginationResult || null;
     
-    return [];
+    return {
+      categories: categoriesArray,
+      pagination: paginationInfo
+    };
   }, [categoriesResponse]);
 
-  const filteredCategories = useMemo(() => {
-    if (!searchQuery) return categories;
+  useEffect(() => {
+    const debounceTimer = setTimeout(() => {
+      if (searchQuery !== searchKeyword) {
+        setSearchKeyword(searchQuery);
+        setCurrentPage(1); 
+      }
+    }, 500); // 500ms debounce
 
-    return categories.filter((cat) => {
-      const name = locale === "ar" ? cat.nameAr : cat.nameEn;
-      return name && name.toLowerCase().includes(searchQuery.toLowerCase());
-    });
-  }, [categories, searchQuery, locale]);
+    return () => clearTimeout(debounceTimer);
+  }, [searchQuery, searchKeyword]);
 
-  // Add this function to handle clearing search
+  // Function to handle clearing search
   const handleClearSearch = () => {
     setSearchQuery("");
+    setCurrentPage(1);
   };
 
-  // Function to get full image URL
-  const getImageUrl = (imagePath: string) => {
-    if (!imagePath) return "/placeholder.svg";
-    // If it's already a full URL, return as is
-    if (imagePath.startsWith("http")) return imagePath;
-    // Otherwise, prepend the base URL
-    return `http://72.60.178.180:8000/${imagePath}`;
+  // Function to handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top when changing pages for better UX
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
+
+  // Function to handle category filter selection
+  const handleCategoryFilter = (categoryId: string | null) => {
+    setSelectedCategory(categoryId);
+    setCurrentPage(1); // Reset to first page when filtering
+  };
+
+  // Function to clear all filters
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setSearchKeyword("");
+    setSelectedCategory(null);
+    setCurrentPage(1);
+  };
+
+  // Determine which arrow icon to use based on locale
+  const ArrowIcon = locale === "ar" ? ArrowLeft : ArrowRight;
+  const PrevPageIcon = locale === "ar" ? ChevronRight : ChevronLeft;
+  const NextPageIcon = locale === "ar" ? ChevronLeft : ChevronRight;
 
   if (isLoading)
     return (
@@ -142,25 +167,25 @@ export function CategoriesAll() {
         {showFilters && (
           <div className="flex flex-wrap gap-2 pt-4 border-t">
             <Button
-              variant="outline"
+              variant={selectedCategory === null ? "default" : "outline"}
               size="sm"
-              asChild
+              onClick={() => handleCategoryFilter(null)}
               className="rounded-full hover:bg-primary-50 hover:border-primary-200"
             >
-              <Link href="/categories">{t("allCategories")}</Link>
+              {t("allCategories")}
             </Button>
             {categories.slice(0, 8).map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
               return (
-                <Link key={cat._id} href={`/companies/category/${cat._id}`}>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="rounded-full hover:bg-primary-50 hover:border-primary-200"
-                  >
-                    {name || t("undefinedCategory")}
-                  </Button>
-                </Link>
+                <Button
+                  key={cat._id}
+                  variant={selectedCategory === cat._id ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => handleCategoryFilter(cat._id)}
+                  className="rounded-full hover:bg-primary-50 hover:border-primary-200"
+                >
+                  {name || t("undefinedCategory")}
+                </Button>
               );
             })}
           </div>
@@ -169,19 +194,22 @@ export function CategoriesAll() {
 
       {/* Categories Grid */}
       <div className="space-y-6">
-        {filteredCategories.length === 0 ? (
+        {categories.length === 0 ? (
           <EmptyState
             title={t("noResultsFound")}
             description={t("noMatchingCategories")}
             action={{
-              label: t("clearSearch"),
-              onClick: handleClearSearch,  
+              label: t("clearFilters"),
+              onClick: clearAllFilters,  
             }}
           />
         ) : viewMode === "grid" ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {filteredCategories.map((cat) => {
+            {categories.map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
+              const description = locale === "ar" ? cat.descriptionAr : cat.descriptionEn;
+              // Use imageUrl if available, otherwise construct it from image path
+              const imageUrl = cat.imageUrl || (cat.image ? `https://www.adwallpro.com/uploads/categories/${cat.image}` : "/placeholder.svg");
 
               return (
                 <Link
@@ -203,7 +231,7 @@ export function CategoriesAll() {
                       {/* Image */}
                       <div className="relative aspect-[16/10] rounded-xl overflow-hidden">
                         <Image
-                          src={getImageUrl(cat.image)}
+                          src={imageUrl}
                           alt={name || "تصنيف غير محدد"}
                           fill
                           className="object-cover transition-transform duration-500 group-hover:scale-105"
@@ -221,8 +249,8 @@ export function CategoriesAll() {
                         <h3 className="font-bold text-lg group-hover:text-primary-600 transition-colors">
                           {name || "تصنيف غير محدد"}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
-                          {t("discoverBestCompanies")} {name || t("undefinedCategory")}
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {description || t("discoverBestCompanies")} {name || t("undefinedCategory")}
                         </p>
                       </div>
 
@@ -233,7 +261,7 @@ export function CategoriesAll() {
                         style={{ backgroundColor: cat.color }}
                       >
                         <Link href={`/companies/category/${cat._id}`}>
-                          <ArrowRight className="h-4 w-4 mr-2" />
+                          <ArrowIcon className="h-4 w-4 mr-2" />
                           {t("exploreCompanies")}
                         </Link>
                       </Button>
@@ -244,10 +272,13 @@ export function CategoriesAll() {
             })}
           </div>
         ) : (
-          // List view remains unchanged
+          // List view
           <div className="space-y-4">
-            {filteredCategories.map((cat) => {
+            {categories.map((cat) => {
               const name = locale === "ar" ? cat.nameAr : cat.nameEn;
+              const description = locale === "ar" ? cat.descriptionAr : cat.descriptionEn;
+              // Use imageUrl if available, otherwise construct it from image path
+              const imageUrl = cat.imageUrl || (cat.image ? `https://www.adwallpro.com/uploads/categories/${cat.image}` : "/placeholder.svg");
 
               return (
                 <Link
@@ -259,7 +290,7 @@ export function CategoriesAll() {
                     <div className="flex items-center gap-6">
                       <div className="relative w-24 h-16 rounded-xl overflow-hidden flex-shrink-0">
                         <Image
-                          src={getImageUrl(cat.image)}
+                          src={imageUrl}
                           alt={name || "تصنيف غير محدد"}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300"
@@ -280,6 +311,9 @@ export function CategoriesAll() {
                             {name || t("undefinedCategory")}
                           </h3>
                         </div>
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {description || t("discoverBestCompanies")} {name || t("undefinedCategory")}
+                        </p>
                       </div>
 
                       <Button
@@ -288,7 +322,7 @@ export function CategoriesAll() {
                         className="rounded-xl group-hover:bg-primary-50 group-hover:border-primary-200 bg-transparent"
                       >
                         <Link href={`/companies/category/${cat._id}`}>
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowIcon className="h-4 w-4" />
                         </Link>
                       </Button>
                     </div>
@@ -297,6 +331,15 @@ export function CategoriesAll() {
               );
             })}
           </div>
+        )}
+
+        {/* Pagination - Using PaginationControl component */}
+        {pagination && pagination.numberOfPages > 1 && (
+          <PaginationControl
+            currentPage={currentPage}
+            totalPages={pagination.numberOfPages}
+            onPageChange={handlePageChange}
+          />
         )}
       </div>
     </div>

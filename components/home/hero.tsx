@@ -15,9 +15,10 @@ import {
 import { UltraSlider } from "./slider";
 import { useEffect, useState } from "react";
 import { useUserStore } from "@/lib/auth";
+import { ArrowLeft } from "lucide-react";
 
 export function UltraHero() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [mounted, setMounted] = useState(false);
   const { user } = useUserStore();
 
@@ -27,7 +28,6 @@ export function UltraHero() {
 
   if (!mounted) return null;
 
-  // تحديد الرابط والنص بناءً على حالة تسجيل الدخول
   const getButtonConfig = () => {
     if (user) {
       return {
@@ -45,6 +45,11 @@ export function UltraHero() {
   };
 
   const buttonConfig = getButtonConfig();
+  
+  // Determine which arrow icon to use based on locale
+  const ArrowIcon = locale === "ar" ? ArrowLeft : ArrowRight;
+  const arrowMarginClass = locale === "ar" ? "mr-2 sm:mr-3" : "ml-2 sm:ml-3";
+  const arrowHoverClass = locale === "ar" ? "group-hover:-translate-x-2" : "group-hover:translate-x-2";
 
   return (
     <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-pattern-grid">
@@ -89,7 +94,7 @@ export function UltraHero() {
                 <Link href={buttonConfig.href}>
                   <buttonConfig.icon className="h-5 w-5 sm:h-6 sm:w-6 mr-2 sm:mr-3" />
                   {t("addNewAd")}
-                  <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 ml-2 sm:ml-3 transition-all group-hover:translate-x-2" />
+                  <ArrowIcon className={`h-4 w-4 sm:h-5 sm:w-5 ${arrowMarginClass} transition-all ${arrowHoverClass}`} />
                 </Link>
               </Button>
             <Button

@@ -15,9 +15,9 @@ export const ar = {
     signOut: "تسجيل الخروج",
     signUp: "إنشاء حساب",
     FAQ: "الأسئلة الشائعة",
-  "googleLoginFailed": "فشل تسجيل الدخول بحساب جوجل",
-  "googleAuthFailed": "فشلت مصادقة جوجل",
-  "orContinueWith": "أو تابع باستخدام",
+    "googleLoginFailed": "فشل تسجيل الدخول بحساب جوجل",
+    "googleAuthFailed": "فشلت مصادقة جوجل",
+    "orContinueWith": "أو تابع باستخدام",
     "signinWithGoogle": "تسجيل الدخول باستخدام جوجل",
     // About Us Section
     aboutUsTitle: "من نحن",
@@ -479,31 +479,31 @@ export const ar = {
     userIdNotFound: "معرف المستخدم غير موجود",
     termsAndConditions: 'بالنقر على "إرسال الطلب" فإنك توافق على شروط الاستخدام وسياسة الخصوصية',
     pendingApproval: "في انتظار الموافقة",
-  activeCompanies: "الشركات النشطة",
-  pendingCompanies: "الشركات المعلقة",
-  subscriptionsPerPlan: "الاشتراكات حسب الخطة",
-  noChartData: "لا توجد بيانات اشتراك متاحة",
-  barChart: "مخطط شريطي",
-  pieChart: "مخطط دائري",
-  adminRecentActivity: "النشاط الأخير",
-  totalEvents: "إجمالي الأحداث",
-  noActivity: "لم يتم العثور على نشاط",
-  ofTotal: "من الإجمالي",
-  adminDashboardTitle: "لوحة تحكم المسؤول",
-  adminDashboardWelcome: "مرحباً بك في لوحة تحكم المسؤول",
-  refresh: "تحديث",
-  
-  // Stats
-  totalUsers: "إجمالي المستخدمين",
-  registeredUser: "المستخدمون المسجلون",
-  admins: "المسؤولون",
-  adminAccounts: "حسابات المسؤولين",
-  regularUsers: "المستخدمون العاديون",
-  adUsers: "المستخدمون العاديون",
-  activeThisWeek: "نشط (24 ساعة)",
-  activeUserLast7Days: "المستخدمون النشطون (آخر 24 ساعة)",
-  eventsLast24h: "حدث في آخر 24 ساعة",
- // Image Upload Component
+    activeCompanies: "الشركات النشطة",
+    pendingCompanies: "الشركات المعلقة",
+    subscriptionsPerPlan: "الاشتراكات حسب الخطة",
+    noChartData: "لا توجد بيانات اشتراك متاحة",
+    barChart: "مخطط شريطي",
+    pieChart: "مخطط دائري",
+    adminRecentActivity: "النشاط الأخير",
+    totalEvents: "إجمالي الأحداث",
+    noActivity: "لم يتم العثور على نشاط",
+    ofTotal: "من الإجمالي",
+    adminDashboardTitle: "لوحة تحكم المسؤول",
+    adminDashboardWelcome: "مرحباً بك في لوحة تحكم المسؤول",
+    refresh: "تحديث",
+
+    // Stats
+    totalUsers: "إجمالي المستخدمين",
+    registeredUser: "المستخدمون المسجلون",
+    admins: "المسؤولون",
+    adminAccounts: "حسابات المسؤولين",
+    regularUsers: "المستخدمون العاديون",
+    adUsers: "المستخدمون العاديون",
+    activeThisWeek: "نشط (24 ساعة)",
+    activeUserLast7Days: "المستخدمون النشطون (آخر 24 ساعة)",
+    eventsLast24h: "حدث في آخر 24 ساعة",
+    // Image Upload Component
     imagePreviewAlt: "معاينة الصورة",
     removeImage: "إزالة الصورة",
     dragImageOrClick: "اسحب الصورة هنا أو انقر للاختيار",
@@ -615,7 +615,7 @@ export const ar = {
     adminFailedToFetchCategories: "فشل في جلب الفئات",
     adminFailedToDeleteCategory: "فشل في حذف الفئة",
     adminCategoryDeletedSuccess: "تم حذف الفئة بنجاح",
-
+    companies: "الشركات",
     // Admin Companies Management
     adminCompaniesManagement: "إدارة الشركات",
     adminCompaniesManagementDesc: "عرض وإدارة جميع شركات النظام",
@@ -754,7 +754,7 @@ export const ar = {
     "loadingNotifications": "جاري تحميل الإشعارات...",
     "markAllAsRead": "تحديد الكل كمقروء",
     "markAsRead": "تحديد كمقروء",
-  
+
 
 
 };
