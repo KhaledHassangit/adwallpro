@@ -1,11 +1,11 @@
-// Create a new file at @/components/admin/AdminCouponsPage.tsx
+// @/components/admin/AdminCouponsPage.tsx
 "use client";
 
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
 import { useI18n } from "@/providers/LanguageProvider";
-import { PlusCircle, Edit, Trash2 } from "@/components/ui/icon";
+import { PlusCircle, Edit, Trash2, Search } from "@/components/ui/icon";
 import {
   Table,
   TableBody,
@@ -70,6 +70,8 @@ function AdminCouponsContent() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedCoupon, setSelectedCoupon] = useState<Coupon | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [keyword, setKeyword] = useState("");
+  const [isActive, setIsActive] = useState<boolean | undefined>(undefined);
 
   const handleEditCoupon = (coupon: Coupon) => {
     setSelectedCoupon(coupon);
@@ -107,13 +109,37 @@ function AdminCouponsContent() {
                 </p>
               </div>
             </div>
-            <Button
-              onClick={() => setShowCreateDialog(true)}
-              className="btn-ultra hover:bg-primary/90"
-            >
-              <PlusCircle className="h-4 w-4 mr-2" />
-              {String(t("adminCreateCoupon") || "Add New Coupon")}
-            </Button>
+            <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={String(t("searchCoupons") || "Search coupons...")}
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+              <Select
+                value={isActive === undefined ? "all" : isActive ? "active" : "inactive"}
+                onValueChange={(value) => setIsActive(value === "all" ? undefined : value === "active")}
+              >
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder={String(t("filterByStatus") || "Filter by Status")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">{String(t("allStatuses") || "All Statuses")}</SelectItem>
+                  <SelectItem value="active">{String(t("active") || "Active")}</SelectItem>
+                  <SelectItem value="inactive">{String(t("inactive") || "Inactive")}</SelectItem>
+                </SelectContent>
+              </Select>
+              <Button
+                onClick={() => setShowCreateDialog(true)}
+                className="btn-ultra hover:bg-primary/90"
+              >
+                <PlusCircle className="h-4 w-4 mr-2" />
+                {String(t("adminCreateCoupon") || "Add New Coupon")}
+              </Button>
+            </div>
           </div>
 
           {/* Coupons Table */}
@@ -121,6 +147,8 @@ function AdminCouponsContent() {
             key={refreshKey}
             onEdit={handleEditCoupon}
             onDelete={handleDeleteCoupon}
+            keyword={keyword}
+            isActive={isActive}
           />
 
           {/* Create Coupon Dialog */}
@@ -594,9 +622,9 @@ function DeleteCouponDialog({ open, onOpenChange, onSuccess, coupon }: DeleteCou
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {String(t("cancel") || "Cancel")}
           </Button>
-          <Button 
-            className="bg-red-600 hover:bg-red-700 text-white" 
-            onClick={handleDelete} 
+          <Button
+            className="bg-red-600 hover:bg-red-700 text-white"
+            onClick={handleDelete}
             disabled={loading}
           >
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : String(t("deleteCoupon") || "Delete Coupon")}

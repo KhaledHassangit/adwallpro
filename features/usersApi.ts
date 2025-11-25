@@ -25,10 +25,10 @@ export const usersApi = createApi({
 
     // Get Paginated Users
     getUsers: builder.query<PaginatedUsersResponse, GetUsersParams>({
-      query: ({ page, limit }: GetUsersParams) => ({
+      query: ({ page, limit, keyword }: GetUsersParams) => ({
         url: '/users',
         method: 'GET',
-        params: { page, limit },
+        params: { page, limit, keyword },
         withToken: true,
       }),
       // Transform the response to match the expected structure
@@ -66,7 +66,7 @@ export const usersApi = createApi({
 
     // Delete a User
     deleteUser: builder.mutation<void, string>({
-      query: (userId:string) => ({
+      query: (userId: string) => ({
         url: `/users/${userId}`,
         method: 'DELETE',
         withToken: true,

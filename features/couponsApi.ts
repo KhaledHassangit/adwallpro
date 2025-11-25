@@ -1,6 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
-import { Coupon, GetCouponsApiResponse,  } from '@/types/types';
+import { Coupon, GetCouponsApiResponse, } from '@/types/types';
 
 
 export const couponsApi = createApi({
@@ -9,12 +9,19 @@ export const couponsApi = createApi({
     tagTypes: ['Coupon'], // Tag for cache invalidation
     endpoints: (builder) => ({
         // Get all Coupons
-        getCoupons: builder.query<GetCouponsApiResponse, { page?: number; limit?: number } | void>({
+        getCoupons: builder.query<GetCouponsApiResponse, { page?: number; limit?: number; keyword?: string; isActive?: boolean } | void>({
             query: (params) => {
                 const page = params && 'page' in params ? params.page : 10;
                 const limit = params && 'limit' in params ? params.limit : 10;
+                const keyword = params && 'keyword' in params ? params.keyword : '';
+                const isActive = params && 'isActive' in params ? params.isActive : undefined;
+
+                let queryString = `page=${page}&limit=${limit}`;
+                if (keyword) queryString += `&keyword=${keyword}`;
+                if (isActive !== undefined) queryString += `&isActive=${isActive}`;
+
                 return {
-                    url: `/coupons?page=${page}&limit=${10}`,
+                    url: `/coupons?${queryString}`,
                     method: 'GET',
                     withToken: true,
                 };

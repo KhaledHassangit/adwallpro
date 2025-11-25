@@ -32,7 +32,7 @@ import { useGetCompaniesQuery, useApproveCompanyMutation, useDeleteCompanyMutati
 // دالة لتنظيف رابط الصورة المكرر
 const cleanImageUrl = (imageUrl?: string): string => {
   if (!imageUrl) return "";
-  
+
   // Handle different URL patterns that might appear in your API
   // Based on your API response, the logoUrl field already contains the full URL
   return imageUrl;
@@ -153,7 +153,7 @@ function AdminCompaniesTable({
     page: currentPage,
     limit: 10,
     status: statusFilter === "all" ? undefined : statusFilter,
-    search: searchQuery || undefined,
+    keyword: searchQuery || undefined,
     country: countryFilter || undefined,
     city: cityFilter || undefined,
     categoryId: categoryId === "all" ? undefined : categoryId,

@@ -2,10 +2,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AdminRoute } from "@/components/auth/route-guard";
-import { Building2, Filter } from "@/components/ui/icon";
+import { Filter } from "@/components/ui/icon";
 import { useI18n } from "@/providers/LanguageProvider";
 import {
   Select,
@@ -66,10 +66,12 @@ function AdminCompaniesContent() {
                   <SelectItem value="all">{String(t("adminAllCompanies") || "All Companies")}</SelectItem>
                   <SelectItem value="pending">{String(t("adminPending") || "Pending")}</SelectItem>
                   <SelectItem value="approved">{String(t("adminApproved") || "Approved")}</SelectItem>
+                  <SelectItem value="rejected">{String(t("adminRejected") || "Rejected")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
+
           <Card className="mb-6 ultra-card">
             <CardContent className="pt-6">
               <div className="flex flex-col md:flex-row gap-4">
@@ -130,6 +132,7 @@ function AdminCompaniesContent() {
               </div>
             </CardContent>
           </Card>
+
           <Card className="hover:shadow-lg transition-shadow ultra-card p-6">
             <CardContent>
               <AdminCompaniesTable

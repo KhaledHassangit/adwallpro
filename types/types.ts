@@ -141,6 +141,7 @@ export interface GetCompaniesParams {
   limit: number;
   status?: string;
   search?: string;
+  keyword?: string;
   country?: string;
   city?: string;
   categoryId?: string;
@@ -343,4 +344,5 @@ export interface PaginatedUsersResponse {
 export interface GetUsersParams {
   page: number;
   limit: number;
+  keyword?: string;
 }

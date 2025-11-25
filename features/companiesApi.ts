@@ -1,4 +1,4 @@
-// @/features/companiesApi.js
+// @/features/companiesApi.ts
 
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
@@ -6,23 +6,30 @@ import { CompaniesResponse, GetCompaniesParams } from '@/types/types';
 
 export const companiesApi = createApi({
   reducerPath: 'companiesApi',
-  // Assuming axiosBaseQuery is configured with your base URL: http://72.60.178.180:8000/api/v1/
-  baseQuery: axiosBaseQuery(), 
-  tagTypes: ['Company', 'Category'], // It's good practice to list all tags you use
+  baseQuery: axiosBaseQuery(),
+  tagTypes: ['Company', 'Category'],
   endpoints: (builder) => ({
     // Get Companies with filters and pagination
     getCompanies: builder.query<CompaniesResponse, GetCompaniesParams>({
       query: (params) => {
         let url = '/companies';
-        
-        if (params.categoryId && params.categoryId !== "all") {
+
+        if (params.status === 'pending') {
+          url = '/companies/admin/pending';
+        } else if (params.status === 'approved') {
+          url = '/companies/admin/approved';
+        } else if (params.status === 'rejected') {
+          url = '/companies/admin/rejected';
+        } else if (params.categoryId && params.categoryId !== "all") {
           url = `/companies/category/${params.categoryId}`;
         } else if (params.search) {
           url = '/companies/search';
+        } else if (params.keyword) {
+          url = '/companies';
         } else if (params.country || params.city) {
           url = '/companies/search-location';
         }
-        
+
         return {
           url,
           method: 'GET',
@@ -30,6 +37,12 @@ export const companiesApi = createApi({
             page: params.page || 1,
             limit: params.limit || 10,
             ...(params.search && { search: params.search }),
+            ...(params.keyword && { keyword: params.keyword }),
+            // Only send status if we are NOT using the specific admin endpoints, 
+            // or if the admin endpoints also support filtering (which is harmless).
+            // But if we are using /companies (default), we definitely need status.
+            // If we are using /companies/admin/pending, status=pending is implicit but sending it is fine.
+            ...(params.status && { status: params.status }),
             ...(params.country && { country: params.country }),
             ...(params.city && { city: params.city }),
           },
@@ -59,24 +72,14 @@ export const companiesApi = createApi({
       providesTags: ['Category'],
     }),
 
-    // ✅ THIS IS THE CORRECT VIEW TRACKING MUTATION
-    trackCompanyView: builder.mutation<any, {companyId: string; type: 'click' | 'hover' }>({
-      // The 'query' function receives the argument from your component: { companyId, type }
+    // Track company view
+    trackCompanyView: builder.mutation<any, { companyId: string; type: 'click' | 'hover' }>({
       query: ({ companyId, type }) => ({
-        // This constructs the URL: http://72.60.178.180:8000/api/v1/company/{companyId}/view
         url: `/companies/${companyId}/views`,
-        
-        // This ensures the request method is POST
         method: 'PATCH',
-        
-        // This sends the { type: 'click' } or { type: 'hover' } in the request body
         data: { type },
-        
-        // This correctly assumes no authentication token is needed for this action
         withToken: false,
       }),
-      // No 'invalidatesTags' is needed here as we are just posting data
-      // and not updating the list of companies in the cache.
     }),
 
     // Approve a company
@@ -87,7 +90,7 @@ export const companiesApi = createApi({
         data: { isApproved },
         withToken: true,
       }),
-      invalidatesTags: ['Company'], // This refetches the companies list after approval
+      invalidatesTags: ['Company'],
     }),
 
     // Delete a company
@@ -97,17 +100,64 @@ export const companiesApi = createApi({
         method: 'DELETE',
         withToken: true,
       }),
-      invalidatesTags: ['Company'], // This refetches the companies list after deletion
+      invalidatesTags: ['Company'],
+    }),
+
+    // Get Pending Companies (Admin)
+    getPendingCompanies: builder.query<CompaniesResponse, { page?: number; limit?: number; keyword?: string }>({
+      query: (params) => ({
+        url: '/companies/admin/pending',
+        method: 'GET',
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          ...(params?.keyword && { keyword: params.keyword }),
+        },
+        withToken: true,
+      }),
+      providesTags: ['Company'],
+    }),
+
+    // Get Approved Companies (Admin)
+    getApprovedCompanies: builder.query<CompaniesResponse, { page?: number; limit?: number; keyword?: string }>({
+      query: (params) => ({
+        url: '/companies/admin/approved',
+        method: 'GET',
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          ...(params?.keyword && { keyword: params.keyword }),
+        },
+        withToken: true,
+      }),
+      providesTags: ['Company'],
+    }),
+
+    // Get Rejected Companies (Admin)
+    getRejectedCompanies: builder.query<CompaniesResponse, { page?: number; limit?: number; keyword?: string }>({
+      query: (params) => ({
+        url: '/companies/admin/rejected',
+        method: 'GET',
+        params: {
+          page: params?.page || 1,
+          limit: params?.limit || 10,
+          ...(params?.keyword && { keyword: params.keyword }),
+        },
+        withToken: true,
+      }),
+      providesTags: ['Company'],
     }),
   }),
 });
 
-// Export the auto-generated hooks for use in your components
 export const {
   useGetCompaniesQuery,
-  useGetCompanyByIdQuery, // Add this new hook
+  useGetCompanyByIdQuery,
   useGetCategoryQuery,
-  useTrackCompanyViewMutation, // This hook is correctly exported and used
+  useTrackCompanyViewMutation,
   useApproveCompanyMutation,
   useDeleteCompanyMutation,
+  useGetPendingCompaniesQuery,
+  useGetApprovedCompaniesQuery,
+  useGetRejectedCompaniesQuery,
 } = companiesApi;

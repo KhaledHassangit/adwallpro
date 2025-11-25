@@ -14,6 +14,7 @@ import {
   Shield,
   Crown,
   Trash2,
+  Search,
 } from "@/components/ui/icon";
 import {
   Dialog,
@@ -58,6 +59,7 @@ import { User } from "@/types/types";
 function AdminUsersContent() {
   const { t } = useI18n();
   const [showCreateAdminDialog, setShowCreateAdminDialog] = useState(false);
+  const [keyword, setKeyword] = useState("");
 
   const { data: userStats, isLoading: statsLoading, error: statsError } =
     useGetUserStatsQuery();
@@ -79,6 +81,15 @@ function AdminUsersContent() {
               </div>
             </div>
             <div className="flex items-center gap-2">
+              <div className="relative w-64">
+                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder={String(t("searchUsers") || "Search users...")}
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
               <Button
                 onClick={() => setShowCreateAdminDialog(true)}
                 className="btn-ultra hover:bg-primary/90"
@@ -171,7 +182,7 @@ function AdminUsersContent() {
           </div>
 
           {/* Users Table */}
-          <AdminUsersTable />
+          <AdminUsersTable keyword={keyword} />
 
           {/* Create Admin Dialog */}
           <CreateAdminDialog
@@ -226,7 +237,7 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
     } catch (err: any) {
       notifications.error(
         err?.data?.message ||
-          String(t("failedToCreateAdmin") || "Failed to create admin")
+        String(t("failedToCreateAdmin") || "Failed to create admin")
       );
     }
   };
@@ -344,21 +355,21 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
 }
 
 // ==================== Users Table ====================
-function AdminUsersTable() {
+function AdminUsersTable({ keyword }: { keyword: string }) {
   const { t, lang } = useI18n();
   const notifications = useNotifications();
   const [page, setPage] = useState(1);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  
+
   // Using the RTK Query hook instead of manual fetch
-  const { 
-    data: usersData, 
-    isLoading, 
+  const {
+    data: usersData,
+    isLoading,
     error,
-    refetch 
-  } = useGetUsersQuery({ page, limit: 10 });
-  
+    refetch
+  } = useGetUsersQuery({ page, limit: 10, keyword });
+
   const [deleteUser] = useDeleteUserMutation();
 
   const handleDeleteClick = (user: User) => {
@@ -429,7 +440,7 @@ function AdminUsersTable() {
                           variant={user.subscription.isActive ? "default" : "outline"}
                           className="mx-auto w-fit"
                         >
-                          {user.subscription.isActive 
+                          {user.subscription.isActive
                             ? (String(t("adminSubscriptionActive") || "Active"))
                             : (String(t("adminSubscriptionInactive") || "Inactive"))
                           }
