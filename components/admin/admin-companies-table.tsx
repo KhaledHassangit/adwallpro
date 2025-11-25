@@ -165,7 +165,7 @@ function AdminCompaniesTable({
 
   // Extract companies and pagination info from response
   const companies = response?.data?.data || [];
-  const totalResults = response?.data?.results || 0;
+  const totalResults = response?.results || 0;
   const totalPages = Math.ceil(totalResults / 10);
 
   // Modal states
