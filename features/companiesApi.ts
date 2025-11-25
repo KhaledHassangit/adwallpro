@@ -39,6 +39,16 @@ export const companiesApi = createApi({
       providesTags: ['Company'],
     }),
 
+    // Get a single company by ID
+    getCompanyById: builder.query<any, string>({
+      query: (id) => ({
+        url: `/companies/${id}`,
+        method: 'GET',
+        withToken: true,
+      }),
+      providesTags: ['Company'],
+    }),
+
     // Get a single category
     getCategory: builder.query<any, string>({
       query: (id) => ({
@@ -70,10 +80,11 @@ export const companiesApi = createApi({
     }),
 
     // Approve a company
-    approveCompany: builder.mutation<void, string>({
-      query: (companyId) => ({
-        url: `/companies/${companyId}/approve`,
+    approveCompany: builder.mutation<void, { id: string; isApproved: boolean }>({
+      query: ({ id, isApproved }) => ({
+        url: `/companies/${id}/approve`,
         method: 'PATCH',
+        data: { isApproved },
         withToken: true,
       }),
       invalidatesTags: ['Company'], // This refetches the companies list after approval
@@ -94,6 +105,7 @@ export const companiesApi = createApi({
 // Export the auto-generated hooks for use in your components
 export const {
   useGetCompaniesQuery,
+  useGetCompanyByIdQuery, // Add this new hook
   useGetCategoryQuery,
   useTrackCompanyViewMutation, // This hook is correctly exported and used
   useApproveCompanyMutation,

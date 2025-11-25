@@ -21,23 +21,7 @@ import {
 } from "@/components/ui/icon";
 import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
-import { useGetUserAnalyticsQuery } from "@/features/analyticsApi";
-
-interface Company {
-  _id: string;
-  companyName: string;
-  description: string;
-  categoryId: {
-    _id: string;
-    nameAr: string;
-    nameEn: string;
-  };
-  isApproved: boolean;
-  createdAt: string;
-  image?: string;
-  email?: string;
-  __v?: number;
-}
+import { useGetUserAnalyticsQuery, UserAnalytics, ActiveAd } from "@/features/analyticsApi";
 
 function UserDashboardContent() {
   const { t, lang } = useI18n();
@@ -48,7 +32,7 @@ function UserDashboardContent() {
     totalViews: 0,
     monthlyGrowth: 0,
   });
-  const [recentCompanies, setRecentCompanies] = useState<Company[]>([]);
+  const [recentCompanies, setRecentCompanies] = useState<ActiveAd[]>([]);
   const currentUser = getCurrentUser();
 
   // Use the RTK Query hook for user analytics
@@ -80,9 +64,7 @@ function UserDashboardContent() {
     );
   }
 
-  const getCategoryName = (
-    categoryId: Company["categoryId"] | undefined
-  ) => {
+  const getCategoryName = (categoryId: ActiveAd["categoryId"] | undefined) => {
     if (!categoryId) return t("unknown");
     return lang === "ar" ? categoryId.nameAr : categoryId.nameEn;
   };
@@ -342,9 +324,9 @@ function UserDashboardContent() {
                         >
                           <div className="flex items-center gap-4 w-full">
                             <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                              {company.image ? (
+                              {company.logoUrl ? (
                                 <img
-                                  src={company.image}
+                                  src={company.logoUrl}
                                   alt={company.companyName}
                                   className="w-full h-full object-cover"
                                 />
@@ -385,7 +367,7 @@ function UserDashboardContent() {
                                 </Badge>
                                 <div className="flex items-center text-xs text-muted-foreground">
                                   <Eye className="h-3 w-3 mr-1" />
-                                  {company.__v || 0} {t("views")}
+                                  {company.views || 0} {t("views")}
                                 </div>
                               </div>
                             </div>

@@ -14,9 +14,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Edit, Trash2 } from "@/components/ui/icon";
 import { useI18n } from "@/providers/LanguageProvider";
-import { useGetCouponsQuery, type Coupon } from "@/features/couponsApi";
+import { useGetCouponsQuery } from "@/features/couponsApi";
 import { PaginationControl } from "@/components/ui/pagination-control";
 import { cn } from "@/lib/utils";
+import { Coupon } from "@/types/types";
 
 interface AdminCouponsTableProps {
   onEdit: (coupon: Coupon) => void;
@@ -99,8 +100,17 @@ export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) 
                       {coupon.discountType === "percentage" ? String(t("percentage") || "Percentage") : String(t("fixedAmount") || "Fixed")}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-center">{coupon.startDate || String(t("notSet") || "Not Set")}</TableCell>
-                  <TableCell className="text-center">{coupon.expiryDate}</TableCell>
+                  <TableCell className="text-center">
+                    {coupon.startDate
+                      ? new Date(coupon.startDate).toLocaleDateString("en-GB")
+                      : String(t("notSet") || "Not Set")}
+                  </TableCell>
+
+                  <TableCell className="text-center">
+                    {coupon.expiryDate
+                      ? new Date(coupon.expiryDate).toLocaleDateString("en-GB")
+                      : ""}
+                  </TableCell>
                   <TableCell className="text-center">{coupon.maxUses || String(t("unlimited") || "Unlimited")}</TableCell>
                   <TableCell className="text-center">{coupon.usedCount || 0}</TableCell>
                   <TableCell className="text-center">
@@ -151,9 +161,7 @@ export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) 
       {/* Fix: Only show pagination if there are results */}
       {results > 0 && (
         <div className="mt-4 flex justify-between items-center">
-          <div className="text-sm text-muted-foreground">
-            {String(t("showingResults") || "Showing")} {Math.min((page - 1) * limit + 1, results)}-{Math.min(page * limit, results)} {String(t("of") || "of")} {results} {String(t("results") || "results")}
-          </div>
+
           <PaginationControl
             currentPage={page}
             totalPages={totalPages}

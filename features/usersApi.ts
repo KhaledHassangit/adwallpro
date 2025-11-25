@@ -1,3 +1,4 @@
+// @/features/usersApi.ts
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
 import { GetUsersParams, PaginatedUsersResponse, UserStats } from '@/types/types';
@@ -14,15 +15,11 @@ export const usersApi = createApi({
         method: 'GET',
         withToken: true,
       }),
-      // Transform the response to match the expected structure
+      // Fix: Return the actual UserStats object directly
       transformResponse: (response: any) => {
-        // The API returns { status, message, data: { data: { stats } } }
-        // We want to flatten this to { data: { stats } }
-        return {
-          data: {
-            data: response.data.data
-          }
-        };
+        // The API returns { status, message, data: { data: UserStats } }
+        // We want to extract and return just the UserStats object
+        return response.data.data;
       },
     }),
 
@@ -37,18 +34,17 @@ export const usersApi = createApi({
       // Transform the response to match the expected structure
       transformResponse: (response: any) => {
         // The API returns { status, message, data: { results, paginationResult, data: { users } } }
-        // We want to flatten this to { data: { results, paginationResult, data: { users } } }
+        // We want to flatten this to { data: { results, paginationResult, data: { users } }
         return {
+          status: response.status,
+          results: response.data.results,
+          paginationResult: response.data.paginationResult,
           data: {
-            results: response.data.results,
-            paginationResult: response.data.paginationResult,
-            data: {
-              users: response.data.data.users
-            }
+            users: response.data.data.users
           }
         };
       },
-      providesTags: ['User'], // Provides the 'User' tag
+      providesTags: ['User'], // Provides a 'User' tag
     }),
 
     // Create a new Admin

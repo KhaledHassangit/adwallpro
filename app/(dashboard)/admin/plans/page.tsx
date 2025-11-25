@@ -11,7 +11,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2 } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Check, Save, ArrowLeft, Package, DollarSign, Calendar, Tag, Palette, Star, Zap, Shield, AlertTriangle, Loader2, Inbox } from "lucide-react";
 import { useNotifications, localized } from "@/hooks/notifications";
 import {
   useGetPlansQuery,
@@ -707,6 +707,28 @@ const DisplayCard = memo(({ plan, locale, categories, onEdit, onDelete, onToggle
 
 DisplayCard.displayName = 'DisplayCard';
 
+// Empty State Component
+const EmptyState = ({ locale, onCreatePlan }: { locale: string; onCreatePlan: () => void }) => (
+  <div className="col-span-full flex flex-col items-center justify-center p-12 text-center">
+    <div className="rounded-full bg-muted p-6 mb-4">
+      <Inbox className="w-12 h-12 text-muted-foreground" />
+    </div>
+    <h3 className="text-xl font-semibold mb-2">
+      {locale === "ar" ? "لا توجد باقات اشتراك" : "No subscription plans"}
+    </h3>
+    <p className="text-muted-foreground mb-6 max-w-md">
+      {locale === "ar" 
+        ? "لم يتم إنشاء أي باقات اشتراك بعد. ابدأ بإنشاء باقتك الأولى لإتاحتها للمستخدمين."
+        : "No subscription have been created yet. Start by creating your first plan to make it available to users."
+      }
+    </p>
+    <Button onClick={onCreatePlan} className="btn-ultra">
+      <Plus className="w-4 h-4 mr-2" />
+      {locale === "ar" ? "إنشاء باقة جديدة" : "Create New Plan"}
+    </Button>
+  </div>
+);
+
 // Main Component
 function PlansAdminPageContent() {
   const { t, locale } = useI18n();
@@ -737,12 +759,13 @@ function PlansAdminPageContent() {
 
   // Use the RTK Query hooks
   const { data: plansData, isLoading: plansLoading, error: plansError, refetch: refetchPlans } = useGetPlansQuery({ page, limit: 10 });
-  const { data: categoriesData, isLoading: categoriesLoading } = useGetCategoriesQuery();
+  // Fetch all categories without pagination by setting a high limit value
+  const { data: categoriesData, isLoading: categoriesLoading } = useGetCategoriesQuery({ limit: 1000 });
   const [createPlan, { isLoading: creatingPlan }] = useCreatePlanMutation();
   const [updatePlan, { isLoading: updatingPlan }] = useUpdatePlanMutation();
   const [deletePlan, { isLoading: deletingPlan }] = useDeletePlanMutation();
 
-  // Extract plans and categories from the API responses
+  // Extract plans and categories from API responses
   const plans = plansData?.data?.data || [];
   const totalPages = plansData?.data?.paginationResult?.numberOfPages || 1;
   const categories = categoriesData?.data?.data || [];
@@ -914,10 +937,12 @@ function PlansAdminPageContent() {
               {locale === "ar" ? "إنشاء وإدارة باقات الاشتراك" : "Create and manage subscription plans"}
             </p>
           </div>
-          <Button onClick={startCreate} className="flex items-center gap-2 btn-ultra">
-            <Plus className="w-4 h-4" />
-            {locale === "ar" ? "إنشاء باقة جديدة" : "Create New Plan"}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={startCreate} className="btn-ultra">
+              <Plus className="w-4 h-4 mr-2" />
+              {locale === "ar" ? "إنشاء باقة جديدة" : "Create New Plan"}
+            </Button>
+          </div>
         </div>
 
         {/* Plans Grid */}
@@ -926,6 +951,8 @@ function PlansAdminPageContent() {
             <div className="col-span-full flex items-center justify-center p-12">
               <Loader2 className="w-8 h-8 animate-spin text-primary" />
             </div>
+          ) : plans.length === 0 && editingId !== "new" ? (
+            <EmptyState locale={locale} onCreatePlan={startCreate} />
           ) : (
             <>
               {editingId === "new" && (
@@ -970,7 +997,7 @@ function PlansAdminPageContent() {
         </div>
 
         {/* Pagination Control */}
-        {!plansLoading && (
+        {!plansLoading && plans.length > 0 && (
           <PaginationControl
             currentPage={page}
             totalPages={totalPages}

@@ -1,3 +1,4 @@
+// Create a new file at @/components/admin/AdminCouponsPage.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -46,12 +47,13 @@ import {
   useCreateCouponMutation,
   useUpdateCouponMutation,
   useDeleteCouponMutation,
-  type Coupon,
 } from "@/features/couponsApi";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { AdminCouponsTable } from "@/components/admin/AdminCouponsTable";
+import { Coupon } from "@/types/types";
 
 // Type definitions
+
 type DiscountType = "percentage" | "fixed";
 
 interface ApiError {
@@ -98,10 +100,10 @@ function AdminCouponsContent() {
             <div className="flex items-center gap-3">
               <div>
                 <h1 className="text-3xl font-bold gradient-text">
-                  {String(t("adminCouponsManagementTitle") || "Coupons Management")}
+                  {String(t("adminCoupons") || "Coupons Management")}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                  {String(t("adminCouponsManagementDesc") || "Manage and create discount coupons.")}
+                  {String(t("adminCouponsDesc") || "Manage and create discount coupons.")}
                 </p>
               </div>
             </div>
@@ -110,7 +112,7 @@ function AdminCouponsContent() {
               className="btn-ultra hover:bg-primary/90"
             >
               <PlusCircle className="h-4 w-4 mr-2" />
-              {String(t("adminAddNewCoupon") || "Add New Coupon")}
+              {String(t("adminCreateCoupon") || "Add New Coupon")}
             </Button>
           </div>
 
@@ -592,7 +594,11 @@ function DeleteCouponDialog({ open, onOpenChange, onSuccess, coupon }: DeleteCou
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
             {String(t("cancel") || "Cancel")}
           </Button>
-          <Button variant="destructive" onClick={handleDelete} disabled={loading}>
+          <Button 
+            className="bg-red-600 hover:bg-red-700 text-white" 
+            onClick={handleDelete} 
+            disabled={loading}
+          >
             {loading ? <div className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" /> : String(t("deleteCoupon") || "Delete Coupon")}
           </Button>
         </DialogFooter>

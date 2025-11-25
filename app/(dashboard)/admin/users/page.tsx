@@ -1,3 +1,4 @@
+// @/pages/admin/users.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -50,8 +51,8 @@ import {
   useGetUsersQuery,
   useCreateAdminMutation,
   useDeleteUserMutation,
-  type User,
 } from "@/features/usersApi";
+import { User } from "@/types/types";
 
 // ==================== Main Content Component ====================
 function AdminUsersContent() {
@@ -73,10 +74,7 @@ function AdminUsersContent() {
                   {String(t("adminUsersManagementTitle") || "Users Management")}
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                  {String(
-                    t("adminUsersManagementDesc") ||
-                      "Manage users and their roles."
-                  )}
+                  {String(t("adminUsersManagementDesc") || "Manage users, create admin accounts, and monitor user activity")}
                 </p>
               </div>
             </div>
@@ -93,7 +91,7 @@ function AdminUsersContent() {
 
           {statsError && (
             <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
-              Failed to load user statistics. Please try refreshing the page.
+              {String(t("adminStatsError") || "Failed to load user statistics. Please try refreshing the page.")}
             </div>
           )}
 
@@ -166,9 +164,7 @@ function AdminUsersContent() {
                   {statsLoading ? "..." : userStats?.data?.data?.activeThisWeek || "0"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-2">
-                  {String(
-                    t("adminActiveLast7Days") || "Active in Last 7 Days"
-                  )}
+                  {String(t("adminActiveLast7Days") || "Active in Last 7 Days")}
                 </p>
               </CardContent>
             </Card>
@@ -304,9 +300,7 @@ function CreateAdminDialog({ open, onOpenChange }: CreateAdminDialogProps) {
             {formData.passwordConfirm &&
               formData.password !== formData.passwordConfirm && (
                 <p className="text-xs text-destructive mt-1">
-                  {String(
-                    t("passwordsDoNotMatch") || "Passwords do not match"
-                  )}
+                  {String(t("passwordsDoNotMatch") || "Passwords do not match")}
                 </p>
               )}
           </div>
@@ -377,13 +371,13 @@ function AdminUsersTable() {
 
     try {
       await deleteUser(userToDelete._id).unwrap();
-      notifications.success(t("adminUserDeletedSuccess"));
+      notifications.success(String(t("adminUserDeletedSuccess") || "User deleted successfully"));
       refetch();
       setDeleteDialogOpen(false);
       setUserToDelete(null);
     } catch (error: any) {
       notifications.error(
-        error?.data?.message || t("adminFailedToDeleteUser")
+        error?.data?.message || String(t("adminFailedToDeleteUser") || "Failed to delete user")
       );
     }
   };
@@ -393,8 +387,8 @@ function AdminUsersTable() {
   }
 
   // Extract users and pagination from the response
-  const users = usersData?.data?.data?.users || [];
-  const totalPages = usersData?.data?.paginationResult?.numberOfPages || 1;
+  const users = usersData?.data?.users || [];
+  const totalPages = usersData?.paginationResult?.numberOfPages || 1;
 
   return (
     <>
@@ -403,13 +397,13 @@ function AdminUsersTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="text-center">{t("adminUserName")}</TableHead>
-                <TableHead className="text-center">{t("adminUserEmail")}</TableHead>
-                <TableHead className="text-center">{t("adminUserRole")}</TableHead>
-                <TableHead className="text-center">{t("adminUserPhone")}</TableHead>
-                <TableHead className="text-center">{t("adminUserSubscription")}</TableHead>
-                <TableHead className="text-center">{t("adminUserRegistrationDate")}</TableHead>
-                <TableHead className="text-center">{t("adminActions")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserName") || "Name")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserEmail") || "Email")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserRole") || "Role")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserPhone") || "Phone")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserSubscription") || "Subscription")}</TableHead>
+                <TableHead className="text-center">{String(t("adminUserRegistrationDate") || "Registration Date")}</TableHead>
+                <TableHead className="text-center">{String(t("adminActions") || "Actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -425,7 +419,7 @@ function AdminUsersTable() {
                         }
                         className="mx-auto w-fit"
                       >
-                        {user.role === "admin" ? t("adminRoleAdmin") : t("adminRoleUser")}
+                        {user.role === "admin" ? String(t("adminRoleAdmin") || "Admin") : String(t("adminRoleUser") || "User")}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">{user.phone || "-"}</TableCell>
@@ -435,11 +429,14 @@ function AdminUsersTable() {
                           variant={user.subscription.isActive ? "default" : "outline"}
                           className="mx-auto w-fit"
                         >
-                          {user.subscription.isActive ? t("adminSubscriptionActive") : t("adminSubscriptionInactive")}
+                          {user.subscription.isActive 
+                            ? (String(t("adminSubscriptionActive") || "Active"))
+                            : (String(t("adminSubscriptionInactive") || "Inactive"))
+                          }
                         </Badge>
                       ) : (
                         <Badge variant="outline" className="mx-auto w-fit">
-                          {t("adminNoSubscription")}
+                          {String(t("adminNoSubscription") || "No Subscription")}
                         </Badge>
                       )}
                     </TableCell>
@@ -466,7 +463,7 @@ function AdminUsersTable() {
                     colSpan={7}
                     className="text-center text-muted-foreground py-8"
                   >
-                    {t("adminNoUsersFound")}
+                    {String(t("adminNoUsersFound") || "No users found")}
                   </TableCell>
                 </TableRow>
               )}
@@ -486,21 +483,21 @@ function AdminUsersTable() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("adminDeleteUserTitle")}</AlertDialogTitle>
+            <AlertDialogTitle>{String(t("adminDeleteUserTitle") || "Delete User")}</AlertDialogTitle>
             <AlertDialogDescription>
               {userToDelete ?
-                `${t("adminDeleteUserConfirmation")} ${userToDelete.name}?` :
-                `${t("adminDeleteUserConfirmation")} ${t("adminThisUser")}?`
+                `${String(t("adminDeleteUserConfirmation") || "Are you sure you want to delete")} ${userToDelete.name}?` :
+                `${String(t("adminDeleteUserConfirmation") || "Are you sure you want to delete")} ${String(t("adminThisUser") || "this user")}?`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>{t("cancel")}</AlertDialogCancel>
+            <AlertDialogCancel>{String(t("cancel") || "Cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteUser}
               className="bg-red-600 hover:bg-red-700"
             >
-              {t("adminDelete")}
+              {String(t("adminDelete") || "Delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -1,9 +1,12 @@
+// types/types.ts
+
+// Role types
 export type Role = "visitor" | "advertiser" | "admin";
 
-
+// Ad status type
 export type AdStatus = "pending" | "approved" | "rejected";
 
-// إعلان الشركة (شركة على جدار الإعلانات)
+// Company ad type
 export type Ad = {
   id: string;
   companyName: string;
@@ -26,9 +29,7 @@ export type Ad = {
   rejectionReason?: string; // سبب الرفض
 };
 
-
-
-
+// Analytics data interface
 export interface AnalyticsData {
   userCount: number;
   adminCount: number;
@@ -46,6 +47,7 @@ export interface AnalyticsData {
   };
 }
 
+// User analytics interface
 export interface UserAnalytics {
   totalAds: number;
   pendingAds: number;
@@ -59,6 +61,7 @@ export interface UserAnalytics {
   };
 }
 
+// Category interface
 export interface Category {
   _id: string;
   nameAr: string;
@@ -68,23 +71,23 @@ export interface Category {
   color: string;
   imageUrl: string;
   createdAt: string;
-  image:string
+  image: string;
 }
 
+// Category stats interface
 export interface CategoryStats {
   totalCategories: number;
   mostUsedCategory: string;
   systemStatus: string;
 }
 
-// Define parameters for the update mutation
+// Parameters for updating category
 export interface UpdateCategoryParams {
   id: string;
   formData: FormData;
 }
 
-
-// Define the shape of the data for type safety
+// Company interface
 export interface Company {
   _id: string;
   userId: {
@@ -118,6 +121,7 @@ export interface Company {
   __v: number;
 }
 
+// Companies response interface
 export interface CompaniesResponse {
   status: string;
   results: number;
@@ -131,6 +135,7 @@ export interface CompaniesResponse {
   };
 }
 
+// Parameters for getting companies
 export interface GetCompaniesParams {
   page: number;
   limit: number;
@@ -141,32 +146,39 @@ export interface GetCompaniesParams {
   categoryId?: string;
 }
 
+// Coupon interface
 export interface Coupon {
   _id: string;
   couponCode: string;
   discountType: "percentage" | "fixed";
   discountValue: number;
   isActive: boolean;
-  createdDate: string;
-  expiryDate: string;
-  startDate?: string;
-  maxUses?: number;
-  usedCount?: number;
+  startDate: string;      // ISO 8601 date string
+  expiryDate: string;     // ISO 8601 date string
+  maxUses: number;
+  usedCount: number;
+  createdAt: string;      // Corrected from 'createdDate'
+  updatedAt: string;      // Added for completeness
 }
 
-export interface CouponsResponse {
+// API response for coupons
+export interface GetCouponsApiResponse {
   status: string;
-  results: number;
-  paginationResult?: {
-    currentPage: number;
-    limit: number;
-    numberOfPages: number;
-  };
+  message: string;
   data: {
-    data: Coupon[];
+    results: number;
+    paginationResult: {
+      currentPage: number;
+      limit: number;
+      numberOfPages: number;
+      next?: number;      // 'next' might not be on the last page
+      prev?: number;      // 'prev' might not be on the first page
+    };
+    data: Coupon[];       // This is the array of coupons
   };
 }
 
+// Plan option interface
 export interface PlanOption {
   duration: string;
   priceUSD: number;
@@ -177,6 +189,7 @@ export interface PlanOption {
   _id?: string;
 }
 
+// Plan interface
 export interface Plan {
   _id?: string;
   name: string;
@@ -191,6 +204,7 @@ export interface Plan {
   updatedAt?: string;
 }
 
+// Plans response interface
 export interface PlansResponse {
   status: string;
   message: string;
@@ -205,7 +219,7 @@ export interface PlansResponse {
   };
 }
 
-
+// Categories response interface
 export interface CategoriesResponse {
   status: string;
   message: string;
@@ -220,6 +234,7 @@ export interface CategoriesResponse {
   };
 }
 
+// Validation error interface
 export interface ValidationError {
   value: string;
   msg: string;
@@ -227,10 +242,15 @@ export interface ValidationError {
   location: string;
 }
 
+// API error interface
 export interface ApiError {
-  errors: ValidationError[];
+  errors?: ValidationError[];
+  data?: {
+    message?: string;
+  };
 }
 
+// Subscription interface
 export interface Subscription {
   _id: string;
   plan: {
@@ -249,9 +269,7 @@ export interface Subscription {
   createdAt?: string;
 }
 
-
-
-
+// User profile interface
 export interface UserProfile {
   _id: string;
   name: string;
@@ -259,59 +277,55 @@ export interface UserProfile {
   phone: string;
 }
 
+// Password change request interface
 export interface PasswordChangeRequest {
   currentPassword: string;
   password: string;
   passwordConfirm: string;
 }
 
+// Update profile request interface
 export interface UpdateProfileRequest {
   name: string;
   phone?: string;
 }
 
-export interface ValidationError {
-  value: string;
-  msg: string;
-  param: string;
-  location: string;
-}
-
-export interface ApiError {
-  errors: ValidationError[];
-}
-
-
+// User interface (matching the API response)
 export interface User {
   _id: string;
+  id: string; // Duplicate ID field that appears in your response
   name: string;
   email: string;
-  role: string;
-  phone?: string;
-  createdAt: string;
+  phone: string;
+  profileImg: string;
+  profileImgUrl: string;
+  role: "admin" | "user";
+  active: boolean;
+  wishlist: any[];
+  lastLogin: string; // ISO date string
+  addresses: any[];
+  createdAt: string; // ISO date string
+  updatedAt: string; // ISO date string
+  slug: string;
+  passwordChangedAt: string; // ISO date string
+  passwordResetCode?: string; // Optional field
+  passwordResetExpires?: string; // Optional field, ISO date string
+  passwordResetVerified?: boolean; // Optional field
   subscription?: {
     adsUsed: number;
     isActive: boolean;
-    plan?: string;
-    option?: string;
-    startDate?: string;
-    endDate?: string;
   };
-  profileImg?: string;
-  active: boolean;
-  lastLogin?: string;
 }
 
+// User stats interface
 export interface UserStats {
   totalUsers: number;
   adminsCount: number;
   regularUsersCount: number;
   activeThisWeek: number;
-  adminPercentage: string;
-  regularUserPercentage: string;
-  activePercentage: string;
 }
 
+// Paginated users response interface
 export interface PaginatedUsersResponse {
   status: string;
   results: number;
@@ -321,12 +335,11 @@ export interface PaginatedUsersResponse {
     numberOfPages: number;
   };
   data: {
-    data: {
-      users: User[];
-    };
+    users: User[];
   };
 }
 
+// Parameters for getting users
 export interface GetUsersParams {
   page: number;
   limit: number;
