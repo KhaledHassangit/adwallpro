@@ -1,6 +1,4 @@
-"use client";
 
-import { Breadcrumb } from "@/components/common/breadcrumb";
 import { useI18n } from "@/providers/LanguageProvider";
 
 export default function AboutPage() {
@@ -9,16 +7,6 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-pattern-grid">
       <main className="pt-24">
-        {/* <div className="container-premium py-8">
-          <Breadcrumb
-            items={[
-              { label: "Home", href: "/" },
-              { label: "About Us", href: "/about" },
-            ]}
-          />
-        </div> */}
-
-        {/* من نحن Section */}
         <div className="max-w-6xl mx-auto mb-20 px-4">
           {/* Header */}
           <div className="text-center mb-16">

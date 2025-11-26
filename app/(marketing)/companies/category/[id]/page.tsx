@@ -31,7 +31,7 @@ export const useViewTracker = () => {
   const trackView = useCallback(async (companyId: string, type: 'click' | 'hover' = 'click') => {
     // Create a unique key for this company and tracking type
     const key = `company_${type}_${companyId}`;
-    
+
     // Check if already tracked in this session
     if (sessionStorage.getItem(key)) {
       return false;
@@ -40,7 +40,7 @@ export const useViewTracker = () => {
     try {
       // Use the RTK Query mutation to track the view
       const result = await trackCompanyView({ companyId, type }).unwrap();
-      
+
       if (result) {
         // Mark as tracked in this session
         sessionStorage.setItem(key, 'true');
@@ -70,12 +70,12 @@ function CompanyCard({ company }: { company: any }) {
   const handleCardHover = () => {
     // Clear any existing timer
     if (hoverTimer) clearTimeout(hoverTimer);
-    
+
     // Set a new timer to track view after 1 second of hovering
     const timer = setTimeout(() => {
       trackView(company._id, 'hover');
     }, 1000);
-    
+
     setHoverTimer(timer);
   };
 
@@ -103,12 +103,12 @@ function CompanyCard({ company }: { company: any }) {
   const getImageUrl = useCallback(() => {
     // Try multiple possible image properties
     const imageUrl = company.imageUrl || company.logo || company.image;
-    
+
     if (!imageUrl) return null;
-    
+
     // If it's already a full URL, return as is
     if (imageUrl.startsWith("http")) return imageUrl;
-    
+
     // Otherwise, prepend the base URL
     return `https://www.adwallpro.com/uploads/categories/${imageUrl}`;
   }, []);
@@ -128,7 +128,7 @@ function CompanyCard({ company }: { company: any }) {
   }, []);
 
   return (
-    <Card 
+    <Card
       className="ultra-card group overflow-hidden border-0 cursor-pointer"
       onMouseEnter={handleCardHover}
       onMouseLeave={handleCardLeave}
@@ -156,9 +156,8 @@ function CompanyCard({ company }: { company: any }) {
 
           {/* Placeholder - shown if no image or if image fails to load */}
           <div
-            className={`image-placeholder ${
-              imageUrl && !imageError ? "hidden" : "flex"
-            }`}
+            className={`image-placeholder ${imageUrl && !imageError ? "hidden" : "flex"
+              }`}
           >
             <div className="text-6xl opacity-20">🏢</div>
           </div>
@@ -273,41 +272,33 @@ export default function CompaniesCategoryPage() {
   const [countryFilter, setCountryFilter] = useState("");
   const [cityFilter, setCityFilter] = useState("");
 
-  // Use RTK Query hooks to fetch category and companies
-  const { data: category, isLoading: categoryLoading, error: categoryError } = useGetCategoryQuery(id || "");
-  
-  // Create params for companies query
-  const companiesParams = useMemo(() => ({
-    categoryId: id || "",
+  const { data: category, isLoading: categoryLoading, error: categoryError } = useGetCategoryQuery(id);
+
+  const { data: companiesResponse, isLoading: companiesLoading, error: companiesError } = useGetCompaniesQuery({
+    categoryId: id,
     search: searchQuery,
     country: countryFilter,
     city: cityFilter,
-    page: 1,
-    limit: 20,
-  }), [id, searchQuery, countryFilter, cityFilter]);
-  
-  const { data: companiesResponse, isLoading: companiesLoading, error: companiesError } = useGetCompaniesQuery(companiesParams);
-  
-  // Extract companies from response
+    useCategoryEndpoint: true,
+  });
+
   const companies = useMemo(() => {
     if (!companiesResponse) return [];
-    
+
     // Try multiple possible paths to extract the companies array
     const possiblePaths = [
       companiesResponse?.data?.data,
       companiesResponse?.data,
-      companiesResponse?.data?.companies,
-      companiesResponse?.companies,
       companiesResponse
     ];
-    
+
     for (const path of possiblePaths) {
       if (Array.isArray(path)) return path;
     }
-    
+
     return [];
   }, [companiesResponse]);
-  
+
   const isLoading = categoryLoading || companiesLoading;
   const error = categoryError || companiesError;
 
@@ -375,7 +366,7 @@ export default function CompaniesCategoryPage() {
           {locale === "ar"
             ? `اكتشف أفضل الشركات في ${catName}`
             : `Discover the best companies in ${catName}`}
-          </p>
+        </p>
         <div className="flex items-center gap-4 mt-4">
           <span className="text-sm text-muted-foreground">
             {companies.length} {t("companiesAvailable")}
@@ -461,9 +452,9 @@ export default function CompaniesCategoryPage() {
               <p className="text-muted-foreground max-w-md">
                 {companies.length === 0
                   ? t("noCategoriesFoundDesc").replace(
-                      "{categoryName}",
-                      catName
-                    )
+                    "{categoryName}",
+                    catName
+                  )
                   : t("tryDifferentFilters")}
               </p>
               {(searchQuery || countryFilter || cityFilter) && (

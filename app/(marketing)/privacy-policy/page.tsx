@@ -1,8 +1,4 @@
-"use client";
 
-import { UltraHeader } from "@/components/layout/header";
-import { Footer } from "@/components/layout/footer";
-import { Breadcrumb } from "@/components/common/breadcrumb";
 import { useI18n } from "@/providers/LanguageProvider";
 
 export default function PrivacyPolicyPage() {

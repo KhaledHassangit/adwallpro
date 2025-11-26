@@ -2,27 +2,39 @@ import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
 import { Coupon, GetCouponsApiResponse, } from '@/types/types';
 
-
 export const couponsApi = createApi({
     reducerPath: 'couponsApi',
     baseQuery: axiosBaseQuery(),
     tagTypes: ['Coupon'], // Tag for cache invalidation
     endpoints: (builder) => ({
-        // Get all Coupons
+        // Get all Coupons - updated to match backend requirements
         getCoupons: builder.query<GetCouponsApiResponse, { page?: number; limit?: number; keyword?: string; isActive?: boolean } | void>({
             query: (params) => {
-                const page = params && 'page' in params ? params.page : 10;
+                const page = params && 'page' in params ? params.page : 1;
                 const limit = params && 'limit' in params ? params.limit : 10;
-                const keyword = params && 'keyword' in params ? params.keyword : '';
+                const keyword = params && 'keyword' in params ? params.keyword : undefined;
                 const isActive = params && 'isActive' in params ? params.isActive : undefined;
 
-                let queryString = `page=${page}&limit=${limit}`;
-                if (keyword) queryString += `&keyword=${keyword}`;
-                if (isActive !== undefined) queryString += `&isActive=${isActive}`;
+                // Build query parameters
+                const queryParams: Record<string, any> = {
+                    page,
+                    limit,
+                };
+
+                // Only add keyword if it exists
+                if (keyword) {
+                    queryParams.keyword = keyword;
+                }
+
+                // Only add isActive if it's not undefined
+                if (isActive !== undefined) {
+                    queryParams.isActive = isActive;
+                }
 
                 return {
-                    url: `/coupons?${queryString}`,
+                    url: '/coupons',
                     method: 'GET',
+                    params: queryParams,
                     withToken: true,
                 };
             },
@@ -77,7 +89,7 @@ export const couponsApi = createApi({
                 method: 'DELETE',
                 withToken: true,
             }),
-            invalidatesTags: ['Coupon'], // Invalidate the 'Coupon' tag to refetch the list
+            invalidatesTags: ['Coupon'], 
         }),
     }),
 });

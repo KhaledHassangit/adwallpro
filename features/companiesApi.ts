@@ -13,39 +13,32 @@ export const companiesApi = createApi({
     getCompanies: builder.query<CompaniesResponse, GetCompaniesParams>({
       query: (params) => {
         let url = '/companies';
+        const queryParams: any = {
+          page: params.page || 1,
+          limit: params.limit || 10,
+        };
 
-        if (params.status === 'pending') {
-          url = '/companies/admin/pending';
-        } else if (params.status === 'approved') {
-          url = '/companies/admin/approved';
-        } else if (params.status === 'rejected') {
-          url = '/companies/admin/rejected';
-        } else if (params.categoryId && params.categoryId !== "all") {
+        // Handle Category Page Request (specific endpoint)
+        if (params.useCategoryEndpoint && params.categoryId) {
           url = `/companies/category/${params.categoryId}`;
-        } else if (params.search) {
-          url = '/companies/search';
-        } else if (params.keyword) {
-          url = '/companies';
-        } else if (params.country || params.city) {
-          url = '/companies/search-location';
         }
+        // Handle General Search/Filter Requests
+        else {
+          // Add filters to query params
+          if (params.status && params.status !== 'all') queryParams.status = params.status;
+          if (params.categoryId && params.categoryId !== 'all') queryParams.categoryId = params.categoryId;
+        }
+
+        // Add common search params
+        if (params.search) queryParams.search = params.search;
+        if (params.keyword) queryParams.keyword = params.keyword;
+        if (params.country) queryParams.country = params.country;
+        if (params.city) queryParams.city = params.city;
 
         return {
           url,
           method: 'GET',
-          params: {
-            page: params.page || 1,
-            limit: params.limit || 10,
-            ...(params.search && { search: params.search }),
-            ...(params.keyword && { keyword: params.keyword }),
-            // Only send status if we are NOT using the specific admin endpoints, 
-            // or if the admin endpoints also support filtering (which is harmless).
-            // But if we are using /companies (default), we definitely need status.
-            // If we are using /companies/admin/pending, status=pending is implicit but sending it is fine.
-            ...(params.status && { status: params.status }),
-            ...(params.country && { country: params.country }),
-            ...(params.city && { city: params.city }),
-          },
+          params: queryParams,
           withToken: true,
         };
       },

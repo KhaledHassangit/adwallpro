@@ -1,4 +1,3 @@
-// Create a new file at @/components/admin/AdminCouponsTable.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -12,7 +11,15 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Edit, Trash2 } from "@/components/ui/icon";
+import { Edit, Trash2, Search } from "@/components/ui/icon";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useI18n } from "@/providers/LanguageProvider";
 import { useGetCouponsQuery } from "@/features/couponsApi";
 import { PaginationControl } from "@/components/ui/pagination-control";
@@ -22,6 +29,10 @@ import { Coupon } from "@/types/types";
 interface AdminCouponsTableProps {
   onEdit: (coupon: Coupon) => void;
   onDelete: (coupon: Coupon) => void;
+  keyword: string;
+  isActive: boolean | undefined;
+  onKeywordChange: (keyword: string) => void;
+  onIsActiveChange: (isActive: boolean | undefined) => void;
 }
 
 interface ApiError {
@@ -30,17 +41,34 @@ interface ApiError {
   };
 }
 
-export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) {
+export function AdminCouponsTable({ 
+  onEdit, 
+  onDelete, 
+  keyword, 
+  isActive, 
+  onKeywordChange, 
+  onIsActiveChange 
+}: AdminCouponsTableProps) {
   const { t } = useI18n();
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  const { data: response, isLoading, isFetching, error } = useGetCouponsQuery({ page, limit });
+  const { data: response, isLoading, isFetching, error } = useGetCouponsQuery({ 
+    page, 
+    limit, 
+    keyword, 
+    isActive 
+  });
 
   // Fix: Correctly extract coupons and pagination from the response
   const coupons = response?.data?.data || [];
   const totalPages = response?.data?.paginationResult?.numberOfPages || 1;
   const results = response?.data?.results || 0;
+
+  // Reset to page 1 when search filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [keyword, isActive]);
 
   if (isLoading) {
     return (
@@ -66,6 +94,32 @@ export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) 
 
   return (
     <div className="ultra-card p-6">
+      {/* Search and Filter Controls */}
+      <div className="flex flex-col sm:flex-row gap-4 mb-6">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={String(t("searchCoupons") || "Search coupons...")}
+            value={keyword}
+            onChange={(e) => onKeywordChange(e.target.value)}
+            className="pl-8"
+          />
+        </div>
+        <Select
+          value={isActive === undefined ? "all" : isActive ? "active" : "inactive"}
+          onValueChange={(value) => onIsActiveChange(value === "all" ? undefined : value === "active")}
+        >
+          <SelectTrigger className="w-[180px]">
+            <SelectValue placeholder={String(t("filterByStatus") || "Filter by Status")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">{String(t("allStatuses") || "All Statuses")}</SelectItem>
+            <SelectItem value="active">{String(t("active") || "Active")}</SelectItem>
+            <SelectItem value="inactive">{String(t("inactive") || "Inactive")}</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
       <div className="rounded-md mb-4">
         <Table>
           <TableHeader>
@@ -161,7 +215,6 @@ export function AdminCouponsTable({ onEdit, onDelete }: AdminCouponsTableProps) 
       {/* Fix: Only show pagination if there are results */}
       {results > 0 && (
         <div className="mt-4 flex justify-between items-center">
-
           <PaginationControl
             currentPage={page}
             totalPages={totalPages}

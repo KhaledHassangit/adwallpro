@@ -145,6 +145,7 @@ export interface GetCompaniesParams {
   country?: string;
   city?: string;
   categoryId?: string;
+  useCategoryEndpoint?: boolean;
 }
 
 // Coupon interface

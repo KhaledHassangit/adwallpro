@@ -1,4 +1,3 @@
-// @/components/admin/AdminCouponsPage.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -110,28 +109,6 @@ function AdminCouponsContent() {
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <div className="relative w-64">
-                <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={String(t("searchCoupons") || "Search coupons...")}
-                  value={keyword}
-                  onChange={(e) => setKeyword(e.target.value)}
-                  className="pl-8"
-                />
-              </div>
-              <Select
-                value={isActive === undefined ? "all" : isActive ? "active" : "inactive"}
-                onValueChange={(value) => setIsActive(value === "all" ? undefined : value === "active")}
-              >
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue placeholder={String(t("filterByStatus") || "Filter by Status")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">{String(t("allStatuses") || "All Statuses")}</SelectItem>
-                  <SelectItem value="active">{String(t("active") || "Active")}</SelectItem>
-                  <SelectItem value="inactive">{String(t("inactive") || "Inactive")}</SelectItem>
-                </SelectContent>
-              </Select>
               <Button
                 onClick={() => setShowCreateDialog(true)}
                 className="btn-ultra hover:bg-primary/90"
@@ -149,6 +126,8 @@ function AdminCouponsContent() {
             onDelete={handleDeleteCoupon}
             keyword={keyword}
             isActive={isActive}
+            onKeywordChange={setKeyword}
+            onIsActiveChange={setIsActive}
           />
 
           {/* Create Coupon Dialog */}

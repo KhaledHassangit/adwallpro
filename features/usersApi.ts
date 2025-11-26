@@ -19,18 +19,32 @@ export const usersApi = createApi({
       transformResponse: (response: any) => {
         // The API returns { status, message, data: { data: UserStats } }
         // We want to extract and return just the UserStats object
-        return response.data.data;
+        return response;
       },
     }),
 
     // Get Paginated Users
     getUsers: builder.query<PaginatedUsersResponse, GetUsersParams>({
-      query: ({ page, limit, keyword }: GetUsersParams) => ({
-        url: '/users',
-        method: 'GET',
-        params: { page, limit, keyword },
-        withToken: true,
-      }),
+      query: ({ page, limit, keyword }: GetUsersParams) => {
+        // Build the query parameters object
+        const params: any = {
+          page: page || 1,
+          limit: limit || 10,
+        };
+        
+        // Only add keyword to params if it exists
+        if (keyword) {
+          // Ensure the keyword is properly encoded
+          params.keyword = keyword;
+        }
+        
+        return {
+          url: '/users',
+          method: 'GET',
+          params,
+          withToken: true,
+        };
+      },
       // Transform the response to match the expected structure
       transformResponse: (response: any) => {
         // The API returns { status, message, data: { results, paginationResult, data: { users } } }

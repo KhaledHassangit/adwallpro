@@ -1,9 +1,7 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
-import { axiosBaseQuery } from '@/lib/baseURL'; // Adjust path if needed
-import { Category, CategoryStats, UpdateCategoryParams } from '@/types/types'; // Adjust path if needed
+import { axiosBaseQuery } from '@/lib/baseURL';
+import { Category, CategoryStats, UpdateCategoryParams } from '@/types/types';
 
-// Define a type for the expected paginated response for better type safety and developer experience.
-// This structure should match what your backend API returns.
 interface PaginatedCategoriesResponse {
   status: string;
   message: string;
@@ -21,63 +19,79 @@ interface PaginatedCategoriesResponse {
 export const categoriesApi = createApi({
   reducerPath: 'categoriesApi',
   baseQuery: axiosBaseQuery(),
-  tagTypes: ['Category'], // This tag is used for cache invalidation
+  tagTypes: ['Category'],
   endpoints: (builder) => ({
     // Get Category Statistics
     getCategoryStats: builder.query<CategoryStats, void>({
       query: () => ({
         url: '/categories/stats',
         method: 'GET',
-        withToken: true, // This endpoint requires authentication
+        withToken: true,
       }),
     }),
 
     // Get all Categories with Pagination, Sorting, and Search
-    getCategories: builder.query<PaginatedCategoriesResponse, { 
-      page?: number; 
-      limit?: number; 
+    getCategories: builder.query<PaginatedCategoriesResponse, {
+      page?: number;
+      limit?: number;
       sort?: string;
       keyword?: string;
-      category?: string; // Add category filter parameter
+      category?: string;
     }>({
       query: ({ page = 1, limit = 100, sort, keyword, category }) => {
-        // Build the query object. Only include parameters if they're provided.
-        const queryParams: { page: string; limit: string; sort?: string; keyword?: string; category?: string } = {
+        // If a specific category ID is provided, fetch that single category
+        if (category) {
+          return {
+            url: `/categories/${category}`,
+            method: 'GET',
+            withToken: false,
+          };
+        }
+
+        // Build the query object
+        const queryParams: { page: string; limit: string; sort?: string; keyword?: string } = {
           page: String(page),
           limit: String(limit),
         };
-        
-        if (sort) {
-          queryParams.sort = sort;
-        }
-        
-        if (keyword) {
-          queryParams.keyword = keyword;
-        }
-        
-        if (category) {
-          queryParams.category = category;
-        }
 
-        // Determine the URL based on whether we have search/filter parameters
-        const hasSearchOrFilter = keyword || category;
+        if (sort) queryParams.sort = sort;
+        if (keyword) queryParams.keyword = keyword;
+
+        const hasSearchOrFilter = keyword;
         const baseUrl = hasSearchOrFilter ? '/categories/search' : '/categories';
-        
-        // Build query parameters for search/filter
+
         let searchParams = new URLSearchParams();
         if (keyword) searchParams.append('keyword', keyword);
-        if (category) searchParams.append('category', category);
         searchParams.append('page', String(page));
         searchParams.append('limit', String(limit));
 
         return {
           url: hasSearchOrFilter ? `${baseUrl}?${searchParams.toString()}` : baseUrl,
           method: 'GET',
-          params: hasSearchOrFilter ? {} : queryParams, // Only send params for non-search requests
-          withToken: false, // Set to true if this endpoint requires authentication
+          params: hasSearchOrFilter ? {} : queryParams,
+          withToken: false,
         };
       },
-      // providesTags is used to cache the data. When a tag is invalidated, RTK Query will refetch the data.
+      transformResponse: (response: any, meta, arg) => {
+        // If we fetched a single category (by ID), wrap it in the paginated structure
+        if (arg.category) {
+          const categoryData = response.data || response;
+          return {
+            status: 'success',
+            message: 'Category fetched successfully',
+            data: {
+              results: 1,
+              paginationResult: {
+                currentPage: 1,
+                numberOfPages: 1,
+                limit: 1,
+              },
+              data: [categoryData],
+            },
+          };
+        }
+        return response;
+      },
       providesTags: ['Category'],
     }),
 
@@ -96,10 +110,9 @@ export const categoriesApi = createApi({
         url: '/categories',
         method: 'POST',
         data: formData,
-        isFormData: true, // Important: Tell axiosBaseQuery to handle FormData correctly
-        withToken: true, // This endpoint requires authentication
+        isFormData: true,
+        withToken: true,
       }),
-      // invalidatesTags will cause the 'getCategories' query to re-run, updating the list with the new category.
       invalidatesTags: ['Category'],
     }),
 
@@ -107,12 +120,11 @@ export const categoriesApi = createApi({
     updateCategory: builder.mutation<Category, UpdateCategoryParams>({
       query: ({ id, formData }) => ({
         url: `/categories/${id}`,
-        method: 'PUT', // or 'PATCH' depending on your API
+        method: 'PUT',
         data: formData,
-        isFormData: true, // Important: Tell axiosBaseQuery to handle FormData correctly
-        withToken: true, // This endpoint requires authentication
+        isFormData: true,
+        withToken: true,
       }),
-      // This will also refresh the list to show the updated category.
       invalidatesTags: (result, error, { id }) => [{ type: 'Category', id }, 'Category'],
     }),
 
@@ -121,16 +133,13 @@ export const categoriesApi = createApi({
       query: (id) => ({
         url: `/categories/${id}`,
         method: 'DELETE',
-        withToken: true, // This endpoint requires authentication
+        withToken: true,
       }),
-      // This will refresh the list, removing the deleted category.
       invalidatesTags: ['Category'],
     }),
   }),
 });
 
-// Export the auto-generated hooks for use in your components.
-// These hooks follow the naming convention: use + EndpointName + Query/Mutation.
 export const {
   useGetCategoryStatsQuery,
   useGetCategoriesQuery,

@@ -1,4 +1,3 @@
-// @/pages/admin/users.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -88,6 +87,13 @@ function AdminUsersContent() {
                   value={keyword}
                   onChange={(e) => setKeyword(e.target.value)}
                   className="pl-8"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      // Prevent form submission and trigger search
+                      e.preventDefault();
+                      // The search will be triggered automatically by the useGetUsersQuery hook
+                    }
+                  }}
                 />
               </div>
               <Button
@@ -392,6 +398,11 @@ function AdminUsersTable({ keyword }: { keyword: string }) {
       );
     }
   };
+
+  // Reset to page 1 when keyword changes
+  React.useEffect(() => {
+    setPage(1);
+  }, [keyword]);
 
   if (isLoading) {
     return <LoadingSpinner />;

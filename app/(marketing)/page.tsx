@@ -1,4 +1,3 @@
-"use client";
 
 import { UltraHero } from "@/components/home/hero";
 import { UltraSlider } from "@/components/home/slider";
