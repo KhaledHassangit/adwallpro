@@ -1,4 +1,6 @@
 
+"use client";
+
 import { useI18n } from "@/providers/LanguageProvider";
 
 export default function AboutPage() {
@@ -58,91 +60,91 @@ export default function AboutPage() {
           </div>
 
           {/* How It Works - 重新设计卡片背景 */}
-        {/* How It Works - Transparent Background Design */}
-<div className="text-center mb-16">
-  <h3 className="text-3xl font-bold text-foreground mb-12">{t("howWeWork")}</h3>
-  <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-    {/* For Advertisers */}
-    <div className="group relative">
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/5 rounded-3xl opacity-0 group-hover:opacity-100 transition duration-500 blur-lg"></div>
-      <div className="relative bg-white/10 dark:bg-black/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 dark:border-white/10 shadow-xl group-hover:shadow-2xl transition-all duration-500">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700"></div>
-        
-        <div className="relative z-10">
-          <div className="w-20 h-20 mx-auto mb-6 relative">
-            <div className="absolute inset-0 bg-primary/30 rounded-2xl group-hover:scale-110 transition-transform duration-300 blur-sm"></div>
-            <div className="relative w-full h-full bg-primary/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-primary/30">
-              <div className="text-3xl">📢</div>
-            </div>
-          </div>
-          
-          <h4 className="text-xl font-bold text-primary mb-6">{t("forAdvertisersWork")}</h4>
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("chooseSquare")}</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("addAdEasily")}</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
-                <div className="w-2 h-2 rounded-full bg-primary"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("beVisibleToAll")}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+          {/* How It Works - Transparent Background Design */}
+          <div className="text-center mb-16">
+            <h3 className="text-3xl font-bold text-foreground mb-12">{t("howWeWork")}</h3>
+            <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+              {/* For Advertisers */}
+              <div className="group relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 to-primary/5 rounded-3xl opacity-0 group-hover:opacity-100 transition duration-500 blur-lg"></div>
+                <div className="relative bg-white/10 dark:bg-black/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 dark:border-white/10 shadow-xl group-hover:shadow-2xl transition-all duration-500">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700"></div>
 
-    {/* For Users */}
-    <div className="group relative">
-      <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition duration-500 blur-lg"></div>
-      <div className="relative bg-white/10 dark:bg-black/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 dark:border-white/10 shadow-xl group-hover:shadow-2xl transition-all duration-500">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700"></div>
-        
-        <div className="relative z-10">
-          <div className="w-20 h-20 mx-auto mb-6 relative">
-            <div className="absolute inset-0 bg-cyan-500/30 rounded-2xl group-hover:scale-110 transition-transform duration-300 blur-sm"></div>
-            <div className="relative w-full h-full bg-cyan-500/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-cyan-500/30">
-              <div className="text-3xl">🔍</div>
+                  <div className="relative z-10">
+                    <div className="w-20 h-20 mx-auto mb-6 relative">
+                      <div className="absolute inset-0 bg-primary/30 rounded-2xl group-hover:scale-110 transition-transform duration-300 blur-sm"></div>
+                      <div className="relative w-full h-full bg-primary/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-primary/30">
+                        <div className="text-3xl">📢</div>
+                      </div>
+                    </div>
+
+                    <h4 className="text-xl font-bold text-primary mb-6">{t("forAdvertisersWork")}</h4>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("chooseSquare")}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("addAdEasily")}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-primary/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-primary/30">
+                          <div className="w-2 h-2 rounded-full bg-primary"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("beVisibleToAll")}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* For Users */}
+              <div className="group relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-cyan-500/20 to-blue-500/5 rounded-3xl opacity-0 group-hover:opacity-100 transition duration-500 blur-lg"></div>
+                <div className="relative bg-white/10 dark:bg-black/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 dark:border-white/10 shadow-xl group-hover:shadow-2xl transition-all duration-500">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -translate-y-16 translate-x-16 group-hover:scale-150 transition-transform duration-700"></div>
+
+                  <div className="relative z-10">
+                    <div className="w-20 h-20 mx-auto mb-6 relative">
+                      <div className="absolute inset-0 bg-cyan-500/30 rounded-2xl group-hover:scale-110 transition-transform duration-300 blur-sm"></div>
+                      <div className="relative w-full h-full bg-cyan-500/20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-cyan-500/30">
+                        <div className="text-3xl">🔍</div>
+                      </div>
+                    </div>
+
+                    <h4 className="text-xl font-bold text-cyan-400 mb-6">{t("forUsersWork")}</h4>
+
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
+                          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("browseSquares")}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
+                          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("findWhatYouNeed")}</span>
+                      </div>
+                      <div className="flex items-start gap-3">
+                        <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
+                          <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
+                        </div>
+                        <span className="text-sm text-foreground/90">{t("directContact")}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          
-          <h4 className="text-xl font-bold text-cyan-400 mb-6">{t("forUsersWork")}</h4>
-          
-          <div className="space-y-4">
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
-                <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("browseSquares")}</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
-                <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("findWhatYouNeed")}</span>
-            </div>
-            <div className="flex items-start gap-3">
-              <div className="w-6 h-6 rounded-full bg-cyan-500/20 backdrop-blur-sm flex items-center justify-center flex-shrink-0 mt-0.5 border border-cyan-500/30">
-                <div className="w-2 h-2 rounded-full bg-cyan-400"></div>
-              </div>
-              <span className="text-sm text-foreground/90">{t("directContact")}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
           {/* Call to Action */}
           <div className="text-center">
             <div className="inline-flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
