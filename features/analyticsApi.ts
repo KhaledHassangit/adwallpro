@@ -1,7 +1,6 @@
 import { createApi } from '@reduxjs/toolkit/query/react';
 import { axiosBaseQuery } from '../lib/baseURL';
 
-// Define the analytics data interfaces based on your API response
 export interface AnalyticsData {
   userCount: number;
   adminCount: number;

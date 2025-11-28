@@ -275,8 +275,10 @@ export default function CompaniesCategoryPage() {
   const { data: category, isLoading: categoryLoading, error: categoryError } = useGetCategoryQuery(id);
 
   const { data: companiesResponse, isLoading: companiesLoading, error: companiesError } = useGetCompaniesQuery({
+    page: 1,
+    limit: 100,
     categoryId: id,
-    search: searchQuery,
+    keyword: searchQuery,
     country: countryFilter,
     city: cityFilter,
     useCategoryEndpoint: true,
