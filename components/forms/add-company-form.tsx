@@ -18,7 +18,7 @@ import { useI18n } from "@/providers/LanguageProvider";
 import { getCurrentUser, SignInButton } from "@/components/auth/sign-in-dialog";
 import { getCategories } from "@/lib/store";
 import { countries } from "@/data/countries";
-import { addAdAction } from "@/app/actions";
+import { addAdAction } from "@/app/[locale]/actions";
 import { ImageUpload } from "@/components/forms/image-upload";
 import { LoadingSpinner } from "@/components/common/loading-spinner";
 import { CheckCircle, AlertCircle, Send } from "lucide-react";

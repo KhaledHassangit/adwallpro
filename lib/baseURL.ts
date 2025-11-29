@@ -3,10 +3,16 @@ import { BaseQueryFn } from '@reduxjs/toolkit/query';
 import axios, { AxiosRequestConfig, AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 
-const baseURL = process.env.NEXT_PUBLIC_API_URL || "http://72.60.178.180:8000/api/v1";
+// Default to HTTPS in production to avoid mixed-content issues on deployed sites.
+const defaultHost = process.env.NODE_ENV === 'production'
+    ? 'https://api.adwallpro.com/api/v1'
+    : 'https://api.adwallpro.com/api/v1';
+
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || defaultHost;
+const baseURL = API_BASE;
 const TOKEN_COOKIE_NAME = "auth_token";
 
-const axiosInstance = axios.create({
+export const axiosInstance = axios.create({
     baseURL,
 });
 

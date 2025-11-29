@@ -1,11 +1,12 @@
 import type React from "react";
 import type { Metadata } from "next";
 import { Poppins, Almarai } from "next/font/google";
-import { Providers } from "../providers/ThemeProvider";
-import { GoogleOAuthProviderWrapper } from "../providers/GoogleOAuthProvider";
+import { Providers } from "../../providers/ThemeProvider";
+import { GoogleOAuthProviderWrapper } from "../../providers/GoogleOAuthProvider";
+import { LangProvider } from "../../providers/LanguageProvider";
 import HeaderGuard from "@/components/layout/header-guard";
 import { Footer } from "@/components/layout/footer";
-import "./globals.css"
+import "./globals.css";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -36,24 +37,43 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
-  children,
-}: {
+type RootLayoutProps = {
   children: React.ReactNode;
-}) {
+  params: Promise<{ locale?: string }>;
+};
+
+export async function generateStaticParams() {
+  return [{ locale: "en" }, { locale: "ar" }];
+}
+
+export default async function RootLayout({
+  children,
+  params,
+}: RootLayoutProps) {
+  const { locale = "en" } = await params;
+  const isArabic = locale === "ar";
+
   return (
     <html
-      lang="en"
-      dir="ltr"
+      lang={locale}
+      dir={isArabic ? "rtl" : "ltr"}
       suppressHydrationWarning
-      className={`${poppins.variable} ${almarai.variable}`}
+      className={`${poppins.variable} ${almarai.variable} ${
+        isArabic ? "ar" : "en"
+      }`}
     >
-      <body className="font-sans antialiased">
+      <body
+        className={`antialiased ${
+          isArabic ? "font-ar" : "font-en"
+        }`}
+      >
         <GoogleOAuthProviderWrapper>
           <Providers>
-            <HeaderGuard />
-            {children}
-            <Footer />
+            <LangProvider initialLocale={locale as "en" | "ar"}>
+              <HeaderGuard />
+              {children}
+              <Footer />
+            </LangProvider>
           </Providers>
         </GoogleOAuthProviderWrapper>
       </body>

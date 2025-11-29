@@ -215,7 +215,18 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
           {/* Navigation */}
           <nav className="flex-1 px-4 my-5 flex flex-col gap-3 overflow-y-auto">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              // Normalize pathname to remove optional locale prefix (/en or /ar)
+              const rawPath = pathname || "";
+              const segments = rawPath.split("/").filter(Boolean);
+              const locales = ["en", "ar"];
+              let pathnameBase = rawPath;
+              if (segments.length && locales.includes(segments[0])) {
+                pathnameBase = "/" + segments.slice(1).join("/");
+                if (pathnameBase === "") pathnameBase = "/";
+              }
+
+              const isActive = pathnameBase === item.href || pathnameBase.startsWith(item.href + "/");
+
               return (
                 <Link key={item.href} href={item.href}>
                   <div

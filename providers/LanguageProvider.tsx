@@ -5,9 +5,10 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useState,
   useEffect,
+  useState,
 } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { dict, type Locale } from "@/i18n/dict";
 
 type Ctx = {
@@ -20,38 +21,52 @@ type Ctx = {
 
 const LangContext = createContext<Ctx | null>(null);
 
-// ✅ Helper: Get initial locale safely
-const getInitialLocale = (): Locale => {
-  if (typeof window !== "undefined") {
-    const saved = localStorage.getItem("locale") as Locale | null;
-    if (saved) return saved;
-  }
-  return "en"; // force English by default
+type LangProviderProps = {
+  children: React.ReactNode;
+  initialLocale: Locale;
 };
 
-export function LangProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(getInitialLocale);
+export function LangProvider({ children, initialLocale }: LangProviderProps) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [mounted, setMounted] = useState(false);
 
-  // ✅ Update <html> lang & dir whenever locale changes
+  // Sync with URL locale changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      document.documentElement.lang = locale;
-      document.documentElement.dir = locale === "ar" ? "rtl" : "ltr";
-      localStorage.setItem("locale", locale);
+    setMounted(true);
+    const pathLocale = pathname.split("/")[1] as Locale;
+    if (pathLocale && ["en", "ar"].includes(pathLocale)) {
+      setLocaleState(pathLocale);
+      document.documentElement.lang = pathLocale;
+      document.documentElement.dir = pathLocale === "ar" ? "rtl" : "ltr";
     }
-  }, [locale]);
+  }, [pathname]);
 
-  // ✅ Change locale programmatically
-  const setLocale = useCallback((l: Locale) => {
-    setLocaleState(l);
-    if (typeof window !== "undefined") {
+  // Change locale and navigate
+  const setLocale = useCallback(
+    (l: Locale) => {
+      setLocaleState(l);
+      
+      // Update HTML element
       document.documentElement.lang = l;
       document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
-      localStorage.setItem("locale", l);
-    }
-  }, []);
 
-  // ✅ Translation function
+      // Extract path without locale prefix
+      const segments = pathname.split("/");
+      let pathWithoutLocale = pathname;
+      
+      if (["en", "ar"].includes(segments[1])) {
+        pathWithoutLocale = "/" + segments.slice(2).join("/");
+      }
+
+      // Navigate to new locale
+      router.push(`/${l}${pathWithoutLocale}`);
+    },
+    [pathname, router]
+  );
+
+  // Translation function
   const t = useCallback(
     (k: string) => dict[locale]?.[k as keyof typeof dict[Locale]] ?? k,
     [locale]
@@ -64,12 +79,33 @@ export function LangProvider({ children }: { children: React.ReactNode }) {
     [locale, setLocale, t, dir]
   );
 
+  // Prevent hydration mismatch
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return <LangContext.Provider value={value}>{children}</LangContext.Provider>;
 }
 
-// ✅ Hook
+// Hook
+const defaultCtx: Ctx = {
+  locale: "en",
+  lang: "en",
+  setLocale: () => {},
+  t: (k: string) => k,
+  dir: "ltr",
+};
+
 export function useI18n() {
   const ctx = useContext(LangContext);
-  if (!ctx) throw new Error("useI18n must be used within LangProvider");
+  if (!ctx) {
+    // Avoid crashing when hook is used outside provider (e.g., server components or early render)
+    // Return a safe fallback and warn during development.
+    if (process.env.NODE_ENV !== "production") {
+      // eslint-disable-next-line no-console
+      console.warn("useI18n used outside LangProvider - returning fallback context");
+    }
+    return defaultCtx;
+  }
   return ctx;
 }

@@ -10,7 +10,17 @@ export function Footer() {
   const { t } = useI18n();
   const pathname = usePathname();
 
-  if (pathname.startsWith("/admin") || pathname.startsWith("/manage")) {
+  // Determine top-level path segment and next segment. Support optional locale prefix.
+  const segments = (pathname || "").split("/").filter(Boolean);
+  const locales = ["en", "ar"];
+  const hasLocalePrefix = locales.includes(segments[0] || "");
+  const top = hasLocalePrefix ? segments[1] || "" : segments[0] || "";
+  const second = hasLocalePrefix ? segments[2] || "" : segments[1] || "";
+
+  const hideTop = ["admin", "manage", "dashboard", "user-dashboard"].includes(top);
+  const hideSecond = second === "admin";
+
+  if (hideTop || hideSecond) {
     return null;
   }
 

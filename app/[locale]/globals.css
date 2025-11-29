@@ -121,30 +121,32 @@
     background: hsl(var(--primary-400));
   }
 
-  /* Language-specific font selection */
-  html[lang="en"] {
+  /* Language-specific font selection - SSR safe */
+  html {
     font-family: var(--font-poppins), system-ui, sans-serif;
   }
 
-  html[lang="ar"] {
+  html[lang="ar"],
+  html.ar {
     font-family: var(--font-almarai), system-ui, sans-serif;
+  }
+
+  html[lang="en"],
+  html.en {
+    font-family: var(--font-poppins), system-ui, sans-serif;
   }
 
   body {
-    font-family: var(--font-poppins), system-ui, sans-serif;
-  }
-
-  html[lang="ar"] body {
-    font-family: var(--font-almarai), system-ui, sans-serif;
+    font-family: inherit;
   }
 
   /* Language-specific text selection */
-  :lang(en) {
-    font-family: var(--font-poppins), system-ui, sans-serif;
-  }
-
   :lang(ar) {
     font-family: var(--font-almarai), system-ui, sans-serif;
+  }
+
+  :lang(en) {
+    font-family: var(--font-poppins), system-ui, sans-serif;
   }
 }
 

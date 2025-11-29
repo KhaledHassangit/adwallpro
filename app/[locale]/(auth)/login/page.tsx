@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
 import { signIn, useAuthStore, useUserStore } from "@/lib/auth";
-import { verifyGoogleToken } from "@/app/actions";
+import { verifyGoogleToken } from "@/app/[locale]/actions";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNotifications } from "@/hooks/notifications";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
