@@ -20,12 +20,12 @@ export function FAQSection() {
 
   const faqs = [
     {
-      questionAr: "ما هو AdWell؟",
-      questionEn: "What is AdWell?",
+      questionAr: "ما هو AdWall؟",
+      questionEn: "What is AdWall?",
       answerAr:
-        "AdWell هو نظام إعلاني يسمح للشركات والأفراد بعرض إعلاناتهم على لوحة إعلانية تفاعلية بطريقة منظمة وسهلة الإدارة.",
+        "AdWall هو نظام إعلاني يسمح للشركات والأفراد بعرض إعلاناتهم على لوحة إعلانية تفاعلية بطريقة منظمة وسهلة الإدارة.",
       answerEn:
-        "AdWell is an advertising platform that lets businesses and individuals display ads on an interactive board in an organized, easy-to-manage way.",
+        "AdWall is an advertising platform that lets businesses and individuals display ads on an interactive board in an organized, easy-to-manage way.",
     },
     {
       questionAr: "كيف أضيف إعلانًا جديدًا؟",

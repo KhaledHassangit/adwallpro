@@ -71,7 +71,7 @@ export function AddCompanyForm() {
               تم إرسال طلبك بنجاح!
             </h2>
             <p className="text-lg text-muted-foreground mb-6">
-              شكراً لك على إضافة شركتك إلى منصة AdWell. سيتم مراجعة طلبك من قبل
+              شكراً لك على إضافة شركتك إلى منصة AdWall. سيتم مراجعة طلبك من قبل
               فريقنا خلال 24-48 ساعة.
             </p>
           </div>

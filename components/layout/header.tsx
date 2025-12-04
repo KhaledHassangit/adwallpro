@@ -157,16 +157,17 @@ export function UltraHeader() {
                     href={n.href}
                     onClick={closeMobileMenu}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-xl px-4 py-2 text-base font-semibold transition-all duration-200",
+                      "group flex items-center gap-2.5 rounded-xl px-4 py-2 text-base font-semibold transition-all duration-200",
+                      "hover:bg-primary-50 dark:hover:bg-primary-950/50",
                       isActive
-                        ? "bg-primary-100 text-primary-700 dark:bg-primary-900/50 dark:text-primary-300 shadow-sm"
-                        : "text-foreground/70 hover:bg-primary-100 hover:text-primary-700 dark:hover:bg-primary-900/50 dark:hover:text-primary-300"
+                        ? "bg-primary-50 dark:bg-primary-950/50 text-violet-500 shadow"
+                        : "text-foreground/80 hover:text-violet-500"
                     )}
                   >
-                    <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+                    <Icon className="h-5 w-5 sm:h-6 sm:w-6 transition-transform duration-200" />
                     {n.label}
                     {isActive && (
-                      <Sparkles className="h-4 w-4 text-primary-500 ml-auto" />
+                      <Sparkles className="h-4 w-4 text-violet-500 ml-auto" />
                     )}
                   </Link>
                 );

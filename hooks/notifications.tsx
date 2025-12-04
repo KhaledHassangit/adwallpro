@@ -96,8 +96,8 @@ export async function sendApprovalEmail(email: string, companyName: string, loca
 
   const message =
     locale === "ar"
-      ? `مبروك! تم قبول إعلان شركة ${companyName} وهو الآن مرئي للجميع على منصة AdWell.`
-      : `Congratulations! Your ad for ${companyName} has been approved and is now visible to everyone on AdWell platform.`
+      ? `مبروك! تم قبول إعلان شركة ${companyName} وهو الآن مرئي للجميع على منصة AdWall.`
+      : `Congratulations! Your ad for ${companyName} has been approved and is now visible to everyone on AdWall platform.`
 
   // In a real implementation, you would send an actual email here
   console.log(`Sending approval email to ${email}:`, { subject, message })
