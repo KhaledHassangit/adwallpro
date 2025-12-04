@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useI18n } from "@/providers/LanguageProvider";
 import { MessageCircle, X, Send, Bot, User, ChevronDown, ChevronUp, Sparkles, Trash2 } from "@/components/ui/icon";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,47 +28,15 @@ interface FAQQuestion {
   answer: string;
 }
 
-const faqData: FAQCategory[] = [
+// Arabic FAQ data
+const faqDataAr: FAQCategory[] = [
   {
     id: "about",
     title: "عن الموقع والفكرة",
     icon: "💡",
     questions: [
-      {
-        id: "about-1",
-        question: "شر هو موقع AdWallPro بالضبط؟",
-        answer: "منصة ذكية للإعلانات الرقمية تتيح لأي شخص أو شركة عرض خدماته أو منتجاته بطريقة احترافية وموجهة."
-      },
-      {
-        id: "about-2",
-        question: "الموقع علمي ولا يشغل بدول محددة؟",
-        answer: "الموقع علمي 🌟 ومتاح لأي مستخدم من أي دولة"
-      },
-      {
-        id: "about-3",
-        question: "شر الفرق بينكم وبين مواقع الإعلانات العادية؟",
-        answer: 'نحن منصة "إعلانات ذكية" يعني الإعلانات بتعرض بناءً على الفئة والموقع الجغرافي والاهتمامات، مو بين قائمة عشوائية'
-      },
-      {
-        id: "about-4",
-        question: "هل في تطبيق خاص بالموقع؟",
-        answer: "حاليًا الموقع يعمل بسلامة على الجوال، والتطبيق الرسمي قيد التطوير"
-      },
-      {
-        id: "about-5",
-        question: "شر معنى إن الموقع 'مدفوع'؟",
-        answer: "يعني كل إعلان له خطة اشتراك محددة (أساسية أو مميزة) حسب المدة والميزات التي تختارها"
-      },
-      {
-        id: "about-6",
-        question: "هل في تجريب مجاني؟",
-        answer: "أحيانًا نقدم عروض تجريبية مؤقتة، تابع إشعاراتنا حتى تعرف وقتها"
-      },
-      {
-        id: "about-7",
-        question: "هل الموقع يدعم أكثر من لغة؟",
-        answer: "نعم، الموقع يدعم العربية والإنجليزية فقط"
-      }
+      { id: "about-1", question: "ما هو موقع AdWallPro؟", answer: "منصة ذكية للإعلانات الرقمية تتيح لأي شخص أو شركة عرض خدماته أو منتجاته بطريقة احترافية." },
+      { id: "about-7", question: "هل الموقع يدعم أكثر من لغة؟", answer: "نعم، الموقع يدعم العربية والإنجليزية فقط" }
     ]
   },
   {
@@ -75,36 +44,8 @@ const faqData: FAQCategory[] = [
     title: "التسجيل والدخول",
     icon: "🔐",
     questions: [
-      {
-        id: "reg-1",
-        question: "كيف أسرت بالموقع؟",
-        answer: "اضغط على 'إنشاء حساب'، أدخل بياناتك واختر الدولة، بعدها فعّل حسابك وابدأ فوراً"
-      },
-      {
-        id: "reg-2",
-        question: "هل التسجيل مجاني؟",
-        answer: "التسجيل نفسه مجاني، لكن نشر الإعلانات يحتاج اشتراك حسب الخطة"
-      },
-      {
-        id: "reg-3",
-        question: "نسبت كلمة السر، شر أعمال؟",
-        answer: "اضغط 'نسيت كلمة المرور'، رح يوصلك رابط إعادة تعيين فوراً على بريدك الإلكتروني"
-      },
-      {
-        id: "reg-4",
-        question: "هل لازم أفعّل الحساب قبل أضيف إعلان؟",
-        answer: "نعم، لازم تفعّل بريدك حتى نحافظ على جودة المستخدمين بالموقع"
-      },
-      {
-        id: "reg-5",
-        question: "فيني أفتح أكثر من حساب؟",
-        answer: "ممكن، لكن ينصح تستخدم حساب واحد لكل إعلاناتك حتى تتابعها بسهولة"
-      },
-      {
-        id: "reg-6",
-        question: "شو فائدة لوحة التحكم؟",
-        answer: "هي مركزك لإدارة الإعلانات، الإحصائيات، الدفع، التعديل، وكل شيء يخص حسابك"
-      }
+      { id: "reg-1", question: "كيف أسجل بالموقع؟", answer: "اضغط على 'إنشاء حساب' وأكمل البيانات ثم فعّل حسابك." },
+      { id: "reg-2", question: "هل التسجيل مجاني؟", answer: "نعم، التسجيل مجاني؛ النشر قد يتطلب اشتراكاً حسب الخطة." }
     ]
   },
   {
@@ -112,78 +53,33 @@ const faqData: FAQCategory[] = [
     title: "الخدمات والإعلانات",
     icon: "🎯",
     questions: [
-      {
-        id: "services-1",
-        question: "كيف أصيف إعلان جديد؟",
-        answer: "من حسابك اضغط 'إضافة إعلان جديد'، عين التفاصيل والصور ثم اختار خطة النشر المناسبة"
-      },
-      {
-        id: "services-2",
-        question: "كم مدة الإعلان؟",
-        answer: "تختلف حسب الخطة: من شهر إلى سنة كاملة، وقابلة للتجديد حسب رغبتك"
-      },
-      {
-        id: "services-3",
-        question: "فيني أصيف روابط لموقعي أو صفحتي؟",
-        answer: "نعم، تقدر تضيف روابط لموقعك أو شبكاتك الاجتماعية"
-      },
-      {
-        id: "services-4",
-        question: "كيف أعرف إذا إعلاني تم قبوله؟",
-        answer: "رح توصلك رسالة تأكيد بالبريد، وكمان بتشوف الحالة 'نشط' بلوحة التحكم"
-      },
-      {
-        id: "services-5",
-        question: "ليش يتم رفض إعلاني؟",
-        answer: "عادة بسبب بيانات ناقصة أو محتوى غير واضح أو مخالف. بيرسلك السبب تتصله"
-      },
-      {
-        id: "services-6",
-        question: "هل ممكن أحدّث الإعلان؟",
-        answer: "نعم، من لوحة التحكم بسهولة"
-      },
-      {
-        id: "services-7",
-        question: "هل الإعلانات بتتغير بنفس الترتيب للجميع؟",
-        answer: "الإعلانات المميزة بتتظهر أولاً، والباقي حسب النشاط والفئة"
-      }
-    ]
-  },
-  {
-    id: "support",
-    title: "المساعدة والدعم",
-    icon: "🛟",
-    questions: [
-      {
-        id: "support-1",
-        question: "عندي مشكلة بالدفع، شر أعمل؟",
-        answer: "تواصل معنا من 'مركز الدعم' داخل حسابك، ورح نراجع المشكلة فوراً"
-      },
-      {
-        id: "support-2",
-        question: "شر طرق الدفع المتاحة؟",
-        answer: "بطاقات بنكية أو Payoneer أو تحويل بنكي حسب بلدك"
-      },
-      {
-        id: "support-3",
-        question: "هل في فواتير أو إيصالات بعد الدفع؟",
-        answer: "أكيد، تحصل على فاتورة رقمية تلقائياً بعد كل عملية"
-      },
-      {
-        id: "support-4",
-        question: "كيف أتواصل مع الدعم الفني؟",
-        answer: 'من أيقونة "الدردشة المباشرة" أسفل الصفحة أو نموذج "اتصل بنا"'
-      },
-      {
-        id: "support-5",
-        question: "كم يستغرق الرد من الدعم؟",
-        answer: "عادة أقل من 12 ساعة، وفي الحالات المستعجلة أقصر"
-      }
+      { id: "services-1", question: "كيف أضيف إعلان جديد؟", answer: "من لوحة التحكم اضغط 'إضافة إعلان جديد' وأكمل التفاصيل." }
     ]
   }
 ];
 
-const contactInfo = {
+// English FAQ data
+const faqDataEn: FAQCategory[] = [
+  {
+    id: "about",
+    title: "About",
+    icon: "💡",
+    questions: [
+      { id: "about-1", question: "What is AdWallPro?", answer: "A smart advertising platform that lets individuals and companies display ads professionally." },
+      { id: "about-7", question: "Is the site multilingual?", answer: "Yes — English and Arabic are supported." }
+    ]
+  },
+  {
+    id: "registration",
+    title: "Registration",
+    icon: "🔐",
+    questions: [
+      { id: "reg-1", question: "How do I sign up?", answer: "Click 'Sign Up', enter your details and verify your email." }
+    ]
+  }
+];
+
+const contactInfoAr = {
   email: "mahmudadwallpro@gmail.com",
   facebook: "https://www.facebook.com/share/1a66tVz9jP/",
   instagram: "https://www.instagram.com/adwallpro",
@@ -191,23 +87,43 @@ const contactInfo = {
   phone: "+1234567890",
 };
 
-const quickActions = [
+const contactInfoEn = { ...contactInfoAr };
+
+const quickActionsAr = [
   { icon: "💳", text: "خطط الأسعار", query: "شر خطط الأسعار" },
   { icon: "🚀", text: "كيف أبدأ", query: "كيف أبدأ استخدام الموقع" },
   { icon: "📞", text: "اتصل بنا", query: "طرق التواصل" },
   { icon: "🔧", text: "مشكلة تقنية", query: "عندي مشكلة في الموقع" },
 ];
 
+const quickActionsEn = [
+  { icon: "💳", text: "Pricing Plans", query: "pricing plans" },
+  { icon: "🚀", text: "How to Start", query: "how to start using the site" },
+  { icon: "📞", text: "Contact Us", query: "contact methods" },
+  { icon: "🔧", text: "Technical Issue", query: "I have a technical issue" },
+];
+
 export function ChatBot() {
+  const { locale } = useI18n();
+  const isArabic = locale === "ar";
+
+  const initialBotMessage: Message = {
+    id: 1,
+    text: isArabic
+      ? "مرحباً! أنا مساعد AdWallPro الذكي 🤖\n\nأنا هنا لمساعدتك في أي استفسار حول المنصة. اختر أحد الأقسام أدناه أو اكتب سؤالك مباشرة!"
+      : "Hello! I'm the AdWallPro assistant 🤖\n\nI'm here to help with any questions about the platform. Choose a category below or type your question.",
+    isBot: true,
+    timestamp: new Date(),
+  };
+
+  // localized content picks
+  const faqData = isArabic ? faqDataAr : faqDataEn;
+  const quickActions = isArabic ? quickActionsAr : quickActionsEn;
+  const contactInfo = isArabic ? contactInfoAr : contactInfoEn;
+  const placeholderText = isArabic ? "اكتب سؤالك هنا..." : "Type your question here...";
+
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: 1,
-      text: "مرحباً! أنا مساعد AdWallPro الذكي 🤖\n\nأنا هنا لمساعدتك في أي استفسار حول المنصة. اختر أحد الأقسام أدناه أو اكتب سؤالك مباشرة!",
-      isBot: true,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([initialBotMessage]);
   const [inputValue, setInputValue] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -222,6 +138,11 @@ export function ChatBot() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping]);
+
+  // Reset initial bot greeting when locale changes
+  useEffect(() => {
+    setMessages([initialBotMessage]);
+  }, [locale]);
 
   const toggleCategory = (categoryId: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -336,14 +257,7 @@ export function ChatBot() {
   };
 
   const clearChat = () => {
-    setMessages([
-      {
-        id: 1,
-        text: "مرحباً! أنا مساعد AdWallPro الذكي 🤖\n\nأنا هنا لمساعدتك في أي استفسار حول المنصة. اختر أحد الأقسام أدناه أو اكتب سؤالك مباشرة!",
-        isBot: true,
-        timestamp: new Date(),
-      },
-    ]);
+    setMessages([initialBotMessage]);
     setShowFAQ(true);
   };
 
@@ -381,10 +295,10 @@ export function ChatBot() {
                     <Bot className="h-5 w-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-sm">مساعد AdWallPro</h3>
+                    <h3 className="font-bold text-sm">{isArabic ? "مساعد AdWallPro" : "AdWallPro Assistant"}</h3>
                     <p className="text-xs opacity-90 flex items-center gap-1">
                       <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse"></div>
-                      متصل الآن
+                      {isArabic ? "متصل الآن" : "Online now"}
                     </p>
                   </div>
                 </div>
@@ -394,7 +308,7 @@ export function ChatBot() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-white/80 hover:bg-white/20 hover:text-white transition-all duration-200"
-                    title={showFAQ ? "إخفاء الأسئلة" : "إظهار الأسئلة"}
+                    title={showFAQ ? (isArabic ? "إخفاء الأسئلة" : "Hide FAQ") : (isArabic ? "إظهار الأسئلة" : "Show FAQ")}
                   >
                     <Menu className="h-3.5 w-3.5" />
                   </Button>
@@ -403,7 +317,7 @@ export function ChatBot() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7 text-white/80 hover:bg-white/20 hover:text-white transition-all duration-200"
-                    title="مسح المحادثة"
+                    title={isArabic ? "مسح المحادثة" : "Clear conversation"}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -563,7 +477,7 @@ export function ChatBot() {
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
                     onKeyPress={handleKeyPress}
-                    placeholder="اكتب سؤالك هنا..."
+                    placeholder={placeholderText}
                     className="flex-1 text-sm rounded-xl border-gray-300 focus:border-blue-500 focus:ring-blue-500"
                   />
                   <Button
@@ -576,7 +490,7 @@ export function ChatBot() {
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2 text-center">
-                  AdWallPro Assistant 🤖 - دائماً هنا لمساعدتك
+                  {isArabic ? "AdWallPro Assistant 🤖 - دائماً هنا لمساعدتك" : "AdWallPro Assistant 🤖 - always here to help"}
                 </p>
               </div>
             </div>

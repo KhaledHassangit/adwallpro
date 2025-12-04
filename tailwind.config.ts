@@ -22,6 +22,7 @@ const config = {
       fontFamily: {
         inter: ["var(--font-inter)", "sans-serif"],
         poppins: ["var(--font-poppins)", "sans-serif"],
+        almarai: ["var(--font-almarai)", "sans-serif"],
         outfit: ["var(--font-outfit)", "sans-serif"],
         "plus-jakarta": ["var(--font-plus-jakarta)", "sans-serif"],
       },

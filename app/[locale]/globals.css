@@ -5,9 +5,9 @@
 /* Modern CSS Variables */
 @layer base {
   :root {
-    /* Modern Typography */
-    --font-poppins: "Poppins", sans-serif;
-    --font-almarai: "Almarai", sans-serif;
+    /* Modern Typography - font variables are provided by next/font when available.
+       Fallbacks are provided below using the var() fallback syntax so the
+       generated CSS from next/font can override these at runtime. */
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 
@@ -123,30 +123,40 @@
 
   /* Language-specific font selection - SSR safe */
   html {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+    font-family: var(--font-poppins, system-ui, sans-serif);
   }
 
   html[lang="ar"],
   html.ar {
-    font-family: var(--font-almarai), system-ui, sans-serif;
+    font-family: var(--font-almarai, system-ui, sans-serif);
   }
 
   html[lang="en"],
   html.en {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+    font-family: var(--font-poppins, system-ui, sans-serif);
   }
 
   body {
     font-family: inherit;
   }
 
+  /* Ensure body class toggles from layout.tsx apply correct font fallback
+     while letting next/font override via CSS variables when available. */
+  body.font-en {
+    font-family: var(--font-poppins, system-ui, sans-serif);
+  }
+
+  body.font-ar {
+    font-family: var(--font-almarai, system-ui, sans-serif);
+  }
+
   /* Language-specific text selection */
   :lang(ar) {
-    font-family: var(--font-almarai), system-ui, sans-serif;
+    font-family: var(--font-almarai, system-ui, sans-serif);
   }
 
   :lang(en) {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+    font-family: var(--font-poppins, system-ui, sans-serif);
   }
 }
 
@@ -668,11 +678,11 @@
 
   /* Language-specific utilities */
   .font-en {
-    font-family: var(--font-poppins), system-ui, sans-serif;
+    font-family: var(--font-poppins, system-ui, sans-serif);
   }
 
   .font-ar {
-    font-family: var(--font-almarai), system-ui, sans-serif;
+    font-family: var(--font-almarai, system-ui, sans-serif);
   }
 }
 
