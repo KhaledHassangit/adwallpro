@@ -10,43 +10,77 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
 import { useNotifications } from "@/hooks/notifications";
 import { Eye, EyeOff, Mail, Lock, User, UserPlus, Phone } from "lucide-react";
+import { createSignupSchema, type SignupFormData, type SignupFormErrors } from "@/lib/validations";
+import { z } from "zod";
 
 export default function SignupPage() {
-  const { t, locale } = useI18n(); // Assuming locale is available from useI18n
+  const { t, locale } = useI18n();
   const router = useRouter();
   const notifications = useNotifications();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<SignupFormData>({
     name: "",
     email: "",
     password: "",
     passwordConfirm: "",
     phone: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<SignupFormErrors>({});
 
   // Determine if the current language is RTL
   const isRTL = locale === "ar";
 
+  // Create schema with translated messages
+  const signupSchema = createSignupSchema({
+    nameRequired: t("nameRequired"),
+    emailRequired: t("emailRequired"),
+    invalidEmailAddress: t("invalidEmailAddress"),
+    passwordRequired: t("passwordRequired"),
+    passwordMinLengthShort: t("passwordMinLengthShort"),
+    passwordsNotMatch: t("passwordsNotMatch"),
+    phoneRequired: t("phoneRequired"),
+    invalidPhone: t("invalidPhone")
+  });
+
+  const validateForm = (): boolean => {
+    try {
+      signupSchema.parse(formData);
+      setFieldErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: SignupFormErrors = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as string;
+          if (!errors[field]) {
+            errors[field] = [];
+          }
+          errors[field]?.push(err.message);
+        });
+        setFieldErrors(errors);
+      }
+      return false;
+    }
+  };
+
+  const handleInputChange = (field: keyof SignupFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // التحقق من تطابق كلمات المرور
-    if (formData.password !== formData.passwordConfirm) {
-      notifications.error(t("passwordsNotMatch"));
-      return;
-    }
-
-    // التحقق من طول كلمة المرور
-    if (formData.password.length < 6) {
-      notifications.error(t("passwordMinLength"));
-      return;
-    }
-
-    // التحقق من رقم الهاتف
-    if (!formData.phone) {
-      notifications.error(t("phoneRequired"));
+    // Validate form before submission
+    if (!validateForm()) {
+      notifications.error(t("formValidationError"));
       return;
     }
 
@@ -63,7 +97,7 @@ export default function SignupPage() {
           email: formData.email,
           password: formData.password,
           passwordConfirm: formData.passwordConfirm,
-          phone: formData.phone, // Now including phone in the request body
+          phone: formData.phone,
         }),
       });
 
@@ -73,13 +107,11 @@ export default function SignupPage() {
         throw new Error(data.message || t("accountCreationFailed"));
       }
 
-      // حفظ التوكن والمعلومات في localStorage
+      // Save token and user info
       localStorage.setItem("auth_token", data.token);
       localStorage.setItem("user_data", JSON.stringify(data.data.user));
 
       notifications.success(t("accountCreatedSuccess"));
-
-      // التوجه للصفحة الرئيسية
       router.push("/");
     } catch (error: any) {
       console.error("Signup error:", error);
@@ -103,7 +135,7 @@ export default function SignupPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <Label htmlFor="name">{t("fullName")}</Label>
               <div className="relative">
@@ -113,17 +145,19 @@ export default function SignupPage() {
                   type="text"
                   placeholder={t("fullNamePlaceholder")}
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                  className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  onChange={handleInputChange("name")}
+                  className={`${isRTL ? "pr-10" : "pl-10"} ${fieldErrors.name ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '0.75rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '0.75rem'
                   }}
-                  required
                 />
               </div>
+              {fieldErrors.name && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.name[0]}
+                </p>
+              )}
             </div>
 
             <div>
@@ -135,17 +169,19 @@ export default function SignupPage() {
                   type="email"
                   placeholder={t("emailPlaceholder")}
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  onChange={handleInputChange("email")}
+                  className={`${isRTL ? "pr-10" : "pl-10"} ${fieldErrors.email ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '0.75rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '0.75rem'
                   }}
-                  required
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.email[0]}
+                </p>
+              )}
             </div>
 
             <div>
@@ -157,17 +193,19 @@ export default function SignupPage() {
                   type="tel"
                   placeholder={t("phoneWithCountryCodePlaceholder")}
                   value={formData.phone}
-                  onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
-                  }
-                  className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  onChange={handleInputChange("phone")}
+                  className={`${isRTL ? "pr-10" : "pl-10"} ${fieldErrors.phone ? "border-red-500" : ""}`}
                   style={{
-                    paddingLeft: isRTL ? '!0.75rem' : '!2.5rem',
-                    paddingRight: isRTL ? '!2.5rem' : '!0.75rem'
+                    paddingLeft: isRTL ? '0.75rem' : '2.5rem',
+                    paddingRight: isRTL ? '2.5rem' : '0.75rem'
                   }}
-                  required
                 />
               </div>
+              {fieldErrors.phone && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.phone[0]}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
                 {t("phoneWithCountryCodeNote")}
               </p>
@@ -182,16 +220,12 @@ export default function SignupPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder={t("passwordPlaceholder")}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className="pr-10 pl-10"
+                  onChange={handleInputChange("password")}
+                  className={`pr-10 pl-10 ${fieldErrors.password ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '2.5rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '2.5rem'
                   }}
-                  required
-                  minLength={6}
                 />
                 <button
                   type="button"
@@ -205,8 +239,13 @@ export default function SignupPage() {
                   )}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.password[0]}
+                </p>
+              )}
               <p className="text-xs text-muted-foreground mt-1">
-                {t("passwordMinLength")}
+                {t("passwordMinLengthShort")}
               </p>
             </div>
 
@@ -219,19 +258,12 @@ export default function SignupPage() {
                   type={showConfirmPassword ? "text" : "password"}
                   placeholder={t("passwordPlaceholder")}
                   value={formData.passwordConfirm}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      passwordConfirm: e.target.value,
-                    })
-                  }
-                  className="pr-10 pl-10"
+                  onChange={handleInputChange("passwordConfirm")}
+                  className={`pr-10 pl-10 ${fieldErrors.passwordConfirm ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '2.5rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '2.5rem'
                   }}
-                  required
-                  minLength={6}
                 />
                 <button
                   type="button"
@@ -245,12 +277,11 @@ export default function SignupPage() {
                   )}
                 </button>
               </div>
-              {formData.passwordConfirm &&
-                formData.password !== formData.passwordConfirm && (
-                  <p className="text-xs text-destructive mt-1">
-                    {t("passwordsNotMatch")}
-                  </p>
-                )}
+              {fieldErrors.passwordConfirm && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.passwordConfirm[0]}
+                </p>
+              )}
             </div>
 
             <Button type="submit" className="w-full btn-ultra" disabled={loading}>

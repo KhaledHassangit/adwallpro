@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useCallback } from "react";
+import { useMemo, useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -27,25 +27,56 @@ import { useGetCompaniesQuery, useGetCategoryQuery, useTrackCompanyViewMutation 
 export const useViewTracker = () => {
   const [trackedViews, setTrackedViews] = useState<Set<string>>(new Set());
   const [trackCompanyView] = useTrackCompanyViewMutation();
+  const { user } = useUserStore();
+  const { isAuthenticated } = useAuthStore();
+
+  // Initialize tracked views from localStorage on component mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedViews = localStorage.getItem("trackedCompanyViews");
+      if (savedViews) {
+        try {
+          const parsedViews = JSON.parse(savedViews);
+          setTrackedViews(new Set(parsedViews));
+        } catch (error) {
+          console.error("Error parsing tracked views:", error);
+        }
+      }
+    }
+  }, []);
+
+  // Save tracked views to localStorage whenever they change
+  const saveTrackedViews = useCallback((views: Set<string>) => {
+    if (typeof window !== "undefined") {
+      localStorage.setItem("trackedCompanyViews", JSON.stringify(Array.from(views)));
+    }
+  }, []);
 
   const trackView = useCallback(async (companyId: string, type: 'click' | 'hover' = 'click') => {
-    // Create a unique key for this company and tracking type
-    const key = `company_${type}_${companyId}`;
+    // Don't track if user is not authenticated
+    if (!isAuthenticated || !user) {
+      return false;
+    }
 
-    // Check if already tracked in this session
-    if (sessionStorage.getItem(key)) {
+    // Create a unique key for this user, company, and tracking type
+    const key = `${user._id}_${type}_${companyId}`;
+
+    // Check if already tracked
+    if (trackedViews.has(key)) {
       return false;
     }
 
     try {
-      // Use the RTK Query mutation to track the view
+      // Use the RTK Query mutation to track the view and await the result
       const result = await trackCompanyView({ companyId, type }).unwrap();
-
-      if (result) {
-        // Mark as tracked in this session
-        sessionStorage.setItem(key, 'true');
-        setTrackedViews(prev => new Set(prev).add(key));
-        console.log(`View tracked for company ${companyId} (${type})`);
+      
+      // Check the actual boolean result from the API
+      if (result === true) {
+        // Mark as tracked
+        const newTrackedViews = new Set(trackedViews).add(key);
+        setTrackedViews(newTrackedViews);
+        saveTrackedViews(newTrackedViews);
+        console.log(`View tracked for company ${companyId} (${type}) by user ${user._id}`);
         return true;
       }
       return false;
@@ -53,7 +84,7 @@ export const useViewTracker = () => {
       console.error('Error tracking view:', error);
       return false;
     }
-  }, [trackCompanyView]);
+  }, [trackCompanyView, trackedViews, isAuthenticated, user, saveTrackedViews]);
 
   return { trackView, trackedViews };
 };
@@ -62,42 +93,61 @@ export const useViewTracker = () => {
 function CompanyCard({ company }: { company: any }) {
   const { t } = useI18n();
   const { trackView } = useViewTracker();
-  const [hoverTimer, setHoverTimer] = useState<NodeJS.Timeout | null>(null);
   const [imageError, setImageError] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
+  const [hasTrackedHover, setHasTrackedHover] = useState(false);
+  
+  // Use useRef to store the timer ID to prevent memory leaks
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+  
+  // Clear the timer when component unmounts
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   // Handle card hover
-  const handleCardHover = () => {
+  const handleCardHover = useCallback(() => {
     // Clear any existing timer
-    if (hoverTimer) clearTimeout(hoverTimer);
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+    }
 
-    // Set a new timer to track view after 1 second of hovering
-    const timer = setTimeout(() => {
-      trackView(company._id, 'hover');
-    }, 1000);
-
-    setHoverTimer(timer);
-  };
+    // Only track hover once per company card
+    if (!hasTrackedHover) {
+      // Set a new timer to track view after 1 second of hovering
+      hoverTimerRef.current = setTimeout(() => {
+        trackView(company._id, 'hover').then((tracked) => {
+          if (tracked) {
+            setHasTrackedHover(true);
+          }
+        });
+      }, 1000);
+    }
+  }, [hasTrackedHover, trackView, company._id]);
 
   // Handle card leave
-  const handleCardLeave = () => {
+  const handleCardLeave = useCallback(() => {
     // Clear hover timer if user leaves before 1 second
-    if (hoverTimer) {
-      clearTimeout(hoverTimer);
-      setHoverTimer(null);
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
     }
-  };
+  }, []);
 
   // Handle card click
-  const handleCardClick = () => {
+  const handleCardClick = useCallback(() => {
     trackView(company._id, 'click');
-  };
+  }, [trackView, company._id]);
 
   // Handle contact link click
-  const handleContactClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleContactClick = useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
     trackView(company._id, 'click');
     // Allow default behavior (navigation) to continue
-  };
+  }, [trackView, company._id]);
 
   // Function to get the correct image URL
   const getImageUrl = useCallback(() => {
@@ -111,7 +161,7 @@ function CompanyCard({ company }: { company: any }) {
 
     // Otherwise, prepend the base URL
     return `https://www.adwallpro.com/uploads/categories/${imageUrl}`;
-  }, []);
+  }, [company]);
 
   const imageUrl = getImageUrl();
 

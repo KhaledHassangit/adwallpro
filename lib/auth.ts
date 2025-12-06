@@ -36,7 +36,7 @@ export const setAuthCookie = (token: string) => {
     expires: 7, // 7 days
     secure: process.env.NODE_ENV === "production",
     sameSite: "strict",
-    path: '/', // Ensure cookie is available across the site
+    path: '/', 
   });
 };
 

@@ -288,6 +288,44 @@ export const ar = {
     reviewProcess2: "ستتلقى إشعار عبر البريد الإلكتروني عند الموافقة أو الرفض",
     reviewProcess3: "يمكنك متابعة حالة طلبك من خلال حسابك",
     backToHome: "العودة للرئيسية",
+    
+    // Validation Error Messages
+    emailRequired: "البريد الإلكتروني مطلوب",
+    passwordRequired: "كلمة المرور مطلوبة",
+    invalidEmailAddress: "يرجى إدخال بريد إلكتروني صحيح",
+    passwordMinLengthShort: "يجب أن تكون كلمة المرور 6 أحرف على الأقل",
+    passwordsDoNotMatchError: "كلمات المرور غير متطابقة",
+    passwordsNotMatch: "كلمات المرور غير متطابقة",
+    formValidationError: "يرجى تصحيح الأخطاء في النموذج",
+    nameRequired: "الاسم مطلوب",
+    phoneRequired: "رقم الهاتف مطلوب",
+    invalidPhone: "يرجى إدخال رقم هاتف صحيح",
+    resetCodeRequired: "رمز إعادة التعيين مطلوب",
+    invalidResetCode: "رمز إعادة التعيين غير صحيح",
+    resetCodeError: "فشل في إرسال رمز إعادة التعيين",
+    resetPasswordSuccess: "تم إعادة تعيين كلمة المرور بنجاح",
+    resetPasswordError: "فشل في إعادة تعيين كلمة المرور",
+    accountCreationFailed: "فشل في إنشاء الحساب",
+    accountCreatedSuccess: "تم إنشاء الحساب بنجاح",
+    creatingAccount: "جاري إنشاء الحساب...",
+    createAccount: "إنشاء حساب",
+    alreadyHaveAccount: "هل لديك حساب بالفعل؟",
+    phoneWithCountryCode: "رقم الهاتف مع رمز البلد",
+    verifyCodeTitle: "التحقق من الرمز",
+    verifyCodeSubtitle: "أدخل رمز التحقق المرسل إلى بريدك الإلكتروني",
+    newPasswordTitle: "إعادة تعيين كلمة المرور",
+    newPasswordSubtitle: "أنشئ كلمة مرور جديدة لحسابك",
+    forgotPasswordTitle: "هل نسيت كلمة المرور",
+    forgotPasswordSubtitle: "أدخل بريدك الإلكتروني لتلقي رمز إعادة التعيين",
+    resetCode: "رمز إعادة التعيين",
+    newPassword: "كلمة المرور الجديدة",
+    sendResetCode: "إرسال رمز إعادة التعيين",
+    verifyCode: "التحقق من الرمز",
+    updatePassword: "تحديث كلمة المرور",
+    backToLogin: "العودة إلى تسجيل الدخول",
+    sending: "جاري الإرسال...",
+    verifying: "جاري التحقق...",
+    updating: "جاري التحديث...",
     exploreCompanies: "استكشف الشركات",
     addCompanyFree: "أضف شركتك مجاناً",
     fillFormDesc:
@@ -400,52 +438,25 @@ export const ar = {
     emailPlaceholder: "example@domain.com",
     phoneWithCountryCodePlaceholder: "رقم الهاتف مع رمز البلد ",
     phoneWithCountryCodeNote: "يرجى تضمين رمز بلدك ",
-    phoneRequired: "رقم الهاتف مطلوب",
     passwordPlaceholder: "••••••••",
     adminDeleteUserTitle: "حذف المستخدم",
 
     // Validation Messages
     passwordMinLength: "يجب أن تحتوي كلمة المرور على 6 أحرف على الأقل",
-    passwordsNotMatch: "كلمات المرور غير متطابقة",
 
     // Actions
-    creatingAccount: "جاري إنشاء الحساب...",
     loggingIn: "جاري تسجيل الدخول...",
-    createAccount: "إنشاء حساب",
 
     // Links
-    alreadyHaveAccount: "لديك حساب بالفعل؟",
     dontHaveAccount: "ليس لديك حساب؟",
-    forgotPassword: "نسيت كلمة المرور؟",
 
     // Success/Error Messages
-    accountCreatedSuccess: "تم إنشاء الحساب بنجاح! مرحباً بك",
     loginSuccess: "تم تسجيل الدخول بنجاح",
-    accountCreationFailed: "فشل في إنشاء الحساب",
     loginFailed: "فشل في تسجيل الدخول",
 
 
     // Forgot password page translations
-    forgotPasswordTitle: "نسيت كلمة المرور؟",
-    forgotPasswordSubtitle: "سنرسل لك رمز استعادة على بريدك الإلكتروني",
-    verifyCodeTitle: "التحقق من الرمز",
-    verifyCodeSubtitle: "أدخل الرمز المرسل إلى بريدك الإلكتروني",
-    newPasswordTitle: "كلمة مرور جديدة",
-    newPasswordSubtitle: "أدخل كلمة المرور الجديدة",
-    sendResetCode: "إرسال رمز الاستعادة",
-    sending: "جاري الإرسال...",
-    verifyCode: "التحقق من الرمز",
-    verifying: "جاري التحقق...",
-    updatePassword: "تحديث كلمة المرور",
-    updating: "جاري التحديث...",
-    backToLogin: "العودة إلى تسجيل الدخول",
-    resetCode: "رمز الاستعادة",
-    newPassword: "كلمة المرور الجديدة",
     resetCodeSent: "تم إرسال رمز الاستعادة إلى بريدك الإلكتروني",
-    resetCodeError: "فشل في إرسال رمز الاستعادة",
-    invalidResetCode: "رمز الاستعادة غير صحيح",
-    resetPasswordSuccess: "تم إعادة تعيين كلمة المرور بنجاح",
-    resetPasswordError: "فشل في إعادة تعيين كلمة المرور",
 
 
     // Add Ad Page
@@ -790,8 +801,6 @@ export const ar = {
   paginationPage: "صفحة",
   paginationOf: "من",
   lang: "ar",
-
-
 
 };
 

@@ -8,6 +8,7 @@ import { LangProvider } from "@/providers/LanguageProvider";
 import { AuthProvider } from "@/components/auth/auth-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { store } from "@/lib/store";
+import type { Locale } from "@/i18n/dict";
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (

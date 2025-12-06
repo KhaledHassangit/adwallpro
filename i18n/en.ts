@@ -2,7 +2,7 @@ export const en = {
   // Site Info
   siteName: "AdWallPro",
   siteDescription: "Smart Advertising Platform",
-
+  
   // Navigation
   home: "Home",
   categories: "Categories",
@@ -15,6 +15,100 @@ export const en = {
   signOut: "Sign Out",
   signUp: "Sign Up",
   FAQ: "FAQ",
+  
+  // Authentication
+  login: "Login",
+  loginTitle: "Login",
+  loginSubtitle: "Enter your credentials to access your account",
+  loginFailed: "Login failed",
+  loginSuccess: "Login successful",
+  loggingIn: "Logging in...",
+  forgotPassword: "Forgot password?",
+  dontHaveAccount: "Don't have an account?",
+  signupTitle: "Create New Account",
+  signupSubtitle: "Join the AddWall community",
+  signup: "Sign Up",
+  alreadyHaveAccount: "Already have an account?",
+  creatingAccount: "Creating account...",
+  createAccount: "Create Account",
+  accountCreatedSuccess: "Account created successfully! Welcome",
+  accountCreationFailed: "Failed to create account",
+  
+  // Forgot password
+  forgotPasswordTitle: "Forgot Password?",
+  forgotPasswordSubtitle: "We'll send you a recovery code to your email",
+  verifyCodeTitle: "Verify Code",
+  verifyCodeSubtitle: "Enter the code sent to your email",
+  newPasswordTitle: "New Password",
+  newPasswordSubtitle: "Enter your new password",
+  sendResetCode: "Send Reset Code",
+  sending: "Sending...",
+  verifyCode: "Verify Code",
+  verifying: "Verifying...",
+  updatePassword: "Update Password",
+  updating: "Updating...",
+  backToLogin: "Back to Login",
+  resetCode: "Reset Code",
+  newPassword: "New Password",
+  resetCodeSent: "Reset code sent to your email",
+  resetCodeError: "Failed to send reset code",
+  invalidResetCode: "Invalid reset code",
+  resetPasswordSuccess: "Password reset successfully",
+  resetPasswordError: "Failed to reset password",
+  
+  // Form Fields
+  fullName: "Full Name",
+  email: "Email",
+  password: "Password",
+  confirmPassword: "Confirm Password",
+  name: "Name",
+  phone: "Phone",
+  address: "Address",
+  description: "Description",
+  fullNamePlaceholder: "Your full name",
+  emailPlaceholder: "example@domain.com",
+  passwordPlaceholder: "••••••••",
+  phoneWithCountryCode: "Phone with country code",
+  phoneWithCountryCodePlaceholder: "Phone with country code ",
+  phoneWithCountryCodeNote: "Please include your country code ",
+  
+  // Validation Messages
+  emailRequired: "Email is required",
+  passwordRequired: "Password is required",
+  invalidEmailAddress: "Please enter a valid email address",
+  passwordMinLength: "Password must be at least 8 characters long",
+  passwordMinLengthShort: "Password must be at least 6 characters",
+  passwordsDoNotMatch: "Passwords do not match",
+  passwordsNotMatch: "Passwords do not match",
+  formValidationError: "Please fix the errors in the form",
+  nameRequired: "Name is required",
+  phoneRequired: "Phone is required",
+  invalidPhone: "Please enter a valid phone number",
+  resetCodeRequired: "Reset code is required",
+  requiredField: "This field is required",
+  invalidEmail: "Invalid email",
+  invalidUrl: "Invalid URL",
+  imageTooLarge: "Image size too large",
+  imageUploadError: "Image upload error",
+  formSubmitSuccess: "Form submitted successfully",
+  formSubmitError: "Form submission error",
+  loginRequired: "Login Required",
+  loginRequiredDesc: "You must log in first to add your company",
+  formSubmittedSuccess: "Your request has been submitted successfully!",
+  formSubmittedDesc: "Your request will be reviewed and approved within 24-48 hours. We will send you a notification via email upon approval.",
+  submitAnotherAd: "Submit Another Ad",
+  whatHappensNow: "What happens now?",
+  reviewProcess1: "The review team will examine your company information",
+  reviewProcess2: "You will receive an email notification when approved or rejected",
+  reviewProcess3: "You can track your request status through your account",
+  backToHome: "Back to Home",
+  exploreCompanies: "Explore Companies",
+  addCompanyFree: "Add Your Company For Free",
+  fillFormDesc: "Fill out the form below and your request will be reviewed by our team within 24-48 hours",
+  completelyFree: "Completely Free!",
+  completelyFreeDesc: "There are no fees to add your company. Just fill in the data and wait for approval.",
+  companyInfo: "Company Information",
+  
   // About Us Section
   aboutUsTitle: "About Us",
   aboutUsSubtitle: "Learn about our story and vision",
@@ -23,16 +117,13 @@ export const en = {
   aboutUsAdvertisers: "Choose the square that suits you, add your ad easily, and be visible to everyone in an organized and professional environment.",
   aboutUsUsers: "Browse the squares to find the offers and services you're looking for quickly and safely, with the platform guaranteed to be free of any harmful or inappropriate content.",
   aboutUsConclusion: "At AdWall, every square has value, every ad has an opportunity, and every opportunity can turn into success. We comply with local and international laws, and work with a spirit of transparency and respect to ensure a safe and reliable platform for everyone.",
-  "googleLoginFailed": "Google login failed",
-  "googleAuthFailed": "Google authentication failed",
-  "orContinueWith": "Or continue with",
-  "signinWithGoogle": "Sign in with Google",
+  
   // Feature titles for About Us
   innovativeApproach: "Innovative Approach",
   clearVision: "Clear Vision",
   forAdvertisers: "For Advertisers",
   forUsers: "For Users",
-
+  
   // Common
   viewAllAds: "View All",
   loading: "Loading...",
@@ -42,20 +133,16 @@ export const en = {
   save: "Save",
   edit: "Edit",
   delete: "Delete",
-
-  // Forms
-  email: "Email",
-  password: "Password",
-  name: "Name",
-  phone: "Phone",
-  address: "Address",
-  description: "Description",
-
-  // FAQ
-  faqTitle: "Frequently Asked Questions",
-  faqSubtitle: "Answers to the most common questions",
-  faqHaveAnotherQuestion: "Have another question? ",
-  faqContactUs: "Contact us",
+  
+  // Hero Section
+  heroNewBadge: "New: Add your company for free with quick review",
+  heroTitle: "Smart Advertising Platform",
+  heroDescription: "The platform that brings visitors and companies together in one place. At AdWall, we provide visitors with an easy and transparent experience to discover the best companies and services quickly, and give companies a unique opportunity to appear before a wide audience looking for what they offer. Adwall is a smart platform that builds trust between companies and customers, and is the ideal place to excel",
+  browseCategories: "Browse Categories",
+  registeredCompanies: "Registered Company",
+  diverseCategories: "Diverse Category",
+  supportedCountries: "Supported Countries",
+  
   // Features Section
   whyBest: "Why We're The Best?",
   modernPlatform: " Smart Platform",
@@ -72,7 +159,7 @@ export const en = {
   rapidGrowthDesc: "Thousands of new companies and potential customers join our platform every month, reflecting growing confidence in our expanding value.",
   exceptionalQuality: "Exceptional Quality",
   exceptionalQualityDesc: "We care about the smallest details; all ads undergo comprehensive review by a specialized team to ensure the highest quality levels before publishing and approval.",
-
+  
   // Slider Section
   modernBusinessTitle: "Modern, Smart & Advanced Companies",
   modernBusinessDesc: "Unmissable opportunities, innovations that change the future",
@@ -80,20 +167,20 @@ export const en = {
   teamworkDesc: "Be part of an integrated business community that makes it easier for you to reach the right partners and gives you real opportunities to achieve your goals",
   digitalServicesTitle: "Comprehensive Digital Services",
   digitalServicesDesc: "Diverse categories covering all your business and personal needs",
-
+  
   // CTA Section
   startJourney: "Start Your Journey Now",
   joinFuture: "Join the Future of Smart Advertising",
   ctaDescription: "Be part of the digital advertising revolution and join thousands of successful companies using AdWall to reach new customers and achieve exceptional growth in their businesses",
   startFreeNow: "Start Free Now",
   exploreCompaniesBtn: "Explore Companies",
-
+  
   // Form Terms
   termsAgreement: 'By clicking "Submit Request" you agree to the Terms of Use and Privacy Policy',
-
+  
   // About Us Additional
   guaranteed: "Guaranteed",
-
+  
   // Main Page About Section
   ourStory: "Our Story",
   whoAreWe: "Who Are We?",
@@ -115,17 +202,17 @@ export const en = {
   directContact: "Direct and secure contact",
   everySquareHasValue: "At AdWall, every square has value",
   everyAdHasChance: "Every ad has an opportunity, and every opportunity can turn into success",
-
+  
   // Header
   modernAdWall: "Smart Advertising Platform",
   addNewAdBtn: "Add New Ad",
-
+  
   // Footer
   followUs: "Follow Us",
   contactUs: "Contact Us",
   allRightsReserved: "All rights reserved.",
   modernAdPlatform: "Smart Advertising Platform - where every square has value",
-
+  
   // Dashboard Navigation
   overview: "Overview",
   companiesManagementNav: "Companies",
@@ -145,15 +232,7 @@ export const en = {
   editCouponDescription: "Update the coupon details below.",
   startDate: "Start Date",
   createCouponDescription: "Create a new discount coupon for your customers.",
-  // Hero Section
-  heroNewBadge: "New: Add your company for free with quick review",
-  heroTitle: "Smart Advertising Platform",
-  heroDescription: "The platform that brings visitors and companies together in one place. At AdWall, we provide visitors with an easy and transparent experience to discover the best companies and services quickly, and give companies a unique opportunity to appear before a wide audience looking for what they offer. Adwall is a smart platform that builds trust between companies and customers, and is the ideal place to excel",
-  browseCategories: "Browse Categories",
-  registeredCompanies: "Registered Company",
-  diverseCategories: "Diverse Category",
-  supportedCountries: "Supported Countries",
-
+  
   // Admin Pages
   companiesManagement: "Companies Management",
   companiesManagementDesc: "Approve, reject, and manage all companies registered on the platform",
@@ -188,7 +267,7 @@ export const en = {
   tryDifferentFilters: "Try adjusting your search criteria or removing some filters to get more results.",
   activeFilters: "Active Filters:",
   searchTerm: "Search:",
-
+  
   // Company Pages
   noCategoriesFound: "No companies in this category currently",
   noCategoriesFoundDesc: 'No companies have been added in the "{categoryName}" category yet. Be the first to add your company!',
@@ -206,18 +285,18 @@ export const en = {
   emailLabel: "Email",
   websiteLabel: "Website",
   facebookLabel: "Facebook",
-
+  
+  // Create Admin
   createAdminTitle: "Create Admin",
   createAdminDescription: "Create a new admin account with elevated privileges.",
   adminAddNewAdmin: "Add New Admin",
   adminCreatedSuccessfully: "Admin created successfully",
   failedToCreateAdmin: "Failed to create admin",
   createAdmin: "Create Admin",
-  passwordsDoNotMatch: "Passwords do not match",
+  passwordsDoNotMatchError: "Passwords do not match",
   creating: "Creating...",
-  confirmPassword: "Confirm Password",
   adminDeleteUserTitle: "Delete User",
-
+  
   // Forms
   companyNameFormLabel: "Company Name",
   companyNameFormPlaceholder: "Enter company name",
@@ -242,32 +321,7 @@ export const en = {
   changeImage: "Change Image",
   submitCompany: "Submit Company Request",
   submitting: "Submitting...",
-
-  // Common Messages
-  requiredField: "This field is required",
-  invalidEmail: "Invalid email",
-  invalidUrl: "Invalid URL",
-  imageTooLarge: "Image size too large",
-  imageUploadError: "Image upload error",
-  formSubmitSuccess: "Form submitted successfully",
-  formSubmitError: "Form submission error",
-  loginRequired: "Login Required",
-  loginRequiredDesc: "You must log in first to add your company",
-  formSubmittedSuccess: "Your request has been submitted successfully!",
-  formSubmittedDesc: "Your request will be reviewed and approved within 24-48 hours. We will send you a notification via email upon approval.",
-  submitAnotherAd: "Submit Another Ad",
-  whatHappensNow: "What happens now?",
-  reviewProcess1: "The review team will examine your company information",
-  reviewProcess2: "You will receive an email notification when approved or rejected",
-  reviewProcess3: "You can track your request status through your account",
-  backToHome: "Back to Home",
-  exploreCompanies: "Explore Companies",
-  addCompanyFree: "Add Your Company For Free",
-  fillFormDesc: "Fill out the form below and your request will be reviewed by our team within 24-48 hours",
-  completelyFree: "Completely Free!",
-  completelyFreeDesc: "There are no fees to add your company. Just fill in the data and wait for approval.",
-  companyInfo: "Company Information",
-
+  
   // Admin Table Messages
   fetchCompaniesFailed: "Failed to fetch companies",
   approveCompanyFailed: "Failed to approve company",
@@ -280,13 +334,13 @@ export const en = {
   unapprovedSuccessfully: "Successfully unapproved and company converted to pending",
   confirmActionMessage: 'Are you sure you want to {action} company "{companyName}"?',
   rejectedSuccessfully: "Company rejected and will remain pending",
-
+  
   // Navigation & Layout
   dashboard: "Dashboard",
   userDashboard: "User Dashboard",
   adminDashboard: "Admin Dashboard",
   profile: "Profile",
-
+  
   // Categories Section
   exploreCategories: "Explore Categories",
   discoverThousandsCompanies: "Discover thousands of companies classified by field and specialty on the modern AdWall platform",
@@ -300,10 +354,7 @@ export const en = {
   noMatchingCategories: "No categories found matching your search",
   clearSearch: "Clear Search",
   discoverBestCompanies: "Discover the best companies in",
-    "adminUserSubscription": "Subscription",
-    "adminSubscriptionActive": "Active",
-    "adminSubscriptionInactive": "Inactive",
-    "adminNoSubscription": "No Subscription",
+  
   // User Dashboard Section
   welcomeToDashboard: "Welcome to AddWall Control Panel - Manage your ads easily",
   manageAds: "Manage Ads",
@@ -332,7 +383,6 @@ export const en = {
   createdAt: "Created At:",
   manageAccountData: "Manage your personal account data",
   accountInformation: "Account Information",
-  fullName: "Full Name",
   phoneNumber: "Phone Number",
   saveChanges: "Save Changes",
   saving: "Saving...",
@@ -343,7 +393,7 @@ export const en = {
   securityTip: "Security Tip",
   securityTipDesc: "Make sure to update your personal data regularly to maintain your account security.",
   failedToFetchData: "Failed to fetch data",
-
+  
   // Ad Management Pages
   adNotFound: "Ad Not Found",
   adNotFoundDesc: "The requested ad was not found",
@@ -355,98 +405,12 @@ export const en = {
   addCompanyForFree: "Add Your Company For Free",
   fillFormAndReview: "Fill out the form below and your request will be reviewed by our team within 24-48 hours",
   categoriesAvailable: "Category available for selection",
-  // Authentication
-  login: "Login",
-  signup: "Sign Up",
-  signupTitle: "Create New Account",
-  signupSubtitle: "Join the AddWall community",
-  loginTitle: "Login",
-  loginSubtitle: "Welcome to AddWall",
-
-  // Form Fields
-  fullNamePlaceholder: "Your full name",
-  emailPlaceholder: "example@domain.com",
-  phoneWithCountryCodePlaceholder: "Phone with country code ",
-  phoneWithCountryCodeNote: "Please include your country code ",
-  phoneRequired: "Phone number is required",
-  passwordPlaceholder: "••••••••",
-
-  // Validation Messages
-  passwordMinLength: "Password must be at least 6 characters",
-  passwordsNotMatch: "Passwords do not match",
-
-  // Actions
-  creatingAccount: "Creating account...",
-  loggingIn: "Logging in...",
-  createAccount: "Create Account",
-
-  // Links
-  alreadyHaveAccount: "Already have an account?",
-  dontHaveAccount: "Don't have an account?",
-  forgotPassword: "Forgot password?",
-
-  // Success/Error Messages
-  accountCreatedSuccess: "Account created successfully! Welcome",
-  loginSuccess: "Login successful",
-  accountCreationFailed: "Failed to create account",
-  loginFailed: "Login failed",
-
-  // Forgot password page translations
-  forgotPasswordTitle: "Forgot Password?",
-  forgotPasswordSubtitle: "We'll send you a recovery code to your email",
-  verifyCodeTitle: "Verify Code",
-  verifyCodeSubtitle: "Enter the code sent to your email",
-  newPasswordTitle: "New Password",
-  newPasswordSubtitle: "Enter your new password",
-  sendResetCode: "Send Reset Code",
-  sending: "Sending...",
-  verifyCode: "Verify Code",
-  verifying: "Verifying...",
-  updatePassword: "Update Password",
-  updating: "Updating...",
-  backToLogin: "Back to Login",
-  resetCode: "Reset Code",
-  newPassword: "New Password",
-  resetCodeSent: "Reset code sent to your email",
-  resetCodeError: "Failed to send reset code",
-  invalidResetCode: "Invalid reset code",
-  resetPasswordSuccess: "Password reset successfully",
-  resetPasswordError: "Failed to reset password",
-  // Add Ad Page
-
-  companyInfoTitle: "Company Information",
-  companyNameLabel: "Company Name",
-  companyNamePlaceholder: "Enter company name",
-  emailLabelForm: "Email",
-  companyDescriptionLabel: "Company Description",
-  companyDescriptionPlaceholder: "Write a detailed description of your company...",
-  selectCompanyCategory: "Select Company Category",
-  noCategoriesAvailable: "No categories available",
-  reload: "Reload",
-  selectCategory: "Select Category",
-  countryLabel: "Country",
-  countryPlaceholder: " Saudi Arabia",
-  cityLabel: "City",
-  cityPlaceholder: " Riyadh",
-  whatsappPlaceholder: " 966501234567",
-  websiteLabelForm: "Website",
-  websitePlaceholder: " www.example.com",
-  facebookLabelForm: "Facebook Link",
-  facebookPlaceholder: " www.facebook.com/company",
-  imageLabel: "Company Logo",
-  submittingAd: "Submitting ad...",
-  submitAdButton: "Submit Request",
-  adAddedSuccessfully: "Ad added successfully",
-  failedToAddAd: "Failed to add ad",
-  unexpectedServerResponse: "Unexpected server response",
-  failedToFetchCategories: "Failed to fetch categories",
-  userDataNotFound: "User data not found",
-  userIdNotFound: "User ID not found",
-  termsAndConditions: 'By clicking "Submit Request" you agree to the terms of use and privacy policy',
-  pendingApproval: "Pending Approval",
-  adminDashboardTitle: "Admin Dashboard",
-  adminDashboardWelcome: "Welcome to your admin dashboard",
-  refresh: "Refresh",
+  
+  // Google Login
+  googleLoginFailed: "Google login failed",
+  googleAuthFailed: "Google authentication failed",
+  orContinueWith: "Or continue with",
+  signinWithGoogle: "Sign in with Google",
   
   // Stats
   totalUsers: "Total Users",
@@ -480,7 +444,7 @@ export const en = {
   
   // Common
   ofTotal: "of total",
-
+  
   // Image Upload Component
   imagePreviewAlt: "Image Preview",
   removeImage: "Remove Image",
@@ -489,15 +453,18 @@ export const en = {
   fileSizeTooLarge: "File size too large. Maximum 5MB",
   editAd: "Edit Ad",
   editAdDescription: "Make changes to your advertisement details below.",
-
+  
   // Admin Dashboard
+  adminDashboardTitle: "Admin Dashboard",
+  adminDashboardWelcome: "Welcome to your admin dashboard",
+  refresh: "Refresh",
   adminNewCompanyApproved: "New company approved",
   adminNewUserRegistered: "New user registered",
   adminNewCategoryRequest: "New category request",
   adminNewCouponCreated: "New coupon created",
   adminMinutesAgo: "minutes ago",
   adminHourAgo: "hour ago",
-
+  
   // Admin Users Management
   adminUsersManagementTitle: "Users Management",
   adminUsersManagementDesc: "View and manage all system users",
@@ -511,56 +478,6 @@ export const en = {
   adminActiveThisWeek: "Active This Week",
   adminActiveLast7Days: "active in last 7 days",
   adminFailedToFetchUserStats: "Failed to fetch user statistics",
-
-  // Admin Categories Management
-  adminCategoriesManagementTitle: "Categories Management",
-  adminCategoriesManagementDesc: "View and manage all system categories",
-  adminAddNewCategory: "Add New Category",
-  // Admin Coupons Management
-  adminCoupons: "Coupons Management",
-  adminCouponsDesc: "View and manage all discount coupons",
-  adminCreateCoupon: "Create New Coupon",
-  adminAllCoupons: "All Coupons",
-  active: "Active",
-  inactive: "Inactive",
-
-  // Create Coupon Modal
-  createCouponTitle: "Create New Coupon",
-  couponCode: "Coupon Code",
-  couponCodePlaceholder: "Enter coupon code",
-  discountValue: "Discount Value",
-  discountPlaceholder: "Enter discount value",
-  discountType: "Discount Type",
-  percentage: "Percentage",
-  fixedAmount: "Fixed Amount",
-  createdDate: "Created Date",
-  expiryDate: "Expiry Date",
-  usageLimit: "Usage Limit",
-  usageLimitPlaceholder: "Number of times the coupon can be used",
-  unlimitedUsage: "Unlimited Usage",
-  saveCoupon: "Save Coupon",
-  couponCreatedSuccess: "Coupon created successfully",
-  couponCreatedError: "Failed to create coupon",
-  couponCodeRequired: "Coupon code is required",
-  discountValueRequired: "Discount value is required",
-  expiryDateRequired: "Expiry date is required",
-  invalidDiscountValue: "Invalid discount value",
-  couponAlreadyExists: "Coupon code already exists",
-
-  // Delete Coupon Modal
-  deleteCouponTitle: "Delete Coupon",
-  deleteCouponDescription: "Are you sure you want to delete this coupon? This action cannot be undone.",
-  deleteCoupon: "Delete Coupon",
-
-  // Success/Error Messages
-  couponUpdatedSuccess: "Coupon updated successfully",
-  couponUpdatedError: "Failed to update coupon",
-  couponDeletedSuccess: "Coupon deleted successfully",
-  couponDeletedError: "Failed to delete coupon",
-
-  usedCount: "Used Count",
-
-  // Admin Users Table
   adminFailedToFetchUsers: "Failed to fetch users",
   adminFailedToDeleteUser: "Failed to delete user",
   adminDeleteUserConfirmation: "Are you sure you want to delete this user?",
@@ -579,6 +496,15 @@ export const en = {
   adminPageOf: "Page {current} of {total}",
   adminRoleAdmin: "Admin",
   adminRoleUser: "User",
+  adminUserSubscription: "Subscription",
+  adminSubscriptionActive: "Active",
+  adminSubscriptionInactive: "Inactive",
+  adminNoSubscription: "No Subscription",
+  
+  // Admin Categories Management
+  adminCategoriesManagementTitle: "Categories Management",
+  adminCategoriesManagementDesc: "View and manage all system categories",
+  adminAddNewCategory: "Add New Category",
   adminCategoryImage: "Image",
   adminCategoryNameAr: "Arabic Name",
   adminCategoryNameEn: "English Name",
@@ -593,48 +519,6 @@ export const en = {
   adminFailedToFetchCategories: "Failed to fetch categories",
   adminFailedToDeleteCategory: "Failed to delete category",
   adminCategoryDeletedSuccess: "Category deleted successfully",
-
-  // Admin Companies Management
-  adminCompaniesManagement: "Companies Management",
-  adminCompaniesManagementDesc: "View and manage all system companies",
-  adminFilterStatus: "Filter by Status",
-  adminAllCompanies: "All Companies",
-  adminSearchCompanies: "Search Companies",
-  adminSelectCategory: "Select Category",
-  adminAllCategories: "All Categories",
-  adminSearchByCountry: "Search by Country",
-  adminSearchByCity: "Search by City",
-  adminClearFilters: "Clear Filters",
-  adminCompanyName: "Company",
-  adminCompanyContact: "Contact Info",
-  adminCompanyLocation: "Location",
-  adminCompanyStatus: "Status",
-  adminWhatsApp: "WhatsApp",
-  adminApproved: "Approved",
-  adminPending: "Pending",
-  adminApprove: "Approve",
-  adminReject: "Reject",
-  adminCompanyApprovedSuccess: "Company approved successfully",
-  adminCompanyRejectedSuccess: "Company rejected successfully",
-  adminCompanyApproveError: "Failed to approve company",
-  adminCompanyRejectError: "Failed to reject company",
-  adminCompaniesFetchError: "Failed to fetch companies",
-  adminCompaniesFetchErrorDesc: "Failed to fetch companies. Please try again.",
-  adminNoCompaniesFound: "No companies found",
-  adminTryAgain: "Try Again",
-  adminError: "Error",
-  adminSuccess: "Success",
-  errorFetchingUserStats: "Failed to fetch user statistics",
-
-  // Card titles
-
-  // Card subtitles
-
-  usageLimitRequired: "Usage limit is required",
-  invalidUsageLimit: "Please enter a valid usage limit",
-
-
-
   adminCategoryCreatedAt: "Created At",
   adminThisCategory: "this category",
   adminCancel: "Cancel",
@@ -666,77 +550,38 @@ export const en = {
   adminDescriptionAr: "Description (Arabic)",
   adminDescriptionEn: "Description (English)",
   adminDeleteCategoryTitle: "Delete Category",
-  // Add Ad Page - Additional translations
-  logoSelectedSuccess: "✓ New logo selected successfully",
-  companyDescriptionEnLabel: "Company Description (English)",
-  companyDescriptionEnPlaceholder: "Write a detailed description of your company in English...",
-  companyNameEnLabel: "Company Name (English)",
-  companyNameEnPlaceholder: "Enter company name in English",
-  videoUrlLabel: "Video URL (for VIP ads)",
-  videoUrlPlaceholder: "Enter video URL (YouTube, Vimeo, etc.)",
-  adTypeLabel: "Ad Type",
-  selectAdType: "Select ad type",
-  normalAd: "Normal Ad",
-  vipAd: "VIP Ad",
-  categoryRequired: "Please select a category",
-
-
-  // Existing translations...
-
-  // Plans Management 
-  subscriptionPlans: "Subscription Plans ",
-  "createAndManagePlans": " Manage Subscription Plans",
-  "createNewPlan": "Create New Plan",
-  "planName": "Plan Name",
-  "planDescription": "Plan Description",
-  "code": "Code",
-  "planType": "Plan Type",
-  "features": "Features",
-  "addFeature": "Add Feature",
-  "enterFeature": "Enter Feature",
-  "planOptions": "Plan Options",
-  "addOption": "Add Option",
-  "option": "Option",
-  "duration": "Duration",
-  "selectDuration": "Select Duration",
-  "priceInUSD": "Price (USD)",
-  "discountPercent": "Discount (%)",
-  "finalPriceInUSD": "Final Price (USD)",
-  "allowedAdsCount": "Allowed Ads Count",
-  "allowedCategories": "Allowed Categories",
-  "create": "Create",
-  "ads": "Ad",
-  "moreFeatures": "+ More Features",
-  "deletePlanConfirmation": "Are you sure you want to delete the plan \"{name}\"? This action cannot be undone.",
-  "failedToLoadPlans": "Failed to load plans",
-  "failedToDelete": "Failed to delete",
-  "failedToSave": "Failed to save",
-  "failedToUpdate": "Failed to update",
-
-  "oneMonth": "1 Month",
-  "threeMonths": "3 Months",
-  "sixMonths": "6 Months",
-  "oneYear": "1 Year",
-  "monthly": "Monthly",
-  "yearly": "Yearly",
-
-  "basic": "Basic",
-  "standard": "Standard",
-  "premium": "Premium",
-
-  "planCode": "Plan Code",
-  "adsIncluded": "Ads Included",
-  "subscriptionStatus": "Subscription Status",
-  "timeLeft": "Time Left",
-  "expiresAt": "Expires At",
-
-  "notifications": "Notifications",
-  "noNotifications": "No notifications",
-  "loadingNotifications": "Loading notifications...",
-  "markAllAsRead": "Mark all as read",
-  "markAsRead": "Mark as read",
-  // ... existing translations
-  adminCompanies: "Companies",
+  
+  // Admin Companies Management
+  adminCompaniesManagement: "Companies Management",
+  adminCompaniesManagementDesc: "View and manage all system companies",
+  adminFilterStatus: "Filter by Status",
+  adminAllCompanies: "All Companies",
+  adminSearchCompanies: "Search Companies",
+  adminSelectCategory: "Select Category",
+  adminAllCategories: "All Categories",
+  adminSearchByCountry: "Search by Country",
+  adminSearchByCity: "Search by City",
+  adminClearFilters: "Clear Filters",
+  adminCompanyName: "Company",
+  adminCompanyContact: "Contact Info",
+  adminCompanyLocation: "Location",
+  adminCompanyStatus: "Status",
+  adminWhatsApp: "WhatsApp",
+  adminApproved: "Approved",
+  adminPending: "Pending",
+  adminApprove: "Approve",
+  adminReject: "Reject",
+  adminCompanyApprovedSuccess: "Company approved successfully",
+  adminCompanyRejectedSuccess: "Company rejected successfully",
+  adminCompanyApproveError: "Failed to approve company",
+  adminCompanyRejectError: "Failed to reject company",
+  adminCompaniesFetchError: "Failed to fetch companies",
+  adminCompaniesFetchErrorDesc: "Failed to fetch companies. Please try again.",
+  adminNoCompaniesFound: "No companies found",
+  adminTryAgain: "Try Again",
+  adminError: "Error",
+  adminSuccess: "Success",
+  errorFetchingUserStats: "Failed to fetch user statistics",
   adminCompanyImage: "Image",
   adminCompanyCategory: "Category",
   adminCompanyOwner: "Owner",
@@ -762,8 +607,151 @@ export const en = {
   adminTimestampInfo: "Timestamp Information",
   adminLastUpdated: "Last Updated",
   adminClose: "Close",
+  
+  // Pagination
   paginationPage: "Page",
   paginationOf: "of",
+  
+  // Coupons Management
+  adminCoupons: "Coupons Management",
+  adminCouponsDesc: "View and manage all discount coupons",
+  adminCreateCoupon: "Create New Coupon",
+  adminAllCoupons: "All Coupons",
+  active: "Active",
+  inactive: "Inactive",
+  
+  // Create Coupon Modal
+  createCouponTitle: "Create New Coupon",
+  couponCode: "Coupon Code",
+  couponCodePlaceholder: "Enter coupon code",
+  discountValue: "Discount Value",
+  discountPlaceholder: "Enter discount value",
+  discountType: "Discount Type",
+  percentage: "Percentage",
+  fixedAmount: "Fixed Amount",
+  createdDate: "Created Date",
+  expiryDate: "Expiry Date",
+  usageLimit: "Usage Limit",
+  usageLimitPlaceholder: "Number of times the coupon can be used",
+  unlimitedUsage: "Unlimited Usage",
+  saveCoupon: "Save Coupon",
+  couponCreatedSuccess: "Coupon created successfully",
+  couponCreatedError: "Failed to create coupon",
+  couponCodeRequired: "Coupon code is required",
+  discountValueRequired: "Discount value is required",
+  expiryDateRequired: "Expiry date is required",
+  invalidDiscountValue: "Invalid discount value",
+  couponAlreadyExists: "Coupon code already exists",
+  usageLimitRequired: "Usage limit is required",
+  invalidUsageLimit: "Please enter a valid usage limit",
+  
+  // Delete Coupon Modal
+  deleteCouponTitle: "Delete Coupon",
+  deleteCouponDescription: "Are you sure you want to delete this coupon? This action cannot be undone.",
+  deleteCoupon: "Delete Coupon",
+  
+  // Success/Error Messages
+  couponUpdatedSuccess: "Coupon updated successfully",
+  couponUpdatedError: "Failed to update coupon",
+  couponDeletedSuccess: "Coupon deleted successfully",
+  couponDeletedError: "Failed to delete coupon",
+  usedCount: "Used Count",
+  
+  // Add Ad Page
+  companyInfoTitle: "Company Information",
+  companyNameLabel: "Company Name",
+  companyNamePlaceholder: "Enter company name",
+  emailLabelForm: "Email",
+  companyDescriptionLabel: "Company Description",
+  companyDescriptionPlaceholder: "Write a detailed description of your company...",
+  selectCompanyCategory: "Select Company Category",
+  noCategoriesAvailable: "No categories available",
+  reload: "Reload",
+  selectCategory: "Select Category",
+  countryLabel: "Country",
+  countryPlaceholder: " Saudi Arabia",
+  cityLabel: "City",
+  cityPlaceholder: " Riyadh",
+  whatsappPlaceholder: " 966501234567",
+  websiteLabelForm: "Website",
+  websitePlaceholder: " www.example.com",
+  facebookLabelForm: "Facebook Link",
+  facebookPlaceholder: " www.facebook.com/company",
+  imageLabel: "Company Logo",
+  submittingAd: "Submitting ad...",
+  submitAdButton: "Submit Request",
+  adAddedSuccessfully: "Ad added successfully",
+  failedToAddAd: "Failed to add ad",
+  unexpectedServerResponse: "Unexpected server response",
+  failedToFetchCategories: "Failed to fetch categories",
+  userDataNotFound: "User data not found",
+  userIdNotFound: "User ID not found",
+  termsAndConditions: 'By clicking "Submit Request" you agree to the terms of use and privacy policy',
+  pendingApproval: "Pending Approval",
+  logoSelectedSuccess: "✓ New logo selected successfully",
+  companyDescriptionEnLabel: "Company Description (English)",
+  companyDescriptionEnPlaceholder: "Write a detailed description of your company in English...",
+  companyNameEnLabel: "Company Name (English)",
+  companyNameEnPlaceholder: "Enter company name in English",
+  videoUrlLabel: "Video URL (for VIP ads)",
+  videoUrlPlaceholder: "Enter video URL (YouTube, Vimeo, etc.)",
+  adTypeLabel: "Ad Type",
+  selectAdType: "Select ad type",
+  normalAd: "Normal Ad",
+  vipAd: "VIP Ad",
+  categoryRequired: "Please select a category",
+  
+  // Plans Management 
+  subscriptionPlans: "Subscription Plans ",
+  createAndManagePlans: " Manage Subscription Plans",
+  createNewPlan: "Create New Plan",
+  planName: "Plan Name",
+  planDescription: "Plan Description",
+  code: "Code",
+  planType: "Plan Type",
+  features: "Features",
+  addFeature: "Add Feature",
+  enterFeature: "Enter Feature",
+  planOptions: "Plan Options",
+  addOption: "Add Option",
+  option: "Option",
+  duration: "Duration",
+  selectDuration: "Select Duration",
+  priceInUSD: "Price (USD)",
+  discountPercent: "Discount (%)",
+  finalPriceInUSD: "Final Price (USD)",
+  allowedAdsCount: "Allowed Ads Count",
+  allowedCategories: "Allowed Categories",
+  create: "Create",
+  ads: "Ad",
+  moreFeatures: "+ More Features",
+  deletePlanConfirmation: "Are you sure you want to delete the plan \"{name}\"? This action cannot be undone.",
+  failedToLoadPlans: "Failed to load plans",
+  failedToDelete: "Failed to delete",
+  failedToSave: "Failed to save",
+  failedToUpdate: "Failed to update",
+  oneMonth: "1 Month",
+  threeMonths: "3 Months",
+  sixMonths: "6 Months",
+  oneYear: "1 Year",
+  monthly: "Monthly",
+  yearly: "Yearly",
+  basic: "Basic",
+  standard: "Standard",
+  premium: "Premium",
+  planCode: "Plan Code",
+  adsIncluded: "Ads Included",
+  subscriptionStatus: "Subscription Status",
+  timeLeft: "Time Left",
+  expiresAt: "Expires At",
+  
+  // Notifications
+  notifications: "Notifications",
+  noNotifications: "No notifications",
+  loadingNotifications: "Loading notifications...",
+  markAllAsRead: "Mark all as read",
+  markAsRead: "Mark as read",
+  
+  // Language
   lang: "en",
-
-}
+};

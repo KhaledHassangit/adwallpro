@@ -1,5 +1,4 @@
-"use client";
-
+"use client"
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,10 +8,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
 import { signIn, useAuthStore, useUserStore } from "@/lib/auth";
-import { verifyGoogleToken } from "@/app/[locale]/actions";
 import { GoogleLogin } from "@react-oauth/google";
 import { useNotifications } from "@/hooks/notifications";
 import { Eye, EyeOff, Mail, Lock, LogIn } from "lucide-react";
+import { createLoginSchema, type LoginFormData, type LoginFormErrors } from "@/lib/validations";
+import { z } from "zod";
+import { verifyGoogleToken } from "../../actions";
+
 // Force dynamic rendering for this page
 export const dynamic = 'force-dynamic';
 
@@ -28,13 +30,53 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<LoginFormData>({
     email: "",
     password: "",
   });
+  const [fieldErrors, setFieldErrors] = useState<LoginFormErrors>({});
 
   const isRTL = locale === "ar";
   const googleClientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
+
+  // Create schema with translated messages
+  const loginSchema = createLoginSchema({
+    emailRequired: t("emailRequired"),
+    passwordRequired: t("passwordRequired"),
+    invalidEmailAddress: t("invalidEmailAddress"),
+    passwordMinLength: t("passwordMinLength")
+  });
+
+  const validateForm = (): boolean => {
+    try {
+      loginSchema.parse(formData);
+      setFieldErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const errors: LoginFormErrors = {};
+        error.errors.forEach((err) => {
+          const field = err.path[0] as string;
+          if (!errors[field]) {
+            errors[field] = [];
+          }
+          errors[field]?.push(err.message);
+        });
+        setFieldErrors(errors);
+      }
+      return false;
+    }
+  };
+
+  const handleInputChange = (field: keyof LoginFormData) => (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Clear error for this field when user starts typing
+    if (fieldErrors[field]) {
+      setFieldErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
 
   const handleGoogleSuccess = async (credentialResponse: any) => {
     setGoogleLoading(true);
@@ -45,7 +87,7 @@ export default function LoginPage() {
       const result = await verifyGoogleToken(credential);
 
       if (!result.success) {
-        throw new Error(result.error || "Google authentication failed");
+        throw new Error(result.error || t("googleAuthFailed"));
       }
 
       // Update auth stores with returned data
@@ -63,18 +105,25 @@ export default function LoginPage() {
       }
     } catch (error: any) {
       console.error("Google login error:", error);
-      notifications.error(error.message || "Google login failed");
+      notifications.error(error.message || t("googleAuthFailed"));
     } finally {
       setGoogleLoading(false);
     }
   };
 
   const handleGoogleError = () => {
-    notifications.error("Google login failed");
+    notifications.error(t("googleLoginFailed"));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate form before submission
+    if (!validateForm()) {
+      notifications.error(t("formValidationError"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -122,7 +171,7 @@ export default function LoginPage() {
         </CardHeader>
 
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
             <div>
               <Label htmlFor="email">{t("email")}</Label>
               <div className="relative">
@@ -132,17 +181,19 @@ export default function LoginPage() {
                   type="email"
                   placeholder={t("emailPlaceholder")}
                   value={formData.email}
-                  onChange={(e) =>
-                    setFormData({ ...formData, email: e.target.value })
-                  }
-                  className={`${isRTL ? "pr-10" : "pl-10"}`}
+                  onChange={handleInputChange("email")}
+                  className={`${isRTL ? "pr-10" : "pl-10"} ${fieldErrors.email ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '0.75rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '0.75rem'
                   }}
-                  required
                 />
               </div>
+              {fieldErrors.email && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.email[0]}
+                </p>
+              )}
             </div>
 
             <div>
@@ -154,15 +205,12 @@ export default function LoginPage() {
                   type={showPassword ? "text" : "password"}
                   placeholder={t("passwordPlaceholder")}
                   value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className="pr-10 pl-10"
+                  onChange={handleInputChange("password")}
+                  className={`pr-10 pl-10 ${fieldErrors.password ? "border-red-500" : ""}`}
                   style={{
                     paddingLeft: isRTL ? '2.5rem' : '2.5rem',
                     paddingRight: isRTL ? '2.5rem' : '2.5rem'
                   }}
-                  required
                 />
                 <button
                   type="button"
@@ -176,6 +224,11 @@ export default function LoginPage() {
                   )}
                 </button>
               </div>
+              {fieldErrors.password && (
+                <p className="text-sm text-red-500 mt-1">
+                  {fieldErrors.password[0]}
+                </p>
+              )}
             </div>
 
             <div className="flex items-center justify-between">

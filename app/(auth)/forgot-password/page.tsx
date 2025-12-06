@@ -10,6 +10,13 @@ import { Label } from "@/components/ui/label";
 import { useI18n } from "@/providers/LanguageProvider";
 import { useNotifications } from "@/hooks/notifications";
 import { Mail, ArrowLeft, Key } from "lucide-react";
+import {
+  createForgotPasswordEmailSchema,
+  createResetCodeSchema,
+  createNewPasswordSchema,
+  type ForgotPasswordValidationMessages
+} from "@/lib/validations";
+import { z } from "zod";
 
 export default function ForgotPasswordPage() {
   const { t, locale } = useI18n();
@@ -20,12 +27,72 @@ export default function ForgotPasswordPage() {
   const [step, setStep] = useState(1); // 1: email, 2: reset code, 3: new password
   const [resetCode, setResetCode] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [resetCodeError, setResetCodeError] = useState<string | null>(null);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  // Determine if the current language is RTL
   const isRTL = locale === "ar";
+
+  // Create schemas with translated messages
+  const validationMessages: ForgotPasswordValidationMessages = {
+    emailRequired: t("emailRequired"),
+    invalidEmailAddress: t("invalidEmailAddress"),
+    resetCodeRequired: t("resetCodeRequired"),
+    passwordRequired: t("passwordRequired"),
+    passwordMinLengthShort: t("passwordMinLengthShort")
+  };
+
+  const emailSchema = createForgotPasswordEmailSchema(validationMessages);
+  const codeSchema = createResetCodeSchema(validationMessages);
+  const passwordSchema = createNewPasswordSchema(validationMessages);
+
+  const validateEmail = (): boolean => {
+    try {
+      emailSchema.parse({ email });
+      setEmailError(null);
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setEmailError(error.errors[0]?.message || "Invalid email");
+      }
+      return false;
+    }
+  };
+
+  const validateResetCode = (): boolean => {
+    try {
+      codeSchema.parse({ resetCode });
+      setResetCodeError(null);
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setResetCodeError(error.errors[0]?.message || "Invalid reset code");
+      }
+      return false;
+    }
+  };
+
+  const validatePassword = (): boolean => {
+    try {
+      passwordSchema.parse({ newPassword });
+      setPasswordError(null);
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setPasswordError(error.errors[0]?.message || "Invalid password");
+      }
+      return false;
+    }
+  };
 
   const handleSendResetCode = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateEmail()) {
+      notifications.error(t("formValidationError"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -58,6 +125,12 @@ export default function ForgotPasswordPage() {
 
   const handleVerifyResetCode = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateResetCode()) {
+      notifications.error(t("formValidationError"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -90,6 +163,12 @@ export default function ForgotPasswordPage() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validatePassword()) {
+      notifications.error(t("formValidationError"));
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -116,7 +195,7 @@ export default function ForgotPasswordPage() {
       console.error("Reset password error:", error);
       notifications.error(error.message || t("resetPasswordError"));
     } finally {
-    setLoading(false);
+      setLoading(false);
     }
   };
 
@@ -151,15 +230,20 @@ export default function ForgotPasswordPage() {
                     type="email"
                     placeholder={t("emailPlaceholder")}
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`${isRTL ? "pr-10" : "pl-10"}`}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (emailError) setEmailError(null);
+                    }}
+                    className={`${isRTL ? "pr-10" : "pl-10"} ${emailError ? "border-red-500" : ""}`}
                     style={{
                       paddingLeft: isRTL ? '0.75rem' : '2.5rem',
                       paddingRight: isRTL ? '2.5rem' : '0.75rem'
                     }}
-                    required
                   />
                 </div>
+                {emailError && (
+                  <p className="text-sm text-red-500 mt-1">{emailError}</p>
+                )}
               </div>
 
               <Button type="submit" className="w-full btn-ultra" disabled={loading}>
@@ -177,10 +261,15 @@ export default function ForgotPasswordPage() {
                   type="text"
                   placeholder="123456"
                   value={resetCode}
-                  onChange={(e) => setResetCode(e.target.value)}
-                  className="text-center text-lg tracking-widest"
-                  required
+                  onChange={(e) => {
+                    setResetCode(e.target.value);
+                    if (resetCodeError) setResetCodeError(null);
+                  }}
+                  className={`text-center text-lg tracking-widest ${resetCodeError ? "border-red-500" : ""}`}
                 />
+                {resetCodeError && (
+                  <p className="text-sm text-red-500 mt-1">{resetCodeError}</p>
+                )}
               </div>
 
               <Button type="submit" className="w-full btn-ultra" disabled={loading}>
@@ -198,12 +287,17 @@ export default function ForgotPasswordPage() {
                   type="password"
                   placeholder="••••••••"
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  required
-                  minLength={6}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    if (passwordError) setPasswordError(null);
+                  }}
+                  className={passwordError ? "border-red-500" : ""}
                 />
+                {passwordError && (
+                  <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+                )}
                 <p className="text-xs text-muted-foreground mt-1">
-                  {t("passwordMinLength")}
+                  {t("passwordMinLengthShort")}
                 </p>
               </div>
 

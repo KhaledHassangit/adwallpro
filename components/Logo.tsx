@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { cn } from "@/lib/utils"; // أو استخدم clsx لو مش عندك cn
+import { cn } from "@/lib/utils"; 
 
 interface LogoProps {
   t: (k: string) => string;
